@@ -1,0 +1,17 @@
+.DS_Store
+.AppleDouble
+._*
+*.tmp
+*.log
+*.bak
+*.swp
+
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_ed25519
+secrets/
+private/
