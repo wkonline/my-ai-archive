@@ -1,0 +1,30 @@
+<!-- 模态框信息删除确认-->
+<div class="modal fade" id="myDeleteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="alert alert-danger alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"></button>
+            <h4>是否确定删除？</h4>
+            <p>删除之后，将永远在硬盘上移除，请谨慎操作！！！</p>
+            <p style="margin-top: 25px">
+                <button type="button" class="btn btn-danger" onclick="confirmDelete();">确定删除</button>
+                <button type="button" class="btn btn-default" onclick="hideDelete();">取消</button>
+            </p>
+        </div>
+    </div>
+</div>
+<script>
+    //打开询问是否删除的模态框并设置需要删的ID
+    delete_id = 0;
+
+    function showDeleteModal(id) {
+        delete_id = id;
+        $("#myDeleteModal").modal("show");
+    }
+</script>
+<script>
+    function hideDelete() {
+        delete_id = 0;
+        $("#myDeleteModal").modal("hide");
+    }
+</script>
+

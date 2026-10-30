@@ -1,0 +1,895 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block css %}
+    <style>
+        .contract-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 18px 0 12px;
+        }
+
+        .contract-page-title {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .contract-page-title h2 {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #17363e;
+            letter-spacing: 0;
+        }
+
+        .contract-page-title h2::before {
+            content: "";
+            width: 4px;
+            height: 20px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, #19b4ad, #0b7486);
+        }
+
+        .result-count {
+            padding: 3px 9px;
+            border: 1px solid #d4e3e5;
+            border-radius: 20px;
+            background: #f2f8f8;
+            color: #45656d;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            height: 38px;
+            padding: 0 14px;
+            border: 1px solid #c9d8da;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #36555d;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+        }
+
+        .tool-btn:hover {
+            color: #0b6e75;
+            border-color: #8cc9c6;
+            background: #f2fbfb;
+            box-shadow: 0 5px 14px rgba(18, 104, 108, .12);
+            transform: translateY(-1px);
+            text-decoration: none;
+        }
+
+        .tool-btn.is-primary {
+            border-color: #08767e;
+            background: linear-gradient(135deg, #0d8d8a, #087078);
+            color: #ffffff;
+            box-shadow: 0 7px 18px rgba(9, 116, 118, .2);
+        }
+
+        .tool-btn.is-primary:hover {
+            color: #ffffff;
+            filter: brightness(1.06);
+        }
+
+        .contract-filter {
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 1px solid #d8e5e7;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(15, 52, 60, .07);
+        }
+
+        .filter-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 13px 16px;
+            border-bottom: 1px solid #e4eef0;
+            background: #f8fcfc;
+        }
+
+        .filter-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #23464f;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .filter-title .glyphicon {
+            color: #0d8f92;
+            font-size: 14px;
+        }
+
+        .filter-clear {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #6a838b;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .filter-clear:hover {
+            color: #c0453f;
+            text-decoration: none;
+        }
+
+        .filter-body {
+            padding: 16px 16px 12px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 12px 14px;
+        }
+
+        .filter-field {
+            grid-column: span 3;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-field label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 7px;
+            color: #4e6c74;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .filter-field label .glyphicon {
+            color: #72a2a6;
+            font-size: 12px;
+        }
+
+        .filter-field input.form-control {
+            width: 100%;
+            height: 40px;
+            padding: 0 11px;
+            border: 1px solid #cedde0;
+            border-radius: 6px;
+            background: #ffffff;
+            box-shadow: inset 0 1px 2px rgba(18, 50, 58, .04);
+            color: #203c44;
+            font-size: 14px;
+            transition: border-color .16s ease, box-shadow .16s ease;
+        }
+
+        .filter-field input.form-control:focus {
+            border-color: #36a9a5;
+            box-shadow: 0 0 0 3px rgba(45, 187, 178, .14);
+            outline: none;
+        }
+
+        .filter-field input.form-control::placeholder {
+            color: #9cafb4;
+        }
+
+        .status-row {
+            grid-column: span 12;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 14px 0 16px;
+            border-top: 1px dashed #dce8ea;
+            margin-top: 2px;
+        }
+
+        .status-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-right: 4px;
+            color: #4e6c74;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-label .glyphicon {
+            color: #72a2a6;
+            font-size: 12px;
+        }
+
+        .status-chip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-right: 8px;
+            white-space: nowrap;
+        }
+
+        .status-chip input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+
+        .chip-ui {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 34px;
+            padding: 0 14px;
+            border: 1px solid #cedde0;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #506970;
+            cursor: pointer;
+            font-size: 13px;
+            user-select: none;
+            transition: border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease;
+            white-space: nowrap;
+        }
+
+        .chip-ui::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border: 1px solid #9aadb2;
+            border-radius: 50%;
+            transition: background .16s ease, border-color .16s ease, box-shadow .16s ease;
+        }
+
+        .status-chip:hover .chip-ui {
+            border-color: #69b6b4;
+            color: #245d62;
+        }
+
+        .status-chip input:checked + .chip-ui {
+            border-color: #25a49e;
+            background: #eaf9f8;
+            color: #0b6a6d;
+            box-shadow: 0 4px 12px rgba(27, 152, 146, .14);
+        }
+
+        .status-chip input:checked + .chip-ui::before {
+            border-color: #159c96;
+            background: #159c96;
+            box-shadow: 0 0 0 3px rgba(21, 156, 150, .16);
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 13px 16px;
+            border-top: 1px solid #e4eef0;
+            background: #fbfdfe;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .filter-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            height: 34px;
+            padding: 0 16px;
+            border: 1px solid #c8d8da;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #4a666e;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+        }
+
+        .filter-btn:hover {
+            color: #0b6e75;
+            text-decoration: none;
+        }
+
+        .filter-btn.is-search {
+            border-color: #0b7b82;
+            background: linear-gradient(135deg, #0e928e, #0a6f78);
+            color: #ffffff;
+            box-shadow: 0 7px 16px rgba(10, 112, 116, .2);
+        }
+
+        .filter-btn.is-search:hover {
+            color: #ffffff;
+            filter: brightness(1.06);
+            transform: translateY(-1px);
+        }
+
+        .contract-table-card {
+            overflow: hidden;
+            margin-top: 14px;
+            border: 1px solid #d8e5e7;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(15, 52, 60, .07);
+        }
+
+        .table-summary {
+            display: flex;
+            align-items: center;
+            gap: 34px;
+            flex-wrap: wrap;
+            padding: 14px 18px;
+            border-bottom: 1px solid #e2ecee;
+            background: linear-gradient(120deg, #fbfdfd, #f4fafa);
+        }
+
+        .summary-metric {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 150px;
+        }
+
+        .summary-metric .metric-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #6b838a;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .summary-metric .metric-label .glyphicon {
+            color: #6fa8a9;
+            font-size: 11px;
+        }
+
+        .summary-metric .metric-value {
+            color: #17383f;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0;
+            line-height: 1.2;
+        }
+
+        .summary-metric.is-amount .metric-value {
+            color: #0a7f80;
+        }
+
+        .data-table-wrap {
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            min-width: 1260px;
+            margin: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 13px;
+        }
+
+        .data-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            padding: 12px 10px;
+            border-bottom: 1px solid #d5e2e5;
+            background: #eef7f7;
+            color: #3d5b63;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .data-table thead th:first-child {
+            padding-left: 18px;
+        }
+
+        .data-table thead th:last-child {
+            padding-right: 18px;
+        }
+
+        .data-table thead th.cell-number {
+            padding-right: 18px;
+            text-align: right;
+        }
+
+        .data-table thead th.cell-center {
+            text-align: center;
+        }
+
+        .data-table tbody td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #eaf0f2;
+            background: #ffffff;
+            color: #34505a;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .data-table tbody tr:nth-child(even) td {
+            background: #fbfdfd;
+        }
+
+        .data-table tbody tr:hover td {
+            background: #f0faf9;
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .data-table td:first-child {
+            padding-left: 18px;
+        }
+
+        .data-table td:last-child {
+            padding-right: 18px;
+        }
+
+        .cell-number {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            padding-right: 18px;
+        }
+
+        .data-table td.cell-number {
+            padding-right: 18px;
+        }
+
+        .cell-center {
+            text-align: center;
+        }
+
+        .contract-code {
+            display: inline-block;
+            padding: 4px 9px;
+            border-radius: 12px;
+            background: #e9f6f5;
+            color: #0a6f73;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .02em;
+        }
+
+        .cell-strong {
+            color: #123238;
+            font-weight: 600;
+        }
+
+        .text-secondary {
+            color: #758a91;
+        }
+
+        .rate-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 104px;
+        }
+
+        .rate-num {
+            width: 38px;
+            color: #42636b;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .rate-track {
+            display: block;
+            width: 54px;
+            height: 6px;
+            overflow: hidden;
+            border-radius: 6px;
+            background: #e2eaec;
+        }
+
+        .rate-track i {
+            display: block;
+            height: 100%;
+            max-width: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #f0ae55, #df8d3c);
+        }
+
+        .rate-box.is-done .rate-track i {
+            background: linear-gradient(90deg, #35c5a2, #0a9a83);
+        }
+
+        .rate-box.is-done .rate-num {
+            color: #0a7d6b;
+        }
+
+        .balance-owe {
+            color: #c14f44;
+            font-weight: 700;
+        }
+
+        .balance-clear {
+            color: #2e8c74;
+        }
+
+        .row-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .row-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: 1px solid #d4e1e3;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #58747c;
+            text-decoration: none;
+            transition: border-color .15s ease, background .15s ease, color .15s ease, transform .15s ease, box-shadow .15s ease;
+        }
+
+        .row-action:hover {
+            transform: translateY(-1px);
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(19, 103, 107, .12);
+        }
+
+        .row-action.is-edit:hover {
+            border-color: #6db7b2;
+            background: #eaf7f6;
+            color: #0a7477;
+        }
+
+        .row-action.is-view:hover {
+            border-color: #a9a5dd;
+            background: #f1f0fb;
+            color: #4d47a8;
+        }
+
+        .empty-row td {
+            padding: 42px 16px !important;
+            text-align: center;
+        }
+
+        .empty-state {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #84969c;
+        }
+
+        .pagination-wrap {
+            display: flex;
+            justify-content: flex-end;
+            margin: 16px 0 8px;
+        }
+
+        .pagination-wrap .pagination {
+            margin: 0;
+        }
+
+        .pagination-wrap .pagination > li > a,
+        .pagination-wrap .pagination > li > span {
+            border-color: #d9e5e7;
+            color: #45616a;
+        }
+
+        .pagination-wrap .pagination > .active > a,
+        .pagination-wrap .pagination > .active > a:hover {
+            border-color: #0b8182;
+            background: #0b8182;
+            color: #ffffff;
+        }
+
+        @media (max-width: 991px) {
+            .filter-field {
+                grid-column: span 6;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .contract-toolbar {
+                margin-top: 12px;
+            }
+
+            .toolbar-actions {
+                width: 100%;
+            }
+
+            .tool-btn {
+                flex: 1 1 0;
+            }
+
+            .filter-field {
+                grid-column: span 12;
+            }
+
+            .filter-actions {
+                justify-content: stretch;
+            }
+
+            .filter-actions > * {
+                flex: 1 1 0;
+            }
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="contract-toolbar">
+        <div class="contract-page-title">
+            <h2>合同列表</h2>
+            <span class="result-count">共 {{ total_count }} 条</span>
+        </div>
+        <div class="toolbar-actions">
+            <a class="tool-btn is-primary" href="/contract/create/">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                新增合同
+            </a>
+            <a class="tool-btn" href="/contract/product_list/">
+                <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+                合同产品展示
+            </a>
+            <a class="tool-btn" href="{% url 'contract_download_excel' %}">
+                <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                数据下载
+            </a>
+        </div>
+    </div>
+    <div class="row" style="margin: 4px 0 14px;">
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-signal" aria-hidden="true"></span> 本年度分月合同业绩</div>
+                <div class="panel-body"><div id="contractTrendChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> 本年度合同额前五</div>
+                <div class="panel-body"><div id="contractCustomerChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-stats" aria-hidden="true"></span> 本年度业务员销售业绩占比</div>
+                <div class="panel-body"><div id="contractStatusChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/echarts.min.js' %}"></script>
+    <script>
+        (function () {
+            var months = {{ chart_months|safe }};
+            var amounts = {{ chart_amounts|safe }};
+            var customers = {{ chart_customer_labels|safe }};
+            var customerValues = {{ chart_customer_values|safe }};
+            var salesmanLabels = {{ chart_salesman_labels|safe }};
+            var salesmanValues = {{ chart_salesman_values|safe }};
+
+            var trend = echarts.init(document.getElementById('contractTrendChart'));
+            trend.setOption({
+                tooltip: {trigger: 'axis'},
+                grid: {left: 20, right: 15, top: 28, bottom: 20, containLabel: true},
+                xAxis: {type: 'category', data: months, axisLabel: {fontSize: 10}},
+                yAxis: {type: 'value', splitLine: {lineStyle: {color: '#eef2f3'}}},
+                series: [{
+                    type: 'bar',
+                    data: amounts,
+                    barMaxWidth: 28,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#14a9a3'},
+                            {offset: 1, color: '#0b7486'}
+                        ]),
+                        borderRadius: [4, 4, 0, 0]
+                    }
+                }]
+            });
+
+            var customer = echarts.init(document.getElementById('contractCustomerChart'));
+            customer.setOption({
+                tooltip: {trigger: 'axis', axisPointer: {type: 'shadow'}},
+                grid: {left: 20, right: 15, top: 28, bottom: 20, containLabel: true},
+                xAxis: {type: 'value'},
+                yAxis: {type: 'category', data: customers, axisLabel: {fontSize: 10}},
+                series: [{
+                    type: 'bar',
+                    data: customerValues,
+                    barMaxWidth: 20,
+                    itemStyle: {color: '#2b9ea0', borderRadius: [0, 4, 4, 0]}
+                }]
+            });
+
+            var status = echarts.init(document.getElementById('contractStatusChart'));
+            status.setOption({
+                tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
+                legend: {bottom: 0, textStyle: {fontSize: 11}},
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '66%'],
+                    center: ['50%', '43%'],
+                    data: salesmanLabels.map(function (name, i) {
+                        return {name: name, value: salesmanValues[i]};
+                    }),
+                    itemStyle: {borderRadius: 6, borderColor: '#fff', borderWidth: 2}
+                }]
+            });
+        })();
+    </script>
+    <section class="contract-filter">
+        <div class="filter-head">
+            <span class="filter-title">
+                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                检索条件
+            </span>
+            <a class="filter-clear" href="javascript:void(0);" onclick="clearFilter()">
+                <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+                清空条件
+            </a>
+        </div>
+        <form method="get" id="contractFilterForm">
+            <div class="filter-body">
+                <div class="filter-grid">
+                    <div class="filter-field">
+                        <label for="id_filter_start">
+                            <span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>
+                            开始日期
+                        </label>
+                        <input id="id_filter_start" type="date" name="start_date" class="form-control"
+                               value="{{ start_date|default:'' }}">
+                    </div>
+                    <div class="filter-field">
+                        <label for="id_filter_end">
+                            <span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>
+                            结束日期
+                        </label>
+                        <div class="date-field-wrap">
+                            <input id="id_filter_end" type="date" name="end_date" class="form-control"
+                                   value="{{ end_date|default:'' }}">
+                        </div>
+                    </div>
+                    <div class="filter-field filter-field-wide">
+                        <label for="id_filter_keyword">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                            快速检索
+                        </label>
+                        <input id="id_filter_keyword" type="text" name="keyword" class="form-control"
+                               placeholder="请输入客户名称或合同号" value="{{ keyword|default:'' }}">
+                    </div>
+                    <div class="filter-field filter-status-inline" style="grid-column: span 3;">
+                        <label for="status_filter">
+                            <span class="glyphicon glyphicon-filter" aria-hidden="true"></span>
+                            状态筛选
+                        </label>
+                        <div style="display: flex; gap: 8px; flex-wrap: nowrap; align-items: center;">
+                            <label class="status-chip">
+                                <input type="checkbox" name="payment_completed" value="False"
+                                       {% if payment_completed == 'False' %}checked{% endif %}>
+                                <span class="chip-ui">只看欠款合同</span>
+                            </label>
+                            <label class="status-chip">
+                                <input type="checkbox" name="invoice_completed" value="False"
+                                       {% if invoice_completed == 'False' %}checked{% endif %}>
+                                <span class="chip-ui">只看欠票合同</span>
+                            </label>
+                            <button class="filter-btn is-search" type="submit" style="margin-left: auto;">
+                                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                                查询
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </section>
+    <div class="panel panel-default m-t-10">
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            {{ title }}
+        </div>
+        <div class="scrollablr-table">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th colspan="2" class="text-danger">总金额： {{ total_amount.contracts_amount }}</th>
+                    <th colspan="2" class="text-danger">合同数量： {{ total_count }}</th>
+                </tr>
+                <tr>
+                    <th>序号</th>
+                    <th>客户名称</th>
+                    <th>合同日期</th>
+                    <th>合同号</th>
+                    <th>数量</th>
+                    <th>合同金额</th>
+                    <th>回款金额</th>
+                    <th>开票金额</th>
+                    <th>回款比例</th>
+                    <th>开票比例</th>
+                    <th>尾款</th>
+                    <th>业务经理</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in contracts %}
+                    <tr>
+                        <td class="text-center">{{ obj.order_number }}</td>
+                        <td>{{ obj.customer.company_name }}</td>
+                        <td>{{ obj.date|date:"Y-m-d" }}</td>
+                        <td><a href="/contract/detail/{{ obj.id }}">{{ obj.contract_number }}</a></td>
+                        <td class="text-center">{{ obj.quantity }}</td>
+                        <td>{{ obj.total_price }}</td>
+                        <td>{{ obj.total_collection|default:"0" }}</td>
+                        <td>{{ obj.total_invoice|default:"0" }}</td>
+                        <td>{{ obj.collection_ratio|floatformat:0|default:"0" }}%</td>
+                        <td>{{ obj.invoice_ratio|floatformat:0|default:"0" }}%</td>
+                        <td>{{ obj.outstanding_balance }}</td>
+                        <td>{{ obj.customer.saler.username }}</td>
+                        <td>
+                            <a class="btn btn-primary btn-xs" href="/contract/{{ obj.id }}/edit/">
+                                <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>编辑
+                            </a>
+                            <a class="btn btn-success btn-xs" href="/contract/detail/{{ obj.id }}">
+                                <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>详细
+                            </a>
+                            {% if obj.attachment %}
+                                <a class="btn btn-info btn-xs" href="{{ obj.attachment.url }}" target="_blank">
+                                    <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>文件
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="13" class="text-center">暂无合同数据</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="clearfix">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+
+    <script>
+        function clearFilter() {
+            // 清空所有筛选表单字段
+            $('#contractFilterForm')[0].reset();
+            // 重新提交表单
+            $('#contractFilterForm').submit();
+        }
+    </script>
+
+{% endblock %}

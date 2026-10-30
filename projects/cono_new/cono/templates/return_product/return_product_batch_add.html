@@ -1,0 +1,148 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <style>
+        .batch-wrap { margin: 4px 0 10px; }
+        .edit-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+        .edit-head h2 { display: inline-flex; align-items: center; gap: 9px; margin: 0; color: #17363e; font-size: 20px; font-weight: 700; }
+        .edit-head h2 .glyphicon { color: #0a8387; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid #c9d8da; border-radius: 6px; background: #fff; color: #45656d; font-size: 13px; font-weight: 600; text-decoration: none; }
+        .back-link:hover { border-color: #83c2be; color: #0a7076; text-decoration: none; }
+        .base-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .base-field label { display: block; margin-bottom: 7px; color: #4e6c74; font-size: 13px; font-weight: 600; }
+        .base-field .form-control { height: 42px; border-radius: 6px; }
+        .product-table-wrap { overflow-x: auto; border: 1px solid #dde8ea; border-radius: 6px; background: #fff; }
+        .product-table { width: 100%; min-width: 860px; margin: 0; table-layout: fixed; }
+        .product-table th, .product-table td { vertical-align: middle; }
+        .footer-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+        @media (max-width: 767px) { .base-grid { grid-template-columns: 1fr; } }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="batch-wrap">
+        <div class="edit-head">
+            <h2><span class="glyphicon glyphicon-retweet" aria-hidden="true"></span>{{ title }}</h2>
+            <a class="back-link" href="/return_product/list/">
+                <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>返回返件列表
+            </a>
+        </div>
+
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="panel panel-default">
+                <div class="panel-heading">基本信息</div>
+                <div class="panel-body">
+                    <div class="base-grid">
+                        <div class="base-field">
+                            <label>客户名称</label>
+                            <select name="customer" id="id_customer" class="form-control" required>
+                                <option value="">请选择客户名称</option>
+                                {% for customer in customers %}
+                                    <option value="{{ customer.pk }}"
+                                            {% if form_data.customer == customer.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ customer.company_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="base-field">
+                            <label>返件日期</label>
+                            <input type="text" name="date" id="return_date" class="form-control"
+                                   value="{% firstof form_data.date date '' %}" required>
+                        </div>
+                    </div>
+                    <p style="margin-top:10px; color:#658088; font-size:13px;">选择客户后自动带出可返件维修单，多行可单独删除。</p>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">返件明细</div>
+                <div class="panel-body">
+                    <div class="product-table-wrap">
+                        <table class="table product-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:200px;">维修编号</th>
+                                    <th style="width:220px;">产品名称</th>
+                                    <th style="width:240px;">产品型号</th>
+                                    <th style="width:100px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="serviceItems">
+                                <tr>
+                                    <td colspan="4" class="text-center" style="padding:22px;color:#8a9ca2;">请先选择客户名称</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-actions">
+                <a class="btn btn-default" href="/return_product/list/">取消</a>
+                <button type="submit" class="btn btn-success">
+                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>保存批量返件
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+{% block js %}
+    <script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+    <script>
+        $(function () {
+            var returnDate = $('#return_date').val() || new Date().toISOString().slice(0, 10);
+            $('#return_date').datepicker({
+                format: 'yyyy-mm-dd',
+                language: 'zh-CN',
+                autoclose: true
+            }).datepicker('setDate', returnDate);
+        });
+        function renderRows(services) {
+            var $body = $('#serviceItems');
+            $body.empty();
+            if (!services || !services.length) {
+                $body.append('<tr><td colspan="4" class="text-center" style="padding:22px;color:#8a9ca2;">该客户暂无可返件维修单</td></tr>');
+                return;
+            }
+            $.each(services, function (index, item) {
+                var row = '<tr>' +
+                    '<td>' + (item.service_number || '') +
+                    '<input type="hidden" name="service_id" value="' + (item.id || '') + '"></td>' +
+                    '<td>' + (item.productcategory__name || '') + '</td>' +
+                    '<td>' + (item.product__model || '') + '</td>' +
+                    '<td class="text-center"><button type="button" class="btn btn-danger btn-xs row-remove">删除</button></td>' +
+                    '</tr>';
+                $body.append(row);
+            });
+        }
+
+        $('#serviceItems').on('click', '.row-remove', function () {
+            $(this).closest('tr').remove();
+        });
+
+        $(function () {
+            $('#id_customer').change(function () {
+                var customerId = $(this).val();
+                if (!customerId) {
+                    renderRows([]);
+                    return;
+                }
+                $.ajax({
+                    url: '{% url 'get_return_product_services' %}',
+                    type: 'GET',
+                    data: {customer_id: customerId},
+                    dataType: 'json',
+                    success: renderRows
+                });
+            });
+        });
+    </script>
+{% endblock %}

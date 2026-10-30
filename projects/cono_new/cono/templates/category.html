@@ -1,0 +1,29 @@
+<select id="category_select" class="form-control">
+    <option value="">请选择一级分类</option>
+    {% for category in categorys %}
+        <option value="{{ category.id }}">{{ category.name }}</option>
+    {% endfor %}
+</select>
+<select id="subcategory_select" class="form-control">
+    <option value="">请选择二级分类</option>
+</select>
+<script>
+    $(document).ready(function () {
+        $("#category_select").change(function () {
+            var category_id = $(this).val();
+            $.ajax({
+                url: "/products/" + category_id + "/",
+                type: "GET",
+                dataType: "json",
+                success: function (products_list) {
+                    $("#subcategory_select").html('<option value="">请选择二级分类</option>');
+                    $.each(products_list, function (index, subcat) {
+                        $("#subcategory_select").append('<option value="' + subcat.id + '">' + subcat.name + '</option>');
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+

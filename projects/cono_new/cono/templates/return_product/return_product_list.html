@@ -1,0 +1,106 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+    <div class=" clearfix">
+        <div class="float-left">
+            <a class="btn btn-success" href="/return_product/add/">
+                <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+                新增登记
+            </a>
+            <a class="btn btn-info" href="/return_product/batch_add/">
+                <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+                批量登记
+            </a>
+        </div>
+        <div class="float-right m-r-10">
+            <a class="btn btn-info" href="{% url 'servicedetail_download_excel' %}">
+                <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                数据下载
+            </a>
+        </div>
+    </div>
+    <div class="m-t-10">
+        <form method="get">
+            <div class="row">
+                <div class="col-xs-2"><label><span class="glyphicon glyphicon-time m-r-5"
+                                                   aria-hidden="true"></span>开始时间</label>
+                    <input type="date" name="date_from" class="form-control " placeholder="开始时间..."
+                           value="{{ date_from }}"></div>
+                <div class="col-xs-2"><label><span class="glyphicon glyphicon-time m-r-5"
+                                                   aria-hidden="true "></span>结束时间</label>
+                    <input type="date" name="date_to" class="form-control " placeholder="结束时间..."
+                           value="{{ date_to }}"></div>
+                <div class="col-xs-3"><label><span class="glyphicon glyphicon-list-alt m-r-5"
+                                                   aria-hidden="true"></span>维修编号</label>
+                    <input type="text" name="service_number" class="form-control " placeholder="维修编号..."
+                           value="{{ service_number }}"></div>
+                <div class="col-xs-3"><label><span class="glyphicon glyphicon-user m-r-5"
+                                                   aria-hidden="true"></span>客户名称</label>
+                    <input type="text" name="customer_name" class="form-control " placeholder="客户名..."
+                           value="{{ customer_name }}"></div>
+                <div class="col-xs-2" style="padding-top:23px;">
+                    <button class="btn btn-info" type="submit">
+                        <span class="glyphicon glyphicon-search m-r-5" aria-hidden="true"></span>点击搜索
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="panel panel-default m-t-10">
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            {{ title }}
+        </div>
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>客户名称</th>
+                <th>产品名称</th>
+                <th>型号</th>
+                <th>维修编号</th>
+                <th>发货人</th>
+                <th>发货时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td>{{ obj.customer }}</td>
+                    <td>{{ obj.service.productcategory }}</td>
+                    <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ obj.service.product }}</td>
+                    <td><a href="/service/detail/{{ obj.service.service_number }}/">{{ obj.service.service_number }}</a></td>
+                    <td>{{ obj.user }}</td>
+                    <td>{{ obj.date }}</td>
+                    <td>
+                        <a class="btn btn-primary btn-xs" href="/return_product/{{ obj.id }}/edit/"><span
+                                class="glyphicon glyphicon-wrench m-r-5" aria-hidden="true"></span>编辑</a>
+                        <a class="btn btn-danger btn-xs" onclick="showDeleteModal({{ obj.id }});"><span
+                                class="glyphicon glyphicon-trash m-r-5" aria-hidden="true"></span>删除</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'delete.html' %}
+<script>
+        function confirmDelete() {
+            $.ajax({
+                url: '{% url 'return_product_delete' %}',
+                type: 'GET',
+                data: {'nid': delete_id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                        location.reload()
+                    } else {
+                        (data.error)
+                    }
+                }
+            })
+        }
+</script>
+{% endblock %}

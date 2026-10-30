@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block content %}
+    <h3 class="text-center">操作成功！！！</h3>
+    <div style="margin-bottom: 300px;margin-top:50px" class="text-center">
+        <p>您的<strong style="color: #761c19;font-size: 16px">{{ title }}</strong>操作已经成功完成。</p>
+        <p>页面将在 <span id="Time" style="color: #761c19;font-size: 16px">5</span> 秒后自动跳转到列表页面...</p>
+        <p>如需手动请<a href="{{ url_path }}" style="color: #761c19;font-size: 16px">点击这里</a></p>
+    </div>
+    <script>
+        function countDown() {
+            //获取初始时间
+            var time = document.getElementById("Time");
+
+            //获取到id为time标签中的数字时间
+            if (time.innerHTML == 0) {
+                //等于0时清除计时，并跳转该指定页面
+                window.location.href = "{{ url_path|default:"/"}}";
+            } else {
+                time.innerHTML = time.innerHTML - 1;
+            }
+        }
+
+        //1000毫秒调用一次
+        window.setInterval("countDown()", 1000);
+    </script>
+{% endblock %}

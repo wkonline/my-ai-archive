@@ -1,0 +1,159 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+    <div>
+        <a class="btn btn-success" href="/contract_file/add/electrical/">
+            <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+            上传电气文件
+        </a>
+            <a class="btn btn-success" href="/contract_file/add/mechanical/">
+            <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+            上传机械文件
+        </a>
+            <a class="btn btn-success" href="/contract_file/add/bill/">
+            <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+            上传清单文件
+        </a>
+    </div>
+    <div class="panel panel-default m-t-10">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            部门列表
+        </div>
+
+        <!-- Table -->
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>项目编号</th>
+                <th>产品名称</th>
+                <th>型号</th>
+                <th>数量</th>
+                <th>电气图</th>
+                <th>说明书</th>
+                <th>其他文件</th>
+                <th>机械图纸</th>
+                <th>装箱清单</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td>{{ obj.contract.contract }}</td>
+                    <td>{{ obj.contract.productcategory }}</td>
+                    <td>{{ obj.contract.product }}</td>
+                    <td class="text-center">{{ obj.contract.quantity }}</td>
+                    {#                    <td><a href="/media/{{ obj.electrical_drawings }}" class="btn btn-primary btn-xs"><span#}
+                    {#                            class="glyphicon glyphicon-download-alt m-r-5" aria-hidden="true"></span>点击下载</a></td>#}
+                    {#                    <td><a href="/media/{{ obj.instruction }}" class="btn btn-primary btn-xs"><span#}
+                    {#                            class="glyphicon glyphicon-download-alt m-r-5" aria-hidden="true"></span>点击下载</a></td>#}
+                    <td>
+                        {% if obj.electrical_drawings %}
+                            <a href="/media/{{ obj.electrical_drawings }}" class="btn btn-primary btn-xs">
+                                <span class="glyphicon glyphicon-download-alt m-r-5" aria-hidden="true"></span>点击下载
+                            </a>
+                        {% else %}
+                            None
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if obj.instruction %}
+                            <a href="/media/{{ obj.instruction }}" class="btn btn-primary btn-xs">
+                                <span class="glyphicon glyphicon-download-alt m-r-5" aria-hidden="true"></span>点击下载
+                            </a>
+                        {% else %}
+                            None
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if obj.other_file %}
+                            <a href="/media/{{ obj.other_file }}" class="btn btn-primary btn-xs">
+                                <span class="glyphicon glyphicon-download-alt m-r-5" aria-hidden="true"></span>点击下载
+                            </a>
+                        {% else %}
+                            None
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if obj.mechanical_drawings %}
+                            <a href="/media/{{ obj.mechanical_drawings }}" class="btn btn-primary btn-xs">
+                                <span class="glyphicon glyphicon-download-alt m-r-5" aria-hidden="true"></span>点击下载
+                            </a>
+                        {% else %}
+                            None
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if obj.packing_list %}
+                            <a href="/media/{{ obj.packing_list }}" class="btn btn-primary btn-xs">
+                                <span class="glyphicon glyphicon-download-alt m-r-5" aria-hidden="true"></span>点击下载
+                            </a>
+                        {% else %}
+                            None
+                        {% endif %}
+                    </td>
+                    {#                    <td>{{ obj.create_time|date:"Y-m-d" }}</td>#}
+                    {#                    <td>{{ obj.update_time|date:"Y-m-d" }}</td>#}
+                    <td>
+                        <a class="btn btn-primary btn-xs" href="/contract_file/{{ obj.id }}/edit/"><span
+                                class="glyphicon glyphicon-wrench m-r-5" aria-hidden="true"></span>编辑</a>
+                        <a class="btn btn-danger btn-xs" href="/contract_file/{{ obj.id }}/delete/"><span
+                                class="glyphicon glyphicon-trash m-r-5" aria-hidden="true"></span>删除</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="modal fade" id="newDepartmentModal" tabindex="-1" role="dialog"
+         aria-labelledby="newDepartmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title btn btn-primary" id="newDepartmentModalLabel">创建新部门</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="department-form">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="submit-department-form">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clearfix">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#submit-department-form').click(function () {
+                var form = $('#department-form');
+                $.ajax({
+                    url: '{% url "department_list" %}',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (data) {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            console.log(data.errors);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(error);
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

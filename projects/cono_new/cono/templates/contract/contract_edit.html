@@ -1,0 +1,491 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+{% block css %}
+    <style>
+        .contract-edit-wrap { margin: 4px 0 10px; }
+        .edit-head {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 14px; margin-bottom: 14px;
+        }
+        .edit-head h2 { margin: 0; color: #17363e; font-size: 20px; font-weight: 700; }
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px; height: 36px;
+            padding: 0 14px; border: 1px solid #c9d8da; border-radius: 6px;
+            background: #fff; color: #45656d; font-size: 13px; font-weight: 600;
+            text-decoration: none;
+        }
+        .back-link:hover { border-color: #83c2be; color: #0a7076; text-decoration: none; }
+        .product-head {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 12px; margin: 18px 0 10px;
+        }
+        .add-row-btn {
+            display: inline-flex; align-items: center; gap: 7px; height: 36px;
+            padding: 0 13px; border: 1px solid #1e8d8d; border-radius: 6px;
+            background: linear-gradient(135deg, #10928e, #0a6f78); color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 6px 14px rgba(10, 112, 116, .18);
+        }
+        .table-scroll {
+            overflow-x: auto; border: 1px solid #dde8ea; border-radius: 6px; background: #fff;
+        }
+        .product-table { width: 100%; min-width: 1120px; margin: 0; table-layout: fixed; }
+        .product-table th, .product-table td { vertical-align: middle; }
+        .product-table select.form-control,
+        .product-table input.form-control { height: 38px; font-size: 13px; }
+        .product-table input[readonly] { background: #f4f8f8; color: #0e7a75; font-weight: 700; }
+        .row-remove { border-color: #e2c9c6; background: #fff7f6; color: #c35a52; }
+        .row-remove:hover { border-color: #d59b94; background: #ffece9; color: #ad3f38; }
+        .summary-strip {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 14px; margin-top: 14px; padding: 13px 16px;
+            border: 1px solid #dce8ea; border-radius: 6px; background: #f8fcfc;
+        }
+        .row-error { display: block; margin-top: 4px; color: #c04a42; font-size: 11px; }
+        .contract-edit-wrap textarea.form-control {
+            min-height: 84px;
+            resize: vertical;
+        }
+        /* 信息卡片 - 去 panel 边框 */
+        .info-card {
+            border: 1px solid #d8e5e7;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 4px 16px rgba(15, 52, 60, .06);
+            overflow: hidden;
+        }
+        .info-card .card-head {
+            background: #17363e;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info-card .card-head .glyphicon { color: #5ec4be; }
+        .info-card .card-body { padding: 20px; }
+        /* 附件区域 */
+
+
+        /* 客户搜索 */
+        .customer-search-wrap { position: relative; }
+        .customer-search-input {
+            height: 42px; border: 1px solid #cedde0; border-radius: 6px;
+            font-size: 14px; padding: 0 12px; width: 100%;
+            box-shadow: inset 0 1px 2px rgba(18, 50, 58, .04);
+        }
+        .customer-search-input:focus {
+            border-color: #36a9a5;
+            box-shadow: 0 0 0 3px rgba(45, 187, 178, .14);
+            outline: none;
+        }
+        .customer-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px;
+            border: 1px solid #d3e1e3; border-radius: 6px; background: #fff;
+            box-shadow: 0 8px 24px rgba(14, 68, 76, .12); z-index: 1000;
+            max-height: 240px; overflow-y: auto; display: none;
+        }
+        .customer-dropdown.show { display: block; }
+        .customer-option {
+            padding: 9px 14px; cursor: pointer; font-size: 13px;
+            color: #34505a; border-bottom: 1px solid #f0f4f5;
+        }
+        .customer-option:last-child { border-bottom: none; }
+        .customer-option:hover, .customer-option.active { background: #eaf7f6; color: #086f78; }
+        .customer-option-empty { padding: 10px 12px; font-size: 13px; color: #8aa0a6; text-align: center; }
+
+        /* 基础信息 grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 14px 16px;
+            margin-bottom: 14px;
+        }
+        .info-grid .col-6  { grid-column: span 6; }
+        .info-grid .col-4  { grid-column: span 4; }
+        .info-grid .col-12 { grid-column: span 12; }
+        .info-field label {
+            display: flex; align-items: center; gap: 4px;
+            margin-bottom: 6px; color: #4e6c74;
+            font-size: 13px; font-weight: 600;
+        }
+        .info-field .required { color: #d65b4f; }
+        .info-field .form-control {
+            height: 42px; border: 1px solid #cedde0;
+            border-radius: 6px; font-size: 14px;
+            padding: 0 12px; width: 100%;
+            box-shadow: inset 0 1px 2px rgba(18, 50, 58, .04);
+        }
+        .info-field .form-control:focus {
+            border-color: #36a9a5;
+            box-shadow: 0 0 0 3px rgba(45, 187, 178, .14);
+            outline: none;
+        }
+        .info-field .field-error {
+            display: block; margin-top: 4px; color: #c04a42; font-size: 11px;
+        }
+        .info-field input[type="file"] {
+            border: none !important; box-shadow: none !important;
+            padding: 8px 0 !important; background: transparent !important;
+            width: 100% !important;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="contract-edit-wrap">
+        <div class="edit-head">
+            <h2><span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{ title }}</h2>
+            <a class="back-link" href="/contract/list/">
+                <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>返回合同列表
+            </a>
+        </div>
+
+        <form method="post" autocomplete="off" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+
+            <div class="info-card">
+                <div class="card-head">
+                    <span class="glyphicon glyphicon-credit-card" aria-hidden="true"></span>
+                    合同信息
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <!-- 第一行：客户名称 + 日期 + 合同编号 -->
+                        <div class="info-field col-4">
+                            <label for="id_customer">客户名称 <span class="required">*</span></label>
+                            <div class="customer-search-wrap">
+                                <input type="text" class="form-control customer-search-input"
+                                       id="customer_search_input"
+                                       placeholder="输入客户名称，回车搜索…"
+                                       autocomplete="off"
+                                       value="">
+                                <input type="hidden" name="customer" id="id_customer" value="{{ contract_form.instance.customer.id|default:'' }}">
+                                <div class="customer-dropdown" id="customer_dropdown"></div>
+                            </div>
+                            <span class="field-error" id="customer_error"></span>
+                        </div>
+                        <div class="info-field col-4">
+                            <label for="{{ contract_form.date.id_for_label }}">
+                                合同日期 <span class="required">*</span>
+                            </label>
+                            {{ contract_form.date }}
+                            {% if contract_form.date.errors %}
+                                <span class="field-error">{{ contract_form.date.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="info-field col-4">
+                            <label for="{{ contract_form.contract_number.id_for_label }}">
+                                合同编号 <span class="required">*</span>
+                            </label>
+                            {{ contract_form.contract_number }}
+                            <span class="field-error" id="contractNumberStatus" aria-live="polite"></span>
+                            {% if contract_form.contract_number.errors %}
+                                <span class="field-error">{{ contract_form.contract_number.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                        <!-- 附件单独一行 -->
+                        <div class="info-field col-12">
+                            <label for="{{ contract_form.attachment.id_for_label }}">合同附件</label>
+                            {{ contract_form.attachment|safe }}
+                            {% if contract_form.attachment.errors %}
+                                <span class="field-error">{{ contract_form.attachment.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                        <!-- 备注 -->
+                        <div class="info-field col-12">
+                            <label for="{{ contract_form.remark.id_for_label }}">备注</label>
+                            {{ contract_form.remark }}
+                            <div style="color:#8aa0a6;font-size:12px;margin-top:4px;">选填，可记录该合同的补充说明、变更情况等信息。</div>
+                            {% if contract_form.remark.errors %}
+                                <span class="field-error">{{ contract_form.remark.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">产品明细</div>
+                <div class="panel-body">
+                    <div class="product-head">
+                        <strong>支持新增、删除和自动计算金额</strong>
+                        <button id="addProductRow" type="button" class="add-row-btn">
+                            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>添加产品
+                        </button>
+                    </div>
+
+                    {{ product_formset.management_form }}
+                    <div class="table-scroll">
+                        <table class="table product-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:170px;">产品名称</th>
+                                    <th style="width:230px;">产品型号</th>
+                                    <th style="width:140px;">服务类型</th>
+                                    <th style="width:110px;">数量</th>
+                                    <th style="width:130px;">单价</th>
+                                    <th style="width:150px;">金额</th>
+                                    <th style="width:90px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productItems">
+                                {% for form in product_formset %}
+                                    <tr class="product-row" data-initial="{% if form.instance.pk %}1{% else %}0{% endif %}">
+                                        {{ form.id }}
+                                        <td>{{ form.category }}</td>
+                                        <td>{{ form.product }}</td>
+                                        <td>{{ form.contract_type }}</td>
+                                        <td>{{ form.quantity }}</td>
+                                        <td>{{ form.price }}</td>
+                                        <td>{{ form.total_price }}</td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-xs row-remove" aria-label="删除明细行">
+                                                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <template id="productRowTemplate">
+                        <tr class="product-row" data-initial="0">
+                            {{ product_formset.empty_form.id }}
+                            <td>{{ product_formset.empty_form.category }}</td>
+                            <td>{{ product_formset.empty_form.product }}</td>
+                            <td>{{ product_formset.empty_form.contract_type }}</td>
+                            <td>{{ product_formset.empty_form.quantity }}</td>
+                            <td>{{ product_formset.empty_form.price }}</td>
+                            <td>{{ product_formset.empty_form.total_price }}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-xs row-remove" aria-label="删除明细行">
+                                    <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <div class="summary-strip">
+                        <span>产品总数量：<strong id="summaryQuantity">0</strong></span>
+                        <span>合同总金额：<strong id="summaryAmount">¥0.00</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>保存修改
+            </button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        (function ($) {
+            function field($row, suffix) {
+                return $row.find('[name$="-' + suffix + '"]').first();
+            }
+
+            function recalcRow($row) {
+                var quantity = parseFloat(field($row, 'quantity').val()) || 0;
+                var price = parseFloat(field($row, 'price').val()) || 0;
+                field($row, 'total_price').val((quantity * price).toFixed(2)).prop('readonly', true);
+            }
+
+            function updateSummary() {
+                var totalQuantity = 0;
+                var totalAmount = 0;
+                $('#productItems .product-row:visible').each(function () {
+                    var $row = $(this);
+                    totalQuantity += parseFloat(field($row, 'quantity').val()) || 0;
+                    totalAmount += parseFloat(field($row, 'total_price').val()) || 0;
+                });
+                $('#summaryQuantity').text(totalQuantity);
+                $('#summaryAmount').text('¥' + totalAmount.toFixed(2));
+            }
+
+            function renumberRows() {
+                $('#productItems .product-row').each(function (index) {
+                    $(this).find('input, select, textarea').each(function () {
+                        var name = $(this).attr('name') || '';
+                        if (name.indexOf('form-') !== 0) return;
+                        var newName = name.replace(/^form-\d+/, 'form-' + index);
+                        $(this).attr('name', newName);
+                        if ($(this).attr('id')) {
+                            $(this).attr('id', 'id_' + newName);
+                        }
+                    });
+                });
+                $('#id_form-TOTAL_FORMS').val($('#productItems .product-row').length);
+            }
+
+            function loadProducts($row) {
+                var categoryId = field($row, 'category').val();
+                var $productField = field($row, 'product');
+                $productField.empty().append('<option value="">请选择产品型号</option>');
+                if (!categoryId) return;
+                $.ajax({
+                    url: '{% url 'get_productcategory_product' %}',
+                    type: 'GET',
+                    data: {productcategory_id: categoryId},
+                    dataType: 'json',
+                    success: function (data) {
+                        $.each(data, function (index, item) {
+                            $productField.append($('<option>', {
+                                value: item.id,
+                                text: item.model
+                            }));
+                        });
+                    }
+                });
+            }
+
+            function addRow() {
+                var index = $('#productItems .product-row').length;
+                var html = $('#productRowTemplate').html().replace(/__prefix__/g, index);
+                var $row = $(html);
+                $('#productItems').append($row);
+                renumberRows();
+                recalcRow($row);
+                updateSummary();
+            }
+
+            function removeRow($row) {
+                if ($row.attr('data-initial') === '1') {
+                    field($row, 'DELETE').prop('checked', true);
+                    $row.hide();
+                } else {
+                    $row.remove();
+                    renumberRows();
+                }
+                updateSummary();
+            }
+
+            $(function () {
+                // 日期字段锁定为只读，防止修改
+                $('#id_date').prop('readonly', true)
+                    .css({background:'#f4f8f8', cursor:'not-allowed', color:'#333'});
+
+                // 回填已有客户名
+                (function initCustomer() {
+                    var val = '{{ customer_value|default:'' }}';
+                    if (val) {
+                        var parts = val.split('||');
+                        if (parts.length === 2) {
+                            $('#id_customer').val(parts[0]);
+                            $('#customer_search_input').val(parts[1]);
+                        }
+                    }
+                })();
+
+                // 客户搜索
+                (function () {
+                    var $searchInput = $('#customer_search_input');
+                    var $dropdown    = $('#customer_dropdown');
+                    var $hiddenField = $('#id_customer');
+                    var debounceTimer = null;
+                    var $options     = $();
+                    var activeIndex  = -1;
+                    function setActiveOption(index) {
+                        $options.removeClass('active');
+                        if (index >= 0 && index < $options.length) {
+                            activeIndex = index;
+                            $options.eq(index).addClass('active');
+                            var option = $options.eq(index)[0];
+                            var dd = $dropdown[0];
+                            if (option.offsetTop < dd.scrollTop) { dd.scrollTop = option.offsetTop; }
+                            else if (option.offsetTop + option.offsetHeight > dd.scrollTop + dd.offsetHeight) {
+                                dd.scrollTop = option.offsetTop + option.offsetHeight - dd.offsetHeight;
+                            }
+                        } else { activeIndex = -1; }
+                    }
+                    function selectOption($opt) {
+                        if (!$opt.length) return;
+                        $hiddenField.val($opt.data('id'));
+                        $searchInput.val($opt.text());
+                        $dropdown.removeClass('show').empty();
+                        $options = $(); activeIndex = -1;
+                    }
+                    function hideDropdown() {
+                        $dropdown.removeClass('show').empty();
+                        $options = $(); activeIndex = -1;
+                    }
+                    $searchInput.on('input', function () {
+                        clearTimeout(debounceTimer);
+                        var q = $.trim($(this).val());
+                        if (!q) { hideDropdown(); return; }
+                        debounceTimer = setTimeout(function () {
+                            $.getJSON('{% url "search_companys" %}', {q: q}, function (data) {
+                                $dropdown.empty(); $options = $(); activeIndex = -1;
+                                if (data.length === 0) {
+                                    $dropdown.append('<div class="customer-option-empty">未找到匹配客户</div>');
+                                } else {
+                                    $.each(data, function (i, item) {
+                                        var $opt = $('<div class="customer-option">').text(item.company_name).data('id', item.id);
+                                        $dropdown.append($opt); $options = $options.add($opt);
+                                    });
+                                }
+                                $dropdown.addClass('show');
+                            });
+                        }, 200);
+                    });
+                    $searchInput.on('keydown', function (e) {
+                        var $opts = $dropdown.find('.customer-option');
+                        if (!e.key) return;
+                        if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            if (!$opts.length) return;
+                            setActiveOption(activeIndex + 1 >= $opts.length ? 0 : activeIndex + 1);
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            if (!$opts.length) return;
+                            setActiveOption(activeIndex - 1 < 0 ? $opts.length - 1 : activeIndex - 1);
+                        } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            var $active = $options.eq(activeIndex);
+                            if ($active.length) { selectOption($active); }
+                            else if ($opts.length === 1) { selectOption($opts.first()); }
+                        } else if (e.key === 'Escape') { hideDropdown(); }
+                    });
+                    $dropdown.on('click', '.customer-option', function () { selectOption($(this)); });
+                    $dropdown.on('mouseenter', '.customer-option', function () {
+                        var idx = $options.index(this);
+                        if (idx >= 0) setActiveOption(idx);
+                    });
+                    $(document).on('click', function (e) {
+                        if (!$(e.target).closest('.customer-search-wrap').length) hideDropdown();
+                    });
+                })();
+
+                $('#productItems .product-row').each(function () {
+                    recalcRow($(this));
+                });
+
+                $('#productItems').on('change', 'select[name$="-category"]', function () {
+                    loadProducts($(this).closest('tr'));
+                });
+
+                $('#productItems').on('input change', 'input[name$="-quantity"], input[name$="-price"]', function () {
+                    var $row = $(this).closest('tr');
+                    recalcRow($row);
+                    updateSummary();
+                });
+
+                $('#addProductRow').on('click', addRow);
+
+                $('#productItems').on('click', '.row-remove', function () {
+                    removeRow($(this).closest('tr'));
+                });
+
+                updateSummary();
+            });
+        })(jQuery);
+    </script>
+{% endblock %}

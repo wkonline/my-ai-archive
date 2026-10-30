@@ -1,0 +1,814 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% load menu %}
+{% block title %}首页{% endblock %}
+{% block css %}
+<style>
+    .home-page {
+        margin-top: -6px;
+    }
+
+    .home-hero {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(19, 102, 110, .12);
+        border-radius: 14px;
+        padding: 26px 28px;
+        color: #ffffff;
+        background:
+            radial-gradient(circle at 84% 16%, rgba(255, 255, 255, .12), transparent 30%),
+            linear-gradient(125deg, #065c63, #0a8387 55%, #12a5a1);
+        box-shadow: 0 16px 34px rgba(10, 78, 85, .18);
+    }
+
+    .home-hero::after {
+        content: "";
+        position: absolute;
+        right: -60px;
+        bottom: -80px;
+        width: 280px;
+        height: 280px;
+        border: 1px solid rgba(255, 255, 255, .18);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .home-hero::before {
+        content: "";
+        position: absolute;
+        right: 80px;
+        bottom: -60px;
+        width: 130px;
+        height: 130px;
+        border: 1px solid rgba(255, 255, 255, .18);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .home-hero .hero-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .16);
+        color: #eafffd;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .home-hero h3 {
+        margin: 14px 0 6px;
+        color: #ffffff;
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .home-hero .hero-sub {
+        margin: 0;
+        color: rgba(255, 255, 255, .82);
+        font-size: 14px;
+    }
+
+    .hero-actions {
+        margin-top: 18px;
+    }
+
+    .hero-actions .btn {
+        margin-right: 8px;
+        margin-bottom: 6px;
+    }
+
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 16px;
+    }
+
+    .metric-grid > .col-sm-3 {
+        float: none;
+        width: auto;
+        padding: 0;
+    }
+
+    .home-card {
+        min-height: 118px;
+        border: 1px solid rgba(11, 129, 130, .14);
+        border-radius: 12px;
+        padding: 16px;
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(14, 68, 76, .08);
+        transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(11, 129, 130, .32);
+        box-shadow: 0 14px 28px rgba(14, 68, 76, .12);
+    }
+
+    .home-card .metric-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #517078;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .home-card .metric-label .glyphicon {
+        color: #0a8387;
+    }
+
+    .home-card .metric-value {
+        margin-top: 10px;
+        color: #17363e;
+        font-size: 25px;
+        font-weight: 700;
+        line-height: 1.2;
+        word-break: break-all;
+    }
+
+    .home-card .metric-unit {
+        color: #7b8e94;
+        font-size: 12px;
+        margin-left: 3px;
+        font-weight: 600;
+    }
+
+    .home-card .metric-note {
+        margin-top: 5px;
+        color: #7b8e94;
+        font-size: 12px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 22px 0 10px;
+    }
+
+    .section-title h4 {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0;
+        color: #17363e;
+        font-size: 17px;
+        font-weight: 700;
+    }
+
+    .section-title h4 .glyphicon {
+        color: #0a8387;
+    }
+
+    .section-title a {
+        color: #0a8387;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .section-title a:hover {
+        color: #065c63;
+    }
+
+    .quick-menu-card {
+        display: flex;
+        align-items: center;
+        min-height: 74px;
+        margin-bottom: 12px;
+        border: 1px solid rgba(11, 129, 130, .13);
+        border-radius: 10px;
+        padding: 10px 14px;
+        color: #21464f;
+        background: #ffffff;
+        text-decoration: none;
+        box-shadow: 0 8px 18px rgba(14, 68, 76, .06);
+        transition: transform .16s ease, box-shadow .16s ease, color .16s ease;
+    }
+
+    .quick-menu-card:hover {
+        color: #065c63;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(14, 68, 76, .1);
+    }
+
+    .quick-menu-card .menu-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 34px;
+        width: 34px;
+        height: 34px;
+        margin-right: 10px;
+        border-radius: 9px;
+        background: #eaf7f6;
+        color: #0a8387;
+    }
+
+    .quick-menu-card .menu-name {
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    .home-table {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(11, 129, 130, .14);
+        background: #ffffff;
+        box-shadow: 0 10px 22px rgba(14, 68, 76, .07);
+    }
+
+    .home-table > .table > thead > tr > th {
+        background: #f3fbfa;
+    }
+
+    /* 首页“最新/最近”列表统一行高。
+       table 单元格的 height 只是最小值，文字换行仍会把行撑高，导致同一张表
+       甚至左右两栏表格高低不齐。这里让每个单元格内容强制单行 + 省略号，
+       从根上保证任何屏幕宽度下行高都完全一致。 */
+    .home-table > .table {
+        table-layout: fixed;
+        margin-bottom: 0;
+    }
+
+    .home-table > .table > tbody > tr > td {
+        height: 46px;
+        padding: 6px 8px;
+        vertical-align: middle;
+        line-height: 1.45;
+        /* 单行显示，超出部分省略 */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 客户名称通常是表中最长的内容，给它更大的宽度配额，
+       其余列按内容需要分配，尽量减少省略。 */
+    .home-table > .table > thead > tr > th.col-customer {
+        width: 196px;
+    }
+
+    .home-table > .table > thead > tr > th.col-contract {
+        width: 128px;
+    }
+
+    .home-table > .table > thead > tr > th.col-code {
+        width: 144px;
+    }
+
+    .home-table > .table > thead > tr > th.col-date {
+        width: 86px;
+    }
+
+    .home-table > .table > thead > tr > th.col-amount {
+        width: 114px;
+    }
+
+    .home-table > .table > thead > tr > th.col-status {
+        width: 132px;
+    }
+
+    /* 序号列：固定宽度、居中、弱化颜色，避免抢主数据的视觉重点。 */
+    .home-table > .table > thead > tr > th.col-index,
+    .home-table > .table > tbody > tr > td.col-index {
+        width: 46px !important;
+        min-width: 46px !important;
+        max-width: 46px !important;
+    }
+
+    .home-table .col-index {
+        text-align: center;
+        color: #8ba1a6;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* 状态标签不参与省略计算，保持完整显示。 */
+    .home-table .status-pill {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .home-table .empty {
+        padding: 24px 0;
+        text-align: center;
+        color: #7d9096;
+        white-space: normal;
+    }
+
+    .status-pill {
+        display: inline-block;
+        min-width: 62px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: #eef7f7;
+        color: #0a6f74;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .status-pill.warning {
+        background: #fff5e6;
+        color: #b26b00;
+    }
+
+    .status-pill.danger {
+        background: #fff1f0;
+        color: #c0413d;
+    }
+
+    .status-pill.success {
+        background: #eaf8f1;
+        color: #217c54;
+    }
+
+    @media (max-width: 991px) {
+        .home-hero h3 {
+            font-size: 22px;
+        }
+
+        .home-card .metric-value {
+            font-size: 22px;
+        }
+
+        .metric-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .metric-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="home-page">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="home-hero">
+                <span class="hero-label"><span class="glyphicon glyphicon-flash" aria-hidden="true"></span>业务工作台</span>
+                <h3>欢迎回来，{{ request.info_dict_username }}</h3>
+                <p class="hero-sub">今天是 {{ today|date:"Y年m月d日" }}，合同、回款、发票和生产计划数据已为你汇总。</p>
+                <div class="hero-actions">
+                    {% if 'contract_list' in permissions %}
+                        <a class="btn btn-primary" href="/contract/list/"><span class="glyphicon glyphicon-file"></span>合同管理</a>
+                    {% endif %}
+                    {% if 'collection_list' in permissions %}
+                        <a class="btn btn-info" href="/collection/list/"><span class="glyphicon glyphicon-piggy-bank"></span>回款登记</a>
+                    {% endif %}
+                    {% if 'plan_list' in permissions %}
+                        <a class="btn btn-default" href="/plan/list/"><span class="glyphicon glyphicon-cog"></span>生产计划</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="metric-grid">
+        {% if can_contract %}
+        <div class="col-sm-3">
+            <div class="home-card">
+                <div class="metric-label"><span class="glyphicon glyphicon-briefcase"></span>本年度合同</div>
+                <div class="metric-value">{{ year_contract_count }}<span class="metric-unit">份</span></div>
+                <div class="metric-note">总金额 ¥{{ year_contract_amount|floatformat:2 }}</div>
+            </div>
+        </div>
+        {% endif %}
+        {% if can_collection %}
+        <div class="col-sm-3">
+            <div class="home-card">
+                <div class="metric-label"><span class="glyphicon glyphicon-piggy-bank"></span>本月回款</div>
+                <div class="metric-value">¥{{ month_collection_amount|floatformat:2 }}</div>
+                <div class="metric-note">{{ month_collection_count }} 笔记录</div>
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="home-card">
+                <div class="metric-label"><span class="glyphicon glyphicon-stats"></span>本季度回款</div>
+                <div class="metric-value">¥{{ quarter_collection_amount|floatformat:2 }}</div>
+                <div class="metric-note">{{ quarter_collection_count }} 笔记录</div>
+            </div>
+        </div>
+        {% endif %}
+        {% if can_invoice %}
+        <div class="col-sm-3">
+            <div class="home-card">
+                <div class="metric-label"><span class="glyphicon glyphicon-list-alt"></span>本月发票</div>
+                <div class="metric-value">¥{{ month_invoice_amount|floatformat:2 }}</div>
+                <div class="metric-note">{{ month_invoice_count }} 张登记</div>
+            </div>
+        </div>
+        {% endif %}
+        {% if can_plan %}
+        <div class="col-sm-3">
+            <div class="home-card">
+                <div class="metric-label"><span class="glyphicon glyphicon-cog"></span>未完成计划</div>
+                <div class="metric-value">{{ pending_plans }}<span class="metric-unit">条</span></div>
+            </div>
+        </div>
+        {% endif %}
+        {% if can_customer %}
+        <div class="col-sm-3">
+            <div class="home-card">
+                <div class="metric-label"><span class="glyphicon glyphicon-user"></span>客户总数</div>
+                <div class="metric-value">{{ customer_count }}<span class="metric-unit">个</span></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if can_chart %}
+    <div class="row" style="margin-top:18px;">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-signal" aria-hidden="true"></span> 企业年度业绩</div>
+                <div class="panel-body">
+                    <div id="yearChart" style="height:320px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-stats" aria-hidden="true"></span> 销售业绩占比</div>
+                <div class="panel-body">
+                    <div id="pieChart" style="height:320px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="section-title">
+        <h4><span class="glyphicon glyphicon-th"></span>常用功能</h4>
+    </div>
+    <div class="row">
+        {% for item in quick_menus %}
+            <div class="col-sm-3">
+                <a class="quick-menu-card" href="{{ item.url }}">
+                    <span class="menu-icon"><span class="glyphicon {{ item.icon }}" aria-hidden="true"></span></span>
+                    <span class="menu-name">{{ item.title }}</span>
+                </a>
+            </div>
+        {% empty %}
+            <div class="col-xs-12">
+                <div class="home-card"><div class="metric-note">暂无可显示的功能入口。</div></div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="row">
+        {% if can_contract %}
+        <div class="col-lg-6">
+            <div class="section-title">
+                <h4><span class="glyphicon glyphicon-file"></span>最新合同</h4>
+                {% if 'contract_list' in permissions %}<a href="/contract/list/">查看全部</a>{% endif %}
+            </div>
+            <div class="home-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="col-index" width="46">#</th>
+                            <th class="col-contract">合同号</th>
+                            <th class="col-customer">客户</th>
+                            <th>业务员</th>
+                            <th class="col-date">日期</th>
+                            <th class="col-amount text-right">金额</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in recent_contracts %}
+                            <tr>
+                                <td class="col-index" width="46">{{ forloop.counter }}</td>
+                                <td><a href="/contract/detail/{{ row.id }}/">{{ row.contract_number }}</a></td>
+                                <td title="{{ row.customer.company_name }}">{{ row.customer.company_name }}</td>
+                                <td>{{ row.customer.saler.username }}</td>
+                                <td>{{ row.date|date:"Y-m-d" }}</td>
+                                <td class="text-right">{{ row.total_price|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="empty">暂无合同数据</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if can_plan %}
+        <div class="col-lg-6">
+            <div class="section-title">
+                <h4><span class="glyphicon glyphicon-calendar"></span>近期生产计划</h4>
+                {% if 'plan_list' in permissions %}<a href="/plan/list/">查看全部</a>{% endif %}
+            </div>
+            <div class="home-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="col-index" width="46">#</th>
+                            <th class="col-contract">合同</th>
+                            <th class="col-code">产品名称</th>
+                            <th class="col-code">型号</th>
+                            <th class="col-date">交货日期</th>
+                            <th class="col-status">状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in upcoming_plans %}
+                            <tr>
+                                <td class="col-index" width="46">{{ forloop.counter }}</td>
+                                <td><a href="/contract/detail/{{ row.contract.id }}/">{{ row.contract.contract_number }}</a></td>
+                                <td>{{ row.productcategory.name }}</td>
+                                <td title="{{ row.product.model }}">{{ row.product.model }}</td>
+                                <td>{{ row.delivery_date|date:"Y-m-d" }}</td>
+                                <td><span class="status-pill {{ row.completed_status|home_status_class }}">{{ row.get_completed_status_display }}</span></td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="empty">暂无近期计划</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% if can_collection %}
+        <div class="col-lg-6">
+            <div class="section-title">
+                <h4><span class="glyphicon glyphicon-piggy-bank"></span>最新回款</h4>
+                {% if 'collection_list' in permissions %}<a href="/collection/list/">查看全部</a>{% endif %}
+            </div>
+            <div class="home-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="col-index" width="46">#</th>
+                            <th class="col-customer">客户</th>
+                            <th class="col-contract">合同</th>
+                            <th class="col-date">日期</th>
+                            <th class="col-amount text-right">金额</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in recent_collections %}
+                            <tr>
+                                <td class="col-index" width="46">{{ forloop.counter }}</td>
+                                <td title="{{ row.customer.company_name }}">{{ row.customer.company_name }}</td>
+                                <td><a href="/contract/detail/{{ row.contract.id }}/">{{ row.contract.contract_number }}</a></td>
+                                <td>{{ row.date|date:"Y-m-d" }}</td>
+                                <td class="text-right">{{ row.amount|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="empty">暂无回款数据</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if can_invoice %}
+        <div class="col-lg-6">
+            <div class="section-title">
+                <h4><span class="glyphicon glyphicon-list-alt"></span>最新发票</h4>
+                {% if 'invoice_list' in permissions %}<a href="/invoice/list/">查看全部</a>{% endif %}
+            </div>
+            <div class="home-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="col-index" width="46">#</th>
+                            <th class="col-customer">客户</th>
+                            <th class="col-contract">合同</th>
+                            <th class="col-date">日期</th>
+                            <th class="col-amount text-right">金额</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in recent_invoices %}
+                            <tr>
+                                <td class="col-index" width="46">{{ forloop.counter }}</td>
+                                <td title="{{ row.customer.company_name }}">{{ row.customer.company_name }}</td>
+                                <td><a href="/contract/detail/{{ row.contract.id }}/">{{ row.contract.contract_number }}</a></td>
+                                <td>{{ row.date|date:"Y-m-d" }}</td>
+                                <td class="text-right">{{ row.amount|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="empty">暂无发票数据</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% if can_service %}
+        <div class="col-lg-6">
+            <div class="section-title">
+                <h4><span class="glyphicon glyphicon-earphone"></span>最新售后服务</h4>
+                {% if 'service_list' in permissions %}<a href="/service/list/">查看全部</a>{% endif %}
+            </div>
+            <div class="home-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="col-index" width="46">#</th>
+                            <th class="col-customer">客户</th>
+                            <th class="col-code">维修编号</th>
+                            <th class="col-code">产品型号</th>
+                            <th class="col-date">接收日期</th>
+                            <th class="col-status">维修情况</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in recent_services %}
+                            <tr>
+                                <td class="col-index" width="46">{{ forloop.counter }}</td>
+                                <td title="{{ row.customer.company_name }}">{{ row.customer.company_name }}</td>
+                                <td><a href="/service/detail/{{ row.service_number }}/">{{ row.service_number }}</a></td>
+                                <td title="{{ row.product.model|default:'' }}">{{ row.product.model|default:"" }}</td>
+                                <td>{{ row.date|date:"Y-m-d" }}</td>
+                                <td><span class="status-pill {{ row.warranty_end|home_status_class }}">{{ row.get_warranty_end_display }}</span></td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="empty">暂无售后服务数据</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if can_servicedetail %}
+        <div class="col-lg-6">
+            <div class="section-title">
+                <h4><span class="glyphicon glyphicon-wrench"></span>最新维修服务</h4>
+                {% if 'servicedetail_list' in permissions %}<a href="/servicedetail/list/">查看全部</a>{% endif %}
+            </div>
+            <div class="home-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="col-index" width="46">#</th>
+                            <th class="col-customer">客户</th>
+                            <th class="col-code">维修编号</th>
+                            <th class="col-code">产品型号</th>
+                            <th>维修人</th>
+                            <th class="col-date">完成时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in recent_servicedetails %}
+                            <tr>
+                                <td class="col-index" width="46">{{ forloop.counter }}</td>
+                                <td title="{{ row.customer.company_name }}">{{ row.customer.company_name }}</td>
+                                <td><a href="/service/detail/{{ row.service.service_number }}/">{{ row.service.service_number }}</a></td>
+                                <td title="{{ row.product.model|default:'' }}">{{ row.product.model|default:"" }}</td>
+                                <td>{{ row.repairman.username }}</td>
+                                <td>{{ row.repair_date|date:"Y-m-d" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="empty">暂无维修服务数据</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% if can_return_product %}
+        <div class="col-lg-6">
+            <div class="section-title">
+                <h4><span class="glyphicon glyphicon-transfer"></span>最新售后退件</h4>
+                {% if 'return_product_list' in permissions %}<a href="/return_product/list/">查看全部</a>{% endif %}
+            </div>
+            <div class="home-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="col-index" width="46">#</th>
+                            <th class="col-customer">客户</th>
+                            <th class="col-code">维修编号</th>
+                            <th>发货人</th>
+                            <th class="col-date">发货时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in recent_return_products %}
+                            <tr>
+                                <td class="col-index" width="46">{{ forloop.counter }}</td>
+                                <td title="{{ row.customer.company_name }}">{{ row.customer.company_name }}</td>
+                                <td><a href="/service/detail/{{ row.service.service_number }}/">{{ row.service.service_number }}</a></td>
+                                <td>{{ row.user.username }}</td>
+                                <td>{{ row.date|date:"Y-m-d" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="empty">暂无售后返件数据</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'js/echarts.min.js' %}"></script>
+    <script>
+        (function () {
+            var yearEl = document.getElementById('yearChart');
+            var pieEl = document.getElementById('pieChart');
+            if (!yearEl || !pieEl) {
+                return;
+            }
+
+            var yearLabels = {{ year_chart_labels|safe }};
+            var yearValues = {{ year_chart_values|safe }};
+            var pieLabels = {{ pie_chart_labels|safe }};
+            var pieValues = {{ pie_chart_values|safe }};
+
+            var yearChart = echarts.init(yearEl);
+            yearChart.setOption({
+                tooltip: {trigger: 'axis', axisPointer: {type: 'shadow'}},
+                grid: {left: 18, right: 18, top: 34, bottom: 28, containLabel: true},
+                xAxis: {
+                    type: 'category',
+                    data: yearLabels,
+                    axisLine: {lineStyle: {color: '#9bb4ba'}},
+                    axisLabel: {color: '#45616a'}
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: {color: '#45616a'},
+                    splitLine: {lineStyle: {color: '#edf3f4'}}
+                },
+                series: [{
+                    name: '合同金额',
+                    type: 'bar',
+                    data: yearValues,
+                    barMaxWidth: 52,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#14a9a3'},
+                            {offset: 1, color: '#0b7486'}
+                        ]),
+                        borderRadius: [6, 6, 0, 0]
+                    }
+                }]
+            });
+
+            var pieChart = echarts.init(pieEl);
+            pieChart.setOption({
+                tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
+                legend: {
+                    bottom: 0,
+                    type: 'scroll',
+                    textStyle: {
+                        color: '#45616a',
+                        fontSize: 12,
+                        overflow: 'truncate',
+                        width: 90,
+                        ellipsis: '..'
+                    },
+                    itemWidth: 14,
+                    itemHeight: 10,
+                    pageTextStyle: {color: '#45616a'}
+                },
+                series: [{
+                    name: '销售业绩',
+                    type: 'pie',
+                    radius: ['42%', '68%'],
+                    center: ['50%', '44%'],
+                    avoidLabelOverlap: true,
+                    label: {color: '#45616a', fontSize: 12},
+                    data: pieLabels.map(function (name, i) {
+                        return {name: name, value: pieValues[i]};
+                    }),
+                    itemStyle: {borderRadius: 6, borderColor: '#ffffff', borderWidth: 2}
+                }]
+            });
+
+            window.addEventListener('resize', function () {
+                yearChart.resize();
+                pieChart.resize();
+            });
+        })();
+    </script>
+{% endblock %}

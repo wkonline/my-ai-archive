@@ -1,0 +1,124 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+{% block css %}
+    <style>
+        .plan-edit-wrap { margin: 4px 0 10px; }
+        .edit-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+        .edit-head h2 { display: inline-flex; align-items: center; gap: 9px; margin: 0; color: #17363e; font-size: 20px; font-weight: 700; }
+        .edit-head h2 .glyphicon { color: #0a8387; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid #c9d8da; border-radius: 6px; background: #fff; color: #45656d; font-size: 13px; font-weight: 600; text-decoration: none; }
+        .back-link:hover { border-color: #83c2be; color: #0a7076; text-decoration: none; }
+        .form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .form-field label { display: block; margin-bottom: 7px; color: #4e6c74; font-size: 13px; font-weight: 600; }
+        .form-field .form-control { height: 42px; border-radius: 6px; }
+        .form-field textarea.form-control { height: auto; min-height: 96px; resize: vertical; }
+        .readonly-box { height: 42px; padding: 0 12px; border: 1px solid #cedde0; border-radius: 6px; background: #f4f8f8; color: #536f76; font-weight: 600; line-height: 40px; }
+        .footer-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+        @media (max-width: 767px) { .form-grid { grid-template-columns: 1fr; } }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="plan-edit-wrap">
+        <div class="edit-head">
+            <h2><span class="glyphicon glyphicon-cog" aria-hidden="true"></span>{{ title }}</h2>
+            <a class="back-link" href="/plan/list/">
+                <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>返回生产计划
+            </a>
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors.0 }}</div>
+        {% endif %}
+
+        <form method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="panel panel-default">
+                <div class="panel-heading">项目信息</div>
+                <div class="panel-body">
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label>项目号</label>
+                            <select name="contract" id="id_contract" class="form-control" required>
+                                <option value="">请选择项目编号</option>
+                                {% for item in contract_list %}
+                                    <option value="{{ item.id }}"
+                                            {% if row_object.contract.id == item.id %}selected{% endif %}>
+                                        {{ item.contract_number }}
+                                    </option>
+                                {% endfor %}
+                                {% if placeholder_contract %}
+                                    <option value="{{ placeholder_contract.id }}"
+                                            {% if row_object.contract.id == placeholder_contract.id %}selected{% endif %}>
+                                        备用编号（无合同临时计划）
+                                    </option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>客户名称</label>
+                            <div class="readonly-box">
+                                {{ row_object.contract.customer.company_name }}
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label>备用编号</label>
+                            {{ form.contract_reserve }}
+                            <span style="color:red;">{{ form.contract_reserve.errors.0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">产品信息</div>
+                <div class="panel-body">
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label>产品名称</label>
+                            {{ form.productcategory }}
+                            <span style="color:red;">{{ form.productcategory.errors.0 }}</span>
+                        </div>
+                        <div class="form-field">
+                            <label>产品型号</label>
+                            {{ form.product }}
+                            <span style="color:red;">{{ form.product.errors.0 }}</span>
+                        </div>
+                        <div class="form-field">
+                            <label>数量</label>
+                            {{ form.quantity }}
+                            <span style="color:red;">{{ form.quantity.errors.0 }}</span>
+                        </div>
+                        <div class="form-field">
+                            <label>单位</label>
+                            {{ form.unit }}
+                            <span style="color:red;">{{ form.unit.errors.0 }}</span>
+                        </div>
+                        <div class="form-field">
+                            <label>生产生效日期</label>
+                            {{ form.effective_date }}
+                            <span style="color:red;">{{ form.effective_date.errors.0 }}</span>
+                        </div>
+                        <div class="form-field">
+                            <label>交货日期</label>
+                            {{ form.delivery_date }}
+                            <span style="color:red;">{{ form.delivery_date.errors.0 }}</span>
+                        </div>
+                        <div class="form-field" style="grid-column: span 3;">
+                            <label>详细配置</label>
+                            {{ form.configuration }}
+                            <span style="color:red;">{{ form.configuration.errors.0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-actions">
+                <a class="btn btn-default" href="/plan/list/">取消</a>
+                <button type="submit" class="btn btn-success">
+                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>保存修改
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

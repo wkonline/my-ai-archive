@@ -1,0 +1,95 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+    <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            批量上传
+        </div>
+        <div class="panel-body">
+            <form method="post" enctype="multipart/form-data" action="/contract_product/multi/">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="file" name="file">
+                </div>
+                <input type="submit" value="上传" class="btn btn-info btn-sm">
+                <a class="btn btn-info btn-sm" href="/media/uploadtemplates/contract_product_list.xlsx">
+                    <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                    模板下载
+                </a>
+            </form>
+        </div>
+    </div>
+    <div class=" clearfix">
+        <div class="float-left">
+            <a class="btn btn-info float-left m-r-10" href="/contract/list/">
+                <span class="glyphicon glyphicon-share" aria-hidden="true"></span>
+                返回到合同列表
+            </a>
+            <a class="btn btn-info float-left m-r-10" href="{% url 'contract_product_download_excel' %}">
+                <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                数据下载
+            </a>
+        </div>
+        <div class=" float-right" style="width: 300px;">
+            <form method="get">
+                <div class="input-group">
+                    <input type="text" name="keyword" class="form-control" placeholder="请输入客户名称或合同号或产品名称或型号...">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="submit">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                        </button>
+                      </span>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="panel panel-default m-t-10">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            {{ title }}
+        </div>
+        <!-- Table -->
+        <table class="table table-bordered m-t-10">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>客户名称</th>
+                <th>产品名称</th>
+                <th>产品型号</th>
+                <th>服务类型</th>
+                <th>数量</th>
+                <th>单价</th>
+                <th>金额</th>
+                <th>合同日期</th>
+                <th>合同号</th>
+                <th>备注</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+                <tr>
+                    <th>{{ obj.contract.order_number }}</th>
+                    <td>{{ obj.customer}}</td>
+                    <td>{{ obj.category }}</td>
+                    <td>{{ obj.product }}</td>
+                    <td>{{ obj.get_contract_type_display }}</td>
+                    <td>{{ obj.quantity }}</td>
+                    <td>{{ obj.price }}</td>
+                    <td>{{ obj.total_price }}</td>
+                    <td>{{ obj.contract.date }}</td>
+                    <td>{{ obj.contract }}</td>
+                    <td>{{ obj.description|default:"" }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="clearfix">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+{% endblock %}

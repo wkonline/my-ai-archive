@@ -1,0 +1,131 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block css %}
+    <style>
+        .kb-search { background: #f8fcfc; border: 1px solid #dce8ea; border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
+        .kb-search .form-control { height: 42px; border-radius: 6px; }
+        .kb-summary { border: 1px solid #dce8ea; border-radius: 10px; overflow: hidden; margin-bottom: 16px; background: #fff; }
+        .kb-summary-head { padding: 12px 16px; background: #f0f9f8; border-bottom: 1px solid #e6eef0; color: #17363e; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .kb-summary-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 16px; }
+        .kb-col-title { color: #0a8387; font-weight: 700; font-size: 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .kb-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 6px; background: #fbfdfd; margin-bottom: 6px; font-size: 13px; color: #34505a; line-height: 1.5; }
+        .kb-item .badge { background: #0a8387; flex-shrink: 0; }
+        .kb-empty { padding: 40px 16px; text-align: center; color: #8ea3a9; }
+        .kb-case { border: 1px solid #e6eef0; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
+        .kb-case-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; color: #17363e; font-weight: 700; font-size: 13px; }
+        .kb-score { font-size: 12px; font-weight: 600; color: #0a8387; background: #eef9f8; border-radius: 10px; padding: 2px 9px; }
+        .kb-field { font-size: 13px; color: #34505a; line-height: 1.6; margin-bottom: 5px; }
+        .kb-field b { color: #4e6c74; }
+        .kb-meta { color: #8ea3a9; font-size: 12px; }
+        @media (max-width: 991px) { .kb-summary-body { grid-template-columns: 1fr; } }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="clearfix m-b-10">
+        <div class="float-left">
+            <a class="btn btn-default" href="/servicedetail/list/">
+                <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+                返回维修记录
+            </a>
+        </div>
+    </div>
+
+    <div class="kb-search">
+        <form method="get">
+            <div class="row">
+                <div class="col-sm-9">
+                    <label><span class="glyphicon glyphicon-search m-r-5" aria-hidden="true"></span>故障现象</label>
+                    <input type="text" name="q" class="form-control" value="{{ query }}"
+                           placeholder="输入故障现象，如：左侧无信号、通讯不上、通电灯闪...">
+                </div>
+                <div class="col-sm-3" style="padding-top:23px;">
+                    <button class="btn btn-info" type="submit">
+                        <span class="glyphicon glyphicon-search m-r-5" aria-hidden="true"></span>查询知识库
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if query %}
+        {% if summary %}
+            <div class="kb-summary">
+                <div class="kb-summary-head">
+                    <span class="glyphicon glyphicon-book" aria-hidden="true"></span>
+                    维修方法总结
+                    <span class="kb-meta">（依据 {{ summary.total }} 条相似历史记录归纳）</span>
+                </div>
+                <div class="kb-summary-body">
+                    <div>
+                        <div class="kb-col-title">
+                            <span class="glyphicon glyphicon-alert" aria-hidden="true"></span>常见故障原因
+                        </div>
+                        {% for item in summary.reasons %}
+                            <div class="kb-item">
+                                <span class="badge">{{ item.count }}</span>
+                                <span>{{ item.text }}</span>
+                            </div>
+                        {% empty %}
+                            <div class="kb-meta">历史记录中未填写故障原因</div>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <div class="kb-col-title">
+                            <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>推荐维修方法
+                        </div>
+                        {% for item in summary.methods %}
+                            <div class="kb-item">
+                                <span class="badge">{{ item.count }}</span>
+                                <span>{{ item.text }}</span>
+                            </div>
+                        {% empty %}
+                            <div class="kb-meta">历史记录中未填写维修方法</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+                    相似历史维修记录（{{ cases|length }} 条）
+                </div>
+                <div class="panel-body">
+                    {% for case in cases %}
+                        <div class="kb-case">
+                            <div class="kb-case-head">
+                                <span>
+                                    <span class="glyphicon glyphicon-file m-r-5" aria-hidden="true"></span>
+                                    {{ case.record.service.service_number }}
+                                    <span class="kb-meta m-l-10">
+                                        {{ case.record.customer.company_name }}
+                                        {% if case.record.product %} / {{ case.record.product }}{% endif %}
+                                        / {{ case.record.repair_date }}
+                                    </span>
+                                </span>
+                                <span class="kb-score">相似度 {{ case.score }}</span>
+                            </div>
+                            <div class="kb-field"><b>故障现象：</b>{{ case.record.fault_text }}</div>
+                            <div class="kb-field"><b>故障原因：</b>{{ case.record.fault_reason }}</div>
+                            <div class="kb-field"><b>维修方法：</b>{{ case.record.repair_method }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="panel panel-default">
+                <div class="kb-empty">
+                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                    没有找到与「{{ query }}」相似的历史维修记录，请换用其他描述再试。
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="panel panel-default">
+            <div class="kb-empty">
+                <span class="glyphicon glyphicon-book" aria-hidden="true"></span>
+                输入故障现象后，系统会检索历史维修记录，归纳出常见故障原因与推荐维修方法。
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

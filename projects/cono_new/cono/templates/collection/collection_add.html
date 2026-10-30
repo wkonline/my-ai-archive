@@ -1,0 +1,247 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <style>
+        .collection-edit-wrap { margin: 4px 0 10px; }
+        .edit-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+        .edit-head h2 { display: inline-flex; align-items: center; gap: 9px; margin: 0; color: #17363e; font-size: 20px; font-weight: 700; }
+        .edit-head h2 .glyphicon { color: #0a8387; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid #c9d8da; border-radius: 6px; background: #fff; color: #45656d; font-size: 13px; font-weight: 600; text-decoration: none; }
+        .back-link:hover { border-color: #83c2be; color: #0a7076; text-decoration: none; }
+        .edit-panel { overflow: hidden; border-color: #d8e5e7; }
+        .form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+        .form-grid.col-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .field-card label { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; color: #4e6c74; font-size: 13px; font-weight: 600; }
+        .field-card label .glyphicon { color: #63a3a6; font-size: 12px; }
+        .field-card .form-control { height: 42px; border: 1px solid #cedde0; border-radius: 6px; color: #203c44; font-size: 14px; padding: 0 12px; width: 100%; box-shadow: inset 0 1px 2px rgba(18,50,58,.04); }
+        .field-card .form-control:focus { border-color: #36a9a5; box-shadow: 0 0 0 3px rgba(45,187,178,.14); outline: none; }
+        .field-card .readonly-field { background: #f4f8f8; color: #536f76; font-weight: 600; }
+        .field-error { display: block; margin-top: 6px; color: #c04a42; font-size: 12px; }
+        .footer-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 16px; border: 0; background: transparent; }
+        @media (max-width: 767px) { .form-grid, .form-grid.col-2 { grid-template-columns: 1fr; } }
+
+        .customer-search-wrap { position: relative; }
+        .customer-search-input {
+            height: 42px !important; border: 1px solid #cedde0 !important;
+            border-radius: 6px !important; font-size: 14px; padding: 0 12px !important;
+            width: 100% !important; box-shadow: inset 0 1px 2px rgba(18,50,58,.04) !important;
+        }
+        .customer-search-input:focus {
+            border-color: #36a9a5 !important;
+            box-shadow: 0 0 0 3px rgba(45,187,178,.14) !important;
+            outline: none !important;
+        }
+        .customer-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px;
+            border: 1px solid #d3e1e3; border-radius: 6px; background: #fff;
+            box-shadow: 0 8px 24px rgba(14,68,76,.12); z-index: 1000;
+            max-height: 240px; overflow-y: auto; display: none;
+        }
+        .customer-dropdown.show { display: block; }
+        .customer-option { padding: 9px 14px; cursor: pointer; font-size: 13px; color: #34505a; border-bottom: 1px solid #f0f4f5; }
+        .customer-option:last-child { border-bottom: none; }
+        .customer-option:hover, .customer-option.active { background: #eaf7f6; color: #086f78; }
+        .customer-option-empty { padding: 10px 12px; font-size: 13px; color: #8aa0a6; text-align: center; }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="collection-edit-wrap">
+        <div class="edit-head">
+            <h2>
+                <span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span>
+                {{ title }}
+            </h2>
+            <a class="back-link" href="/collection/list/">
+                <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>返回回款列表
+            </a>
+        </div>
+        <form method="post" novalidate autocomplete="off">
+            {% csrf_token %}
+            <div class="panel panel-default edit-panel">
+                <div class="panel-heading">新增回款</div>
+                <div class="panel-body">
+                    <!-- 第一行：客户名称 + 回款日期 + 合同编号 -->
+                    <div class="form-grid">
+                        <div class="field-card">
+                            <label for="id_customer">
+                                <span class="glyphicon glyphicon-user" aria-hidden="true"></span>客户名称 <span style="color:#d65b4f">*</span>
+                            </label>
+                            <div class="customer-search-wrap">
+                                <input type="text" class="form-control customer-search-input"
+                                       id="customer_search_input"
+                                       placeholder="输入客户名称，回车搜索…"
+                                       autocomplete="off">
+                                <input type="hidden" name="customer" id="id_customer" value="">
+                                <div class="customer-dropdown" id="customer_dropdown"></div>
+                            </div>
+                            <span class="field-error" id="customer_error"></span>
+                        </div>
+                        <div class="field-card">
+                            <label for="{{ form.date.id_for_label }}">
+                                <span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>{{ form.date.label }} <span style="color:#d65b4f">*</span>
+                            </label>
+                            {{ form.date }}
+                            <span class="field-error">{{ form.date.errors.0 }}</span>
+                        </div>
+                        <div class="field-card">
+                            <label for="contract_select">
+                                <span class="glyphicon glyphicon-file" aria-hidden="true"></span>合同编号 <span style="color:#d65b4f">*</span>
+                            </label>
+                            <select id="contract_select" name="contract" class="form-control">
+                                <option value="">请先选择客户名称</option>
+                            </select>
+                            <span class="field-error" id="contract_error"></span>
+                        </div>
+                    </div>
+                    <!-- 第二行：回款方式 + 回款金额 -->
+                    <div class="form-grid col-2" style="margin-top:14px;">
+                        <div class="field-card">
+                            <label for="{{ form.collection_method.id_for_label }}">
+                                <span class="glyphicon glyphicon-credit-card" aria-hidden="true"></span>{{ form.collection_method.label }}
+                            </label>
+                            {{ form.collection_method }}
+                            <span class="field-error">{{ form.collection_method.errors.0 }}</span>
+                        </div>
+                        <div class="field-card">
+                            <label for="{{ form.amount.id_for_label }}">
+                                <span class="glyphicon glyphicon-usd" aria-hidden="true"></span>{{ form.amount.label }} <span style="color:#d65b4f">*</span>
+                            </label>
+                            {{ form.amount }}
+                            <span class="field-error">{{ form.amount.errors.0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-actions">
+                <a class="btn btn-default" href="/collection/list/">取消</a>
+                <button type="submit" class="btn btn-success">
+                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>保存回款
+                </button>
+            </div>
+        </form>
+    </div>
+    <script>
+        // 服务端渲染的有欠款客户+合同数据（纯本地操作，不发起 AJAX）
+        var CUSTOMER_CONTRACTS_DATA = {{ customer_contracts_data|safe }};
+
+        (function ($) {
+            var $searchInput = $('#customer_search_input');
+            var $dropdown    = $('#customer_dropdown');
+            var $hiddenField = $('#id_customer');
+            var $options     = $();
+            var activeIndex  = -1;
+
+            function setActiveOption(index) {
+                $options.removeClass('active');
+                if (index >= 0 && index < $options.length) {
+                    activeIndex = index;
+                    $options.eq(index).addClass('active');
+                    var option = $options.eq(index)[0];
+                    var dd = $dropdown[0];
+                    if (option.offsetTop < dd.scrollTop) { dd.scrollTop = option.offsetTop; }
+                    else if (option.offsetTop + option.offsetHeight > dd.scrollTop + dd.offsetHeight) {
+                        dd.scrollTop = option.offsetTop + option.offsetHeight - dd.offsetHeight;
+                    }
+                } else { activeIndex = -1; }
+            }
+
+            function selectOption($opt) {
+                if (!$opt.length) return;
+                var custId = $opt.data('id');
+                $hiddenField.val(custId);
+                $searchInput.val($opt.text());
+                $dropdown.removeClass('show').empty();
+                $options = $(); activeIndex = -1;
+                // 从本地数据加载合同
+                $('#contract_select').empty();
+                $('#id_amount').val('');
+                var contracts = CUSTOMER_CONTRACTS_DATA.filter(function(c){ return String(c.id) === String(custId); });
+                if (contracts.length === 0) {
+                    $('#contract_select').append('<option value="">暂无欠款合同</option>');
+                    return;
+                }
+                $.each(contracts[0].contracts, function(i, item) {
+                    $('#contract_select').append(
+                        $('<option>', {value: item.id, 'data-balance': item.balance, text: item.number})
+                    );
+                });
+                // 只有一条合同时，手动填入回款金额（change事件不会触发）
+                if (contracts[0].contracts.length === 1) {
+                    $('#id_amount').val(contracts[0].contracts[0].balance);
+                }
+            }
+
+            function hideDropdown() {
+                $dropdown.removeClass('show').empty();
+                $options = $(); activeIndex = -1;
+            }
+
+            $searchInput.on('input', function () {
+                var q = $.trim($(this).val());
+                if (!q) { hideDropdown(); return; }
+                var qLower = q.toLowerCase();
+                var matches = CUSTOMER_CONTRACTS_DATA.filter(function(c){
+                    return c.name.toLowerCase().indexOf(qLower) !== -1;
+                });
+                $dropdown.empty(); $options = $(); activeIndex = -1;
+                if (matches.length === 0) {
+                    $dropdown.append('<div class="customer-option-empty">未找到匹配客户</div>');
+                } else {
+                    $.each(matches, function (i, item) {
+                        var $opt = $('<div class="customer-option">').text(item.name).data('id', item.id);
+                        $dropdown.append($opt); $options = $options.add($opt);
+                    });
+                }
+                $dropdown.addClass('show');
+            });
+
+            $searchInput.on('keydown', function (e) {
+                var $opts = $dropdown.find('.customer-option');
+                if (!e.key) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!$opts.length) return;
+                    setActiveOption(activeIndex + 1 >= $opts.length ? 0 : activeIndex + 1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (!$opts.length) return;
+                    setActiveOption(activeIndex - 1 < 0 ? $opts.length - 1 : activeIndex - 1);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var $active = $options.eq(activeIndex);
+                    if ($active.length) { selectOption($active); }
+                    else if ($opts.length === 1) { selectOption($opts.first()); }
+                } else if (e.key === 'Escape') { hideDropdown(); }
+            });
+
+            $dropdown.on('click', '.customer-option', function () { selectOption($(this)); });
+            $dropdown.on('mouseenter', '.customer-option', function () {
+                var idx = $options.index(this);
+                if (idx >= 0) setActiveOption(idx);
+            });
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('.customer-search-wrap').length) hideDropdown();
+            });
+        })(jQuery);
+
+        // 合同变更后自动填入欠款余额
+        $(function () {
+            $('#contract_select').on('change', function () {
+                var $opt = $(this).find('option:selected');
+                var balance = $opt.data('balance');
+                if (balance !== undefined && balance !== null) {
+                    $('#id_amount').val(balance);
+                } else {
+                    $('#id_amount').val('');
+                }
+            });
+        });
+    </script>
+{% endblock %}
+{% block js %}
+    <script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+    <script src="{% static 'js/datepicker.js' %}"></script>
+{% endblock %}

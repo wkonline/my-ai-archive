@@ -1,0 +1,87 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+    <div class="clearfix">
+        <div class="float-left">
+            <a class="btn btn-success" href="/customer/add/">
+                <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span> 新增客户
+            </a>
+        </div>
+        <div class="float-right" style="width: 300px;">
+            <form method="get">
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control" placeholder="搜索客户名称或联系人..."
+                           value="{{ q|default:'' }}">
+                    <span class="input-group-btn">
+                        <button class="btn btn-success" type="submit">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                        </button>
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="panel panel-default m-t-10">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            {{ title }}
+        </div>
+
+        <!-- Table -->
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>客户名称</th>
+                <th>联系人</th>
+                <th>电话</th>
+                <th>地址</th>
+                <th>业务经理</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+                <tr>
+                <th>{{ obj.id }}</th>
+                <td>{{ obj.company_name }}</td>
+                <td>{{ obj.contact_person }}</td>
+                <td>{{ obj.phone }}</td>
+                <td style=" max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ obj.address }}</td>
+                <td>{{ obj.saler }}</td>
+                <td>
+                    <a class="btn btn-primary btn-xs" href="/customer/{{ obj.id }}/edit/"><span
+                            class="glyphicon glyphicon-wrench m-r-5" aria-hidden="true"></span>编辑</a>
+                    <a class="btn btn-danger btn-xs" onclick="showDeleteModal({{ obj.id }});"><span
+                            class="glyphicon glyphicon-trash m-r-5" aria-hidden="true"></span>删除</a>
+                </td>
+            {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+    <div class="clearfix">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+    {% include 'delete.html' %}
+    <script>
+        function confirmDelete() {
+            $.ajax({
+                url: '{% url 'customer_delete' %}',
+                type: 'GET',
+                data: {'nid': delete_id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                        location.reload()
+                    } else {
+                        (data.error)
+                    }
+                }
+            })
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+{% endblock %}
+{% block content %}
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">{{ title }} </h3>
+        </div>
+        <div class="panel-body">
+            <form method="post" novalidate autocomplete="off">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_customer">客户名称</label>
+                    <select name="customer" class="form-control" id="id_customer">
+                        <option value="" selected>---请选择客户名称---</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.pk }}">{{ customer.company_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% for field in form %}
+                    <div class="form-group">
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                        <span style="color: red;">{{ field.errors.0 }}</span>
+                    </div>
+                {% endfor %}
+                            <div class="form-group">
+                    <label for="id_productcategory">产品名称</label>
+                    <input type="text" name="productcategory" disabled class="form-control" placeholder="产品名称"
+                           id="id_tproductcategory">
+                </div>
+                <div class="form-group">
+                    <label for="id_product">产品型号</label>
+                    <input type="text" name="product" disabled class="form-control" placeholder="产品名称"
+                           id="id_product">
+                </div>
+                <button type="submit" class="btn btn-primary">提 交</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        // 使用jQuery或原生JS处理AJAX和DOM操作
+        $('#id_customer').change(function () {
+            var customer_id = $(this).val();
+            $.ajax({
+                url: '{% url 'get_return_product_services' %}',
+                type: 'GET',
+                data: {'customer_id': customer_id},
+                dataType: 'json',
+                success: function (data) {
+                    var $service_select = $('#id_service');
+                    $service_select.empty();
+                    $service_select.append('<option value="">请选择售后编号</option>');
+                    $.each(data, function (index, service) {
+                        $service_select.append($('<option>', {
+                            value: service.id,
+                            text: service.service_number
+                        }));
+                    });
+                }
+            });
+        });
+    </script>
+    <script>
+        // 使用jQuery或原生JS处理AJAX和DOM操作
+        $('#id_service').change(function () {
+            var service_number = $(this).val();
+            $.ajax({
+                url: '{% url 'get_return_product_model' %}',
+                type: 'GET',
+                data: {'service_number': service_number},
+                dataType: 'json',
+                success: function (data) {
+                    $.each(data, function (index, product) {
+                        $("#id_tproductcategory").val(product.productcategory__name);
+                        $("#id_product").val(product.product__model);
+                    });
+                }
+            });
+        });
+    </script>
+{% endblock %}
+{% block js %}
+    <script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+    <script>
+        $(document).ready(function () {
+            $('#id_date').datepicker({
+                weekStart: 1,
+                autoclose: true,
+                daysOfWeekHighlighted: "0,6",
+                format: "yyyy-mm-dd",
+                language: "zh-CN"
+            }).datepicker("setDate",'now');
+        });
+    </script>
+{% endblock %}

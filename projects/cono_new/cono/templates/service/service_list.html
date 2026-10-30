@@ -1,0 +1,287 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+{% block css %}
+    <style>
+        th.sticky, td.sticky {
+            position: sticky;
+            left: 0;
+            background-color: #fff; /* Optional: to make sticky headers/cells more visible */
+            z-index: 1; /* Ensures sticky cells are above other cells */
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            批量上传
+        </div>
+        <div class="panel-body">
+            <form method="post" enctype="multipart/form-data" action="/productcategory/multi/">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="file" name="file">
+                </div>
+                <input type="submit" value="上传" class="btn btn-info btn-sm">
+            </form>
+        </div>
+    </div>
+    <div class=" clearfix">
+        <div class="float-left">
+            <a class="btn btn-success" href="/service/add/">
+                <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+                新增登记
+            </a>
+        </div>
+        <div class="float-right m-r-10">
+            <a class="btn btn-info" href="{% url 'service_download_excel' %}">
+                <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                数据下载
+            </a>
+        </div>
+    </div>
+    <div class="row" style="margin: 4px 0 14px;">
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-signal" aria-hidden="true"></span> 本年度每月售后板子数量</div>
+                <div class="panel-body"><div id="serviceMonthChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-stats" aria-hidden="true"></span> 近三年板子维修月度对比</div>
+                <div class="panel-body"><div id="serviceThreeYearChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> 本年度客户维修板子前五占比</div>
+                <div class="panel-body"><div id="serviceCustomerPieChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/echarts.min.js' %}"></script>
+    <script>
+        (function () {
+            var months = {{ chart_months|safe }};
+            var monthValues = {{ chart_month_values|safe }};
+            var threeYears = {{ chart_three_years|safe }};
+            var customerLabels = {{ chart_customer_labels|safe }};
+            var customerValues = {{ chart_customer_values|safe }};
+            var colors = ['#14a9a3', '#f2a35e', '#7b6cc4', '#e05a6b', '#4c9fe8', '#9aa5ad'];
+
+            var monthChart = echarts.init(document.getElementById('serviceMonthChart'));
+            monthChart.setOption({
+                tooltip: {trigger: 'axis'},
+                grid: {left: 20, right: 15, top: 28, bottom: 20, containLabel: true},
+                xAxis: {type: 'category', data: months, axisLabel: {fontSize: 10}},
+                yAxis: {type: 'value', splitLine: {lineStyle: {color: '#eef2f3'}}},
+                series: [{
+                    type: 'bar',
+                    data: monthValues,
+                    barMaxWidth: 26,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#14a9a3'},
+                            {offset: 1, color: '#0b7486'}
+                        ]),
+                        borderRadius: [4, 4, 0, 0]
+                    }
+                }]
+            });
+
+            var yearChart = echarts.init(document.getElementById('serviceThreeYearChart'));
+            yearChart.setOption({
+                tooltip: {trigger: 'axis'},
+                legend: {
+                    bottom: 0,
+                    type: 'scroll',
+                    textStyle: {
+                        fontSize: 11,
+                        overflow: 'truncate',
+                        width: 90,
+                        ellipsis: '..'
+                    },
+                    itemWidth: 14,
+                    itemHeight: 10
+                },
+                grid: {left: 20, right: 15, top: 28, bottom: 30, containLabel: true},
+                xAxis: {type: 'category', data: months, axisLabel: {fontSize: 10}},
+                yAxis: {type: 'value', splitLine: {lineStyle: {color: '#eef2f3'}}},
+                series: threeYears.map(function (item, i) {
+                    return {
+                        name: String(item.year),
+                        type: 'bar',
+                        data: item.values,
+                        barMaxWidth: 22,
+                        itemStyle: {color: colors[i % colors.length], borderRadius: [4, 4, 0, 0]}
+                    };
+                })
+            });
+
+            var pieChart = echarts.init(document.getElementById('serviceCustomerPieChart'));
+            pieChart.setOption({
+                tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
+                legend: {show: false},
+                color: colors,
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '66%'],
+                    center: ['50%', '50%'],
+                    label: {
+                        show: true,
+                        formatter: '{b}',
+                        fontSize: 11,
+                        overflow: 'truncate',
+                        width: 80,
+                        lineHeight: 14
+                    },
+                    data: customerLabels.map(function (name, i) {
+                        return {name: name, value: customerValues[i]};
+                    }),
+                    itemStyle: {borderRadius: 6, borderColor: '#fff', borderWidth: 2}
+                }]
+            });
+        })();
+    </script>
+    <div class="m-t-10">
+        <form method="get">
+            <div class="row">
+                <div class="col-xs-2"><label><span class="glyphicon glyphicon-time m-r-5"
+                                                   aria-hidden="true"></span>开始时间</label>
+                    <input type="date" name="start_date" class="form-control " placeholder="开始时间..."
+                           value="{{ start_date }}"></div>
+                <div class="col-xs-2 float-left p-r-10"><label><span class="glyphicon glyphicon-time m-r-5"
+                                                                     aria-hidden="true "></span>结束时间</label>
+                    <input type="date" name="end_date" class="form-control " placeholder="结束时间..."
+                           value="{{ end_date }}"></div>
+                <div class="col-xs-3"><label><span class="glyphicon glyphicon-list-alt m-r-5"
+                                                   aria-hidden="true"></span>产品搜索</label>
+                    <input type="text" name="keyword" class="form-control " placeholder="产品名称或型号..."></div>
+                <div class="col-xs-3"><label><span class="glyphicon glyphicon-user m-r-5"
+                                                   aria-hidden="true"></span>客户名称</label>
+                    <input type="text" name="customer_name" class="form-control " placeholder="客户名..."
+                           value="{{ customer_name }}"></div>
+                <div class="col-xs-2" style="padding-top:23px;">
+                    <button class="btn btn-default" type="submit">
+                        <span class="glyphicon glyphicon-search m-r-5" aria-hidden="true"></span>点击搜索
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="panel panel-default m-t-10">
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            {{ title }}
+        </div>
+        <div class="scrollablr-table">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th class="sticky">ID</th>
+                    <th class="sticky">客户名称</th>
+                    <th class="sticky">产品名称</th>
+                    <th class="sticky">型号</th>
+                    <th>维修编号</th>
+                    <th>电路板编号</th>
+                    <th>质保情况</th>
+                    <th>维修情况</th>
+                    <th>返件情况</th>
+                    <th>接收时间</th>
+                    <th>备注</th>
+                    <th>操作</th>
+
+
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in queryset %}
+                    <tr>
+                        <td class="text-center">{{ forloop.counter }}</td>
+                        <td>{{ obj.customer }}</td>
+                        <td>{{ obj.productcategory }}</td>
+                        <td>{{ obj.product }}</td>
+                        {#                        <td class="sticky"#}
+                        {#                            style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ obj.product }}</td>#}
+                        <td><a href="/service/detail/{{ obj.service_number }}/">{{ obj.service_number }}</a></td>
+                        <td>{{ obj.product_number|default:"" }}</td>
+                        <td>{{ obj.get_warranty_display }}</td>
+                        <td>
+                            {% if obj.get_warranty_end_display == "正在维修" %}
+                                <span style="color: red;">{{ obj.get_warranty_end_display }}</span>
+                            {% else %}
+                                {{ obj.get_warranty_end_display }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if obj.get_return_status_display == "未发货" %}
+                                <span style="color: red;">{{ obj.get_return_status_display }}</span>
+                            {% else %}
+                                {{ obj.get_return_status_display }}
+                            {% endif %}
+                        </td>
+                        <td>{{ obj.date }}</td>
+                        <td>{{ obj.description|default:"" }}</td>
+                        <td>
+                            <a class="btn btn-primary btn-xs" href="/service/{{ obj.id }}/edit/"><span
+                                    class="glyphicon glyphicon-wrench m-r-5" aria-hidden="true"></span>编辑</a>
+                            <a class="btn btn-warning btn-xs" href="/service/copy/{{ obj.id }}/"><span
+                                    class="glyphicon glyphicon-duplicate m-r-5" aria-hidden="true"></span>复制</a>
+                            <a class="btn btn-danger btn-xs" onclick="showDeleteModal({{ obj.id }});"><span
+                                    class="glyphicon glyphicon-trash m-r-5" aria-hidden="true"></span>删除</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="clearfix">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+    {% include 'delete.html' %}
+    <script>
+        function confirmDelete() {
+            $.ajax({
+                url: '{% url 'service_delete' %}',
+                type: 'GET',
+                data: {'nid': delete_id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                        location.reload()
+                    } else {
+                        (data.error)
+                    }
+                }
+            })
+        }
+    </script>
+    <script>
+        $(document).ready(function () {
+            $('#submit-service-form').click(function () {
+                var form = $('#service-form');
+                $.ajax({
+                    url: '{% url "service_list" %}',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (data) {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            console.log(data.errors);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(error);
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

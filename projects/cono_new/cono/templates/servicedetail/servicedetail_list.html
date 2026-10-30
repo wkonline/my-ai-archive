@@ -1,0 +1,231 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+{% block content %}
+    <div class=" clearfix">
+        <div class="float-left">
+            <a class="btn btn-success" href="/servicedetail/add/">
+                <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+                新增登记
+            </a>
+            <a class="btn btn-info" href="/servicedetail/batch_add/">
+                <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+                批量登记
+            </a>
+            <a class="btn btn-primary" href="/servicedetail/knowledge/">
+                <span class="glyphicon glyphicon-book" aria-hidden="true"></span>
+                知识库搜索
+            </a>
+        </div>
+        <div class="float-right m-r-10">
+            <a class="btn btn-info" href="{% url 'servicedetail_download_excel' %}">
+                <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                数据下载
+            </a>
+        </div>
+    </div>
+    <div class="row" style="margin: 4px 0 14px;">
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-signal" aria-hidden="true"></span> 本年度每月维修板子数量</div>
+                <div class="panel-body"><div id="repairMonthChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-stats" aria-hidden="true"></span> 近三年板子维修数量对比</div>
+                <div class="panel-body"><div id="repairThreeYearChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> 本月维修人员数量占比</div>
+                <div class="panel-body"><div id="repairmanPieChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/echarts.min.js' %}"></script>
+    <script>
+        (function () {
+            var months = {{ chart_months|safe }};
+            var monthValues = {{ chart_month_values|safe }};
+            var threeYears = {{ chart_three_years|safe }};
+            var repairmen = {{ chart_repairman_labels|safe }};
+            var repairmanValues = {{ chart_repairman_values|safe }};
+            var colors = ['#14a9a3', '#f2a35e', '#7b6cc4', '#e05a6b', '#4c9fe8'];
+
+            var monthChart = echarts.init(document.getElementById('repairMonthChart'));
+            monthChart.setOption({
+                tooltip: {trigger: 'axis'},
+                grid: {left: 20, right: 15, top: 28, bottom: 20, containLabel: true},
+                xAxis: {type: 'category', data: months, axisLabel: {fontSize: 10}},
+                yAxis: {type: 'value', splitLine: {lineStyle: {color: '#eef2f3'}}},
+                series: [{
+                    type: 'bar',
+                    data: monthValues,
+                    barMaxWidth: 26,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#14a9a3'},
+                            {offset: 1, color: '#0b7486'}
+                        ]),
+                        borderRadius: [4, 4, 0, 0]
+                    }
+                }]
+            });
+
+            var yearChart = echarts.init(document.getElementById('repairThreeYearChart'));
+            yearChart.setOption({
+                tooltip: {trigger: 'axis'},
+                legend: {bottom: 0, textStyle: {fontSize: 11}},
+                grid: {left: 20, right: 15, top: 28, bottom: 30, containLabel: true},
+                xAxis: {type: 'category', data: months, axisLabel: {fontSize: 10}},
+                yAxis: {type: 'value', splitLine: {lineStyle: {color: '#eef2f3'}}},
+                series: threeYears.map(function (item, i) {
+                    return {
+                        name: String(item.year),
+                        type: 'line',
+                        smooth: true,
+                        data: item.values,
+                        itemStyle: {color: colors[i % colors.length]},
+                        lineStyle: {width: 3},
+                        symbolSize: 6
+                    };
+                })
+            });
+
+            var pieChart = echarts.init(document.getElementById('repairmanPieChart'));
+            pieChart.setOption({
+                tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
+                legend: {bottom: 0, textStyle: {fontSize: 11}},
+                color: colors,
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '66%'],
+                    center: ['50%', '43%'],
+                    data: repairmen.map(function (name, i) {
+                        return {name: name, value: repairmanValues[i]};
+                    }),
+                    itemStyle: {borderRadius: 6, borderColor: '#fff', borderWidth: 2}
+                }]
+            });
+        })();
+    </script>
+    <div class="m-t-10">
+        <form method="get">
+            <div class="row">
+                <div class="col-xs-2"><label><span class="glyphicon glyphicon-time m-r-5"
+                                                   aria-hidden="true"></span>开始时间</label>
+                    <input type="date" name="date_from" class="form-control " placeholder="开始时间..."
+                           value="{{ date_from }}"></div>
+                <div class="col-xs-2"><label><span class="glyphicon glyphicon-time m-r-5"
+                                                   aria-hidden="true "></span>结束时间</label>
+                    <input type="date" name="date_to" class="form-control " placeholder="结束时间..."
+                           value="{{ date_to }}"></div>
+                <div class="col-xs-3"><label><span class="glyphicon glyphicon-list-alt m-r-5"
+                                                   aria-hidden="true"></span>产品搜索</label>
+                    <input type="text" name="keyword" class="form-control " placeholder="产品名称或型号..."></div>
+                <div class="col-xs-3"><label><span class="glyphicon glyphicon-user m-r-5"
+                                                   aria-hidden="true"></span>客户名称</label>
+                    <input type="text" name="customer_name" class="form-control " placeholder="客户名..."
+                           value="{{ customer_name }}"></div>
+                <div class="col-xs-2" style="padding-top:23px;">
+                    <button class="btn btn-info" type="submit">
+                        <span class="glyphicon glyphicon-search m-r-5" aria-hidden="true"></span>点击搜索
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% for obj in queryset %}
+        <div class="panel panel-default m-t-10">
+            <!-- Default panel contents -->
+            <div class="panel-heading clearfix ">
+                <div class="float-left"><span class="glyphicon glyphicon-th-list"
+                                              aria-hidden="true"></span>
+                    项目编号：<a href="/service/detail/{{ obj.service.service_number }}/">{{ obj.service }}</a></div>
+                <div class="float-right"><a class="btn btn-primary btn-xs"
+                                            href="/servicedetail/{{ obj.id }}/edit/"><span
+                        class="glyphicon glyphicon-wrench m-r-5" aria-hidden="true"></span>编辑</a>
+                    <a class="btn btn-danger btn-xs" onclick="showDeleteModal({{ obj.id }});"><span
+                            class="glyphicon glyphicon-trash m-r-5" aria-hidden="true"></span>删除</a></div>
+            </div>
+
+            <!-- Table -->
+            <table class="table table-bordered" style="table-layout:fixed; width:100%;">
+                <colgroup>
+                    <col style="width:5%">
+                    <col style="width:12%">
+                    <col style="width:12%">
+                    <col style="width:12%">
+                    <col style="width:12%">
+                    <col style="width:8%">
+                    <col style="width:10%">
+                    <col style="width:10%">
+                    <col style="width:10%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>客户名称</th>
+                    <th>产品名称</th>
+                    <th>产品型号</th>
+                    <th>电路板编号</th>
+                    <th>质保状态</th>
+                    <th>维修工程师</th>
+                    <th>接收时间</th>
+                    <th>维修完成时间</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th rowspan="4">{{ obj.id }}</th>
+                    <td>{{ obj.customer }}</td>
+                    <td>{{ obj.productcategory }}</td>
+                    <td>{{ obj.product }}</td>
+                    <td>{{ obj.service.product_number }}</td>
+                    <td>{{ obj.service.get_warranty_display }}</td>
+                    <td>{{ obj.repairman }}</td>
+                    <td>{{ obj.service.date }}</td>
+                    <td>{{ obj.repair_date }}</td>
+                </tr>
+                <tr>
+                    <th>故障现象</th>
+                    <td colspan="7">{{ obj.fault_text }}</td>
+                </tr>
+                <tr>
+                    <th>故障原因</th>
+                    <td colspan="7">{{ obj.fault_reason }}</td>
+                </tr>
+                <tr>
+                    <th>维修方法</th>
+                    <td colspan="7">{{ obj.repair_method }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+    <div class="clearfix">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+    {% include 'delete.html' %}
+    <script>
+        function confirmDelete() {
+            $.ajax({
+                url: '{% url 'servicedetail_delete' %}',
+                type: 'GET',
+                data: {'nid': delete_id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                        location.reload()
+                    } else {
+                        (data.error)
+                    }
+                }
+            })
+        }
+    </script>
+{% endblock %}

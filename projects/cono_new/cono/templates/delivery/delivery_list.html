@@ -1,0 +1,150 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+    <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            批量上传
+        </div>
+        <div class="panel-body">
+            <form method="post" enctype="multipart/form-data" action="/delivery/multi/">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="file" name="file">
+                </div>
+                <input type="submit" value="上传" class="btn btn-info btn-sm">
+            </form>
+        </div>
+    </div>
+    <div>
+        <a class="btn btn-info" href="{% url 'delivery_download_excel' %}">
+            <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span> 数据下载
+        </a>
+        <a class="btn btn-success" href="/delivery/add/">
+            <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span> 新增登记
+        </a>
+    </div>
+    <div class="row" style="margin: 10px 0 14px;">
+        <div class="col-sm-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span class="glyphicon glyphicon-signal" aria-hidden="true"></span> 本年度分月发货数量
+                </div>
+                <div class="panel-body"><div id="deliveryMonthChart" style="height:260px;"></div></div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span class="glyphicon glyphicon-stats" aria-hidden="true"></span> 本年发货汇总
+                </div>
+                <div class="panel-body" style="text-align:center; padding: 24px 0;">
+                    <span style="font-size:36px; font-weight:700; color:#0e928e;">
+                        {{ chart_total|default:"0" }}
+                    </span>
+                    <div style="color:#6b838a; font-size:13px; margin-top:6px;">总发货数量（台/件）</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/echarts.min.js' %}"></script>
+    <script>
+        (function () {
+            var months = {{ chart_months|safe }};
+            var values = {{ chart_values|safe }};
+            var chart = echarts.init(document.getElementById('deliveryMonthChart'));
+            chart.setOption({
+                tooltip: {trigger: 'axis'},
+                grid: {left: 20, right: 15, top: 28, bottom: 20, containLabel: true},
+                xAxis: {type: 'category', data: months, axisLabel: {fontSize: 10}},
+                yAxis: {type: 'value', splitLine: {lineStyle: {color: '#eef2f3'}}},
+                series: [{
+                    type: 'bar',
+                    data: values,
+                    barMaxWidth: 30,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#14a9a3'},
+                            {offset: 1, color: '#0b7486'}
+                        ]),
+                        borderRadius: [4, 4, 0, 0]
+                    }
+                }]
+            });
+        })();
+    </script>
+    <div class="panel panel-default m-t-10">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            {{ title }}
+        </div>
+
+        <!-- Table -->
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>客户名称</th>
+                <th>发货日期</th>
+                <th>项目编号</th>
+                <th>产品名称</th>
+                <th>产品型号</th>
+                <th>数量</th>
+                <th>收货人</th>
+                <th>收货人联系电话</th>
+                <th>收货地址</th>
+                <th>发货人</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td>{{ obj.customer }}</td>
+                    <td>{{ obj.date }}</td>
+                    <td>{{ obj.contract }}</td>
+                    <td>{{ obj.productcategory }}</td>
+                    <td>{{ obj.product }}</td>
+                    <td>{{ obj.quantity }}</td>
+                    <td>{{ obj.customer.contact_person }}</td>
+                    <td>{{ obj.customer.phone }}</td>
+                    <td>{{ obj.customer.address }}</td>
+                    <td>{{ obj.delivery_man }}</td>
+                    <td>
+                        <a class="btn btn-primary btn-xs" href="/delivery/{{ obj.id }}/edit/"><span
+                                class="glyphicon glyphicon-wrench m-r-5" aria-hidden="true"></span>编辑</a>
+                        <a class="btn btn-danger btn-xs" onclick="showDeleteModal({{ obj.id }});"><span
+                                class="glyphicon glyphicon-trash m-r-5" aria-hidden="true"></span>删除</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="clearfix">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+    {% include 'delete.html' %}
+    <script>
+        function confirmDelete() {
+            $.ajax({
+                url: '{% url 'delivery_delete' %}',
+                type: 'GET',
+                data: {'nid': delete_id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                        location.reload()
+                    } else {
+                        (data.error)
+                    }
+                }
+            })
+        }
+    </script>
+{% endblock %}

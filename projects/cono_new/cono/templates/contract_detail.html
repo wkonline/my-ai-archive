@@ -1,0 +1,86 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <script src={% static 'js/jquery-3.6.0.min.js' %}></script>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <h1>Create Contract</h1>
+        <div class="panel-body">
+            <form method="post" id="contractForm">
+                {% csrf_token %}
+                {{ contract_form.as_p }}
+                <table id="productTable">
+                    <thead>
+                    <tr>
+                        <th>Product Model</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th>Amount</th>
+                        <th>Remove</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{ product_formset.management_form }}
+                    {% for form in product_formset %}
+                        <tr id="{{ form.prefix }}-row">
+                            <td>{{ form.product_model }}</td>
+                            <td>{{ form.unit_price }}</td>
+                            <td>{{ form.quantity }}</td>
+                            <td>{{ form.amount }}</td>
+                            <td>
+                                <button type="button" class="remove-row">Remove</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" id="addRow">Add Product</button>
+                <button type="submit">Save Contract</button>
+            </form>
+
+            <script>
+                $(document).ready(function () {
+                    let formCount = {{ product_formset.total_form_count|add:"-1" }}; // 初始表单数量减1（因为Django会添加一个额外的空表单）
+
+                    $('#addRow').click(function () {
+                        formCount++;
+                        let row = `<tr id="form-${formCount}-row">
+                       <td>{{ product_formset.empty_form.product_model.as_hidden }}
+                          <input type="text" name="form-${formCount}-product_model" id="id_form-${formCount}-product_model"></td>
+                       <td>{{ product_formset.empty_form.unit_price.as_hidden }}
+                          <input type="text" name="form-${formCount}-unit_price" id="id_form-${formCount}-unit_price"></td>
+                       <td>{{ product_formset.empty_form.quantity.as_hidden }}
+                          <input type="text" name="form-${formCount}-quantity" id="id_form-${formCount}-quantity" oninput="calculateAmount(this)"></td>
+                       <td><input type="text" name="form-${formCount}-amount" id="id_form-${formCount}-amount" readonly></td>
+                       <td><button type="button" class="remove-row">Remove</button></td>
+                   </tr>`;
+                        $('#productTable tbody').append(row);
+
+                        // 绑定计算金额的函数（如果需要的话）
+                        $('#id_form-' + formCount + '-quantity').on('input', function () {
+                            calculateAmount(this);
+                        });
+                    });
+
+                    $('#productTable').on('click', '.remove-row', function () {
+                        $(this).closest('tr').remove();
+                    });
+
+                    function calculateAmount(quantityInput) {
+                        let row = $(quantityInput).closest('tr');
+                        let price = parseFloat(row.find('input[name^="unit_price"]').val()) || 0;
+                        let quantity = parseInt(quantityInput.value) || 0;
+                        let amount = price * quantity;
+                        row.find('input[name^="amount"]').val(amount.toFixed(2));
+                    }
+                });
+            </script>
+        </div>
+
+    </div>
+{% endblock %}

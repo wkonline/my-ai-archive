@@ -1,0 +1,161 @@
+{% extends 'layout.html' %}
+{% block title %}用户权限管理{% endblock %}
+{% block css %}
+    <style>
+        .auth-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin: 4px 0 16px; }
+        .auth-head h2 { display: inline-flex; align-items: center; gap: 9px; margin: 0; color: #17363e; font-size: 20px; font-weight: 700; }
+        .auth-head h2 .glyphicon { color: #0a8387; }
+        .base-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .base-field label { display: block; margin-bottom: 7px; color: #4e6c74; font-size: 13px; font-weight: 600; }
+        .base-field .form-control { height: 42px; border-radius: 6px; }
+        .group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+        .group-card { border: 1px solid #dce8ea; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 8px 22px rgba(14, 68, 76, .07); }
+        .group-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #e6eef0; background: #f8fcfc; }
+        .group-title { display: inline-flex; align-items: center; gap: 7px; color: #17363e; font-size: 15px; font-weight: 700; }
+        .group-title .glyphicon { color: #0a8387; }
+        .group-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .perm-list { padding: 10px 14px; }
+        .perm-row { display: grid; grid-template-columns: minmax(0, 1fr) 98px 98px; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #edf3f4; }
+        .perm-row:last-child { border-bottom: 0; }
+        .perm-name { color: #34505a; font-size: 13px; line-height: 1.4; }
+        .permission-code { display: block; color: #8ea3a9; font-size: 11px; }
+        .perm-actions { text-align: center; }
+        .menu-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; padding: 12px 14px; }
+        .menu-item { display: flex; align-items: center; gap: 6px; padding: 7px 9px; border-radius: 6px; background: #f8fcfc; color: #34505a; font-size: 13px; font-weight: 600; margin: 0; }
+        .menu-item:hover { background: #eef9f8; color: #086f78; }
+        .footer-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+        @media (max-width: 991px) { .group-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) { .base-grid { grid-template-columns: 1fr; } .perm-row { grid-template-columns: 1fr 72px 72px; } .menu-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="auth-head">
+        <h2><span class="glyphicon glyphicon-user" aria-hidden="true"></span>用户权限管理：{{ user.username }}</h2>
+        <a class="back-link btn btn-default" href="/user/list/">
+            <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>返回用户列表
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="panel panel-default">
+            <div class="panel-heading">基础设置</div>
+            <div class="panel-body">
+                <div class="base-grid">
+                    <div class="base-field">
+                        <label>角色</label>
+                        <select name="role" class="form-control">
+                            {% for choice in role_choices %}
+                                <option value="{{ choice.key }}" {% if user.role == choice.key %}selected{% endif %}>
+                                    {{ choice.name }}（{{ choice.key }}）
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="base-field">
+                        <label>自定义顶部栏目</label>
+                        <select name="custom_menu" class="form-control">
+                            <option value="0" {% if not menu_customize %}selected{% endif %}>跟随角色栏目</option>
+                            <option value="1" {% if menu_customize %}selected{% endif %}>仅使用下面勾选的栏目</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title m-t-10"><h4>单个用户功能权限</h4></div>
+        <div class="group-grid">
+            {% for group in permission_groups %}
+                <div class="group-card">
+                    <div class="group-head">
+                        <div class="group-title"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>{{ group.name }}</div>
+                        <div class="group-actions">
+                            <button type="button" class="btn btn-default btn-xs js-allow-group">全组允许</button>
+                            <button type="button" class="btn btn-default btn-xs js-clear-group">清空该组</button>
+                        </div>
+                    </div>
+                    <div class="perm-list">
+                        {% for permission in group.items %}
+                            <div class="perm-row">
+                                <div class="perm-name">
+                                    {{ permission.label }}
+                                    <span class="permission-code">{{ permission.code }}</span>
+                                </div>
+                                <div class="perm-actions">
+                                    <label class="text-success" style="font-weight:400;">
+                                        <input type="checkbox" name="allow_{{ permission.code }}" {% if permission.code in extra_permissions %}checked{% endif %}> 允许
+                                    </label>
+                                </div>
+                                <div class="perm-actions">
+                                    <label class="text-danger" style="font-weight:400;">
+                                        <input type="checkbox" name="deny_{{ permission.code }}" {% if permission.code in denied_permissions %}checked{% endif %}> 禁止
+                                    </label>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="section-title m-t-10"><h4>顶部显示栏目</h4></div>
+        <div class="group-grid">
+            {% for group in menu_groups %}
+                <div class="group-card">
+                    <div class="group-head">
+                        <div class="group-title"><span class="glyphicon glyphicon-th-large" aria-hidden="true"></span>{{ group.name }}</div>
+                        <div class="group-actions">
+                            <button type="button" class="btn btn-default btn-xs js-select-group">全选</button>
+                            <button type="button" class="btn btn-default btn-xs js-clear-menu-group">清空</button>
+                        </div>
+                    </div>
+                    <div class="menu-list">
+                        {% for item in group.items %}
+                            <label class="menu-item">
+                                <input type="checkbox" name="menus" value="{{ item.title }}" {% if item.title in user_menu_titles %}checked{% endif %}>
+                                <span>{{ item.title }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="footer-actions">
+            <a class="btn btn-default" href="/user/list/">取消</a>
+            <button class="btn btn-success" type="submit">
+                <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>保存权限
+            </button>
+        </div>
+    </form>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            $('.js-select-group').on('click', function () {
+                $(this).closest('.group-card').find('input[type="checkbox"]').prop('checked', true);
+            });
+            $('.js-clear-menu-group').on('click', function () {
+                $(this).closest('.group-card').find('input[type="checkbox"]').prop('checked', false);
+            });
+            $('.js-allow-group').on('click', function () {
+                $(this).closest('.group-card').find('input[name^="allow_"]').prop('checked', true)
+                    .closest('.perm-row').find('input[name^="deny_"]').prop('checked', false);
+            });
+            $('.js-clear-group').on('click', function () {
+                $(this).closest('.group-card').find('input[name^="allow_"], input[name^="deny_"]').prop('checked', false);
+            });
+            $(document).on('change', 'input[name^="allow_"], input[name^="deny_"]', function () {
+                var $row = $(this).closest('.perm-row');
+                var $allow = $row.find('input[name^="allow_"]');
+                var $deny = $row.find('input[name^="deny_"]');
+                if ($(this).is($allow) && $allow.is(':checked')) {
+                    $deny.prop('checked', false);
+                }
+                if ($(this).is($deny) && $deny.is(':checked')) {
+                    $allow.prop('checked', false);
+                }
+            });
+        });
+    </script>
+{% endblock %}

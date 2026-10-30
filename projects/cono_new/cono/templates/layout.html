@@ -1,0 +1,279 @@
+{% load static %}
+{% load menu %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}_洛阳科诺工业设备有限公司</title>
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-3.4.1/css/bootstrap.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260923">
+    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+    <style>
+        /* 表格底色统一交给全局样式处理 */
+        table tr:nth-child(even),
+        table tr:nth-child(odd) {
+            background-color: transparent;
+        }
+
+        a {
+            color: #3d5c64;
+        }
+
+        .daohang {
+            display: block;
+            font-size: 0;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .daohang > li {
+            display: inline-block;
+            float: none;
+            margin: 4px 7px 0 0 !important;
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        .daohang > li > a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 36px;
+            padding: 6px 13px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            background: transparent;
+            color: #3d5c64;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+        }
+
+        .daohang > li > a:hover {
+            border-color: transparent;
+            background: #edf9f8;
+            color: #0a6f74;
+            transform: translateY(-1px);
+        }
+
+        .daohang > li.active > a,
+        .daohang > li.active > a:hover {
+            border-color: #17a09b;
+            background: linear-gradient(135deg, #0d918d, #086f78);
+            color: #ffffff;
+            box-shadow: none;
+        }
+
+        .daohang > li > a .glyphicon {
+            color: #6da4a7;
+            font-size: 12px;
+        }
+
+        .daohang > li.active > a .glyphicon {
+            color: #ffffff;
+        }
+
+        @media (max-width: 767px) {
+            .logo_img {
+                width: 100%;
+                text-align: center;
+                margin-bottom: 8px;
+            }
+
+            .daohang {
+                padding: 6px;
+            }
+
+            .daohang > li {
+                margin-right: 6px;
+                margin-bottom: 6px;
+            }
+
+            .daohang > li > a {
+                width: 100%;
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+        }
+
+    </style>
+    {% block css %}{% endblock %}
+</head>
+<body>
+<div class="container m-t-10">
+    {% if messages %}
+        <div class="row">
+            <div class="col-xs-12">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    <div class="clearfix">
+        <ul class="nav navbar-nav float-right">
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                   aria-expanded="false" style="padding: 8px 12px;">
+                    <span style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background: #337ab7; color: white; text-align: center; line-height: 32px; font-size: 14px; margin-right: 8px;">
+                        {{ request.info_dict_username|make_list|first|upper }}
+                    </span>
+                    <span class="glyphicon glyphicon-cog"></span>
+                    <span class="m-l-5">{{ request.info_dict_username }}</span>
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    <li><a href="/user/profile/"><span class="glyphicon glyphicon-dashboard"></span> 我的资料</a></li>
+                    <li><a href="/user/profile/edit/"><span class="glyphicon glyphicon-edit"></span> 修改资料</a></li>
+                    <li><a href="/user/profile/password/"><span class="glyphicon glyphicon-lock"></span> 修改密码</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="/logout/"><span class="glyphicon glyphicon-log-out"></span> 注销</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="row">
+        <div class="logo_img col-xs-3"><img src="{% static 'img/logo.png' %}" alt="公司Logo"></div>
+        <div class="col-lg-9">
+            <ul class="nav nav-pills daohang ">
+                {% cono_menu request %}
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="container m-t-10">
+    {% block content %}
+        {% block category %}
+        {% endblock %}
+    {% endblock %}
+</div>
+<script src="{% static 'plugins/bootstrap-3.4.1/js/bootstrap.min.js' %}"></script>
+{% block js %}{% endblock %}
+<style>
+    .drag-zone {
+        position: relative;
+        border: 2px dashed #b9d4d6;
+        border-radius: 6px;
+        background: #f6fbfb;
+        padding: 18px 14px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+    .drag-zone:hover, .drag-zone.dragover {
+        border-color: #0a8387;
+        background: #edf8f8;
+        box-shadow: 0 0 0 3px rgba(10, 131, 135, .12);
+    }
+    .drag-zone input[type="file"] {
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .drag-zone .dz-icon {
+        font-size: 22px;
+        color: #0a8387;
+        display: block;
+        margin-bottom: 4px;
+    }
+    .drag-zone .dz-text {
+        color: #45656d;
+        font-size: 13px;
+        pointer-events: none;
+    }
+    .drag-zone .dz-file {
+        display: none;
+        margin-top: 6px;
+        font-size: 12px;
+        color: #0e7a75;
+        font-weight: 600;
+        word-break: break-all;
+    }
+    .drag-zone.has-file .dz-file { display: block; }
+    .drag-zone.has-file .dz-text { color: #0a8387; }
+</style>
+<script>
+    (function () {
+        function upgradeFileInput($input) {
+            if (!$input.is('input[type="file"]') || $input.closest('.drag-zone').length || $input.closest('.attach-area').length) return;
+            var zone = $('<div class="drag-zone"></div>');
+            $input.wrap(zone);
+            var $zone = $input.parent('.drag-zone');
+            $zone.append(
+                '<span class="glyphicon glyphicon-cloud-upload dz-icon" aria-hidden="true"></span>' +
+                '<div class="dz-text">点击选择或拖拽文件到此处</div>' +
+                '<div class="dz-file"></div>'
+            );
+
+            function setFileLabel(file) {
+                var name = file ? file.name : '';
+                if (name) {
+                    $zone.addClass('has-file');
+                    $zone.find('.dz-file').text('已选择：' + name);
+                    $zone.find('.dz-text').text('点击重新选择，或继续拖拽替换');
+                } else {
+                    $zone.removeClass('has-file');
+                    $zone.find('.dz-file').text('');
+                    $zone.find('.dz-text').text('点击选择或拖拽文件到此处');
+                }
+            }
+
+            $input.on('change', function () {
+                setFileLabel(this.files && this.files.length ? this.files[0] : null);
+            });
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function (type) {
+                $zone.on(type, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+            $zone.on('dragenter dragover', function () {
+                $zone.addClass('dragover');
+            });
+            $zone.on('dragleave drop', function () {
+                $zone.removeClass('dragover');
+            });
+            $zone.on('drop', function (e) {
+                var files = e.originalEvent.dataTransfer.files;
+                if (files && files.length) {
+                    $input.prop('files', files);
+                    setFileLabel(files[0]);
+                }
+            });
+        }
+
+        $(function () {
+            $('input[type="file"]').each(function () {
+                upgradeFileInput($(this));
+            });
+            $(document).on('DOMNodeInserted', function (e) {
+                $(e.target).find('input[type="file"]').each(function () {
+                    upgradeFileInput($(this));
+                });
+            });
+        });
+    })(jQuery);
+</script>
+<div class="container">
+    <div class="row p-t-10">
+        <div class="col-xs-12">
+            <div class="text-center">
+                <p>地址：河南省洛阳市洛龙区关林路中电光谷产业园3-6-1栋 电话：0379-62202805 传真：0379-62202807 邮箱：conoch@163.com</p>
+                <p>Copyright © 2021-2024 <a href="http://www.conoindustry.com">洛阳科诺工业设备有限公司</a> All Rights Reserved.</p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

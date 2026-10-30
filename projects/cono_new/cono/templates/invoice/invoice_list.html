@@ -1,0 +1,418 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+{% block css %}
+<style>
+    .contract-filter {
+        overflow: hidden;
+        margin-bottom: 16px;
+        border: 1px solid #d8e5e7;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 8px 24px rgba(15, 52, 60, .07);
+    }
+
+    .filter-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 13px 16px;
+        border-bottom: 1px solid #e4eef0;
+        background: #f8fcfc;
+    }
+
+    .filter-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #23464f;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .filter-title .glyphicon {
+        color: #0d8f92;
+        font-size: 14px;
+    }
+
+    .filter-clear {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: #6a838b;
+        font-size: 13px;
+        text-decoration: none;
+    }
+
+    .filter-clear:hover {
+        color: #c0453f;
+        text-decoration: none;
+    }
+
+    .filter-body {
+        padding: 16px 16px 12px;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 12px 14px;
+    }
+
+    .filter-field {
+        grid-column: span 3;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-field label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 7px;
+        color: #4e6c74;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .filter-field label .glyphicon {
+        color: #72a2a6;
+        font-size: 12px;
+    }
+
+    .filter-field input.form-control {
+        width: 100%;
+        height: 40px;
+        padding: 0 11px;
+        border: 1px solid #cedde0;
+        border-radius: 6px;
+        background: #ffffff;
+        box-shadow: inset 0 1px 2px rgba(18, 50, 58, .04);
+        color: #203c44;
+        font-size: 14px;
+        transition: border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .filter-field input.form-control:focus {
+        border-color: #36a9a5;
+        box-shadow: 0 0 0 3px rgba(45, 187, 178, .14);
+        outline: none;
+    }
+
+    .filter-field input.form-control::placeholder {
+        color: #9cafb4;
+    }
+
+    .filter-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        height: 34px;
+        padding: 0 16px;
+        border: 1px solid #c8d8da;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #4a666e;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: color .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+    }
+
+    .filter-btn:hover {
+        color: #0b6e75;
+        text-decoration: none;
+    }
+
+    .filter-btn.is-search {
+        border-color: #0b7b82;
+        background: linear-gradient(135deg, #0e928e, #0a6f78);
+        color: #ffffff;
+        box-shadow: 0 7px 16px rgba(10, 112, 116, .2);
+    }
+
+    .filter-btn.is-search:hover {
+        color: #ffffff;
+        filter: brightness(1.06);
+        transform: translateY(-1px);
+    }
+
+    .invoice-table-card {
+        overflow: hidden;
+        margin-top: 14px;
+        border: 1px solid #d8e5e7;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 8px 24px rgba(15, 52, 60, .07);
+    }
+</style>
+{% endblock %}
+{% block content %}
+    <div class="panel panel-default" style="margin-bottom: 16px;">
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            批量上传（支持金蝶销售发票序时簿导出文件）
+        </div>
+        <div class="panel-body">
+            <form method="post" enctype="multipart/form-data" action="/invoice/multi/">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="file" name="file">
+                </div>
+                <input type="submit" value="上传" class="btn btn-info btn-sm">
+                <a class="btn btn-info btn-sm" href="/media/uploadtemplates/fapiao.xlsx">
+                    <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                    模板下载
+                </a>
+            </form>
+        </div>
+    </div>
+    <div>
+        <a class="btn btn-success" href="/invoice/create/">
+            <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+            新增发票
+        </a>
+    </div>
+    <div class="row" style="margin: 4px 0 14px;">
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-signal" aria-hidden="true"></span> 本年度每月开票额</div>
+                <div class="panel-body"><div id="invoiceMonthChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> 本年度开票金额前五</div>
+                <div class="panel-body"><div id="invoiceTopChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><span class="glyphicon glyphicon-stats" aria-hidden="true"></span> 本月开票金额前五占比</div>
+                <div class="panel-body"><div id="invoiceMonthPieChart" style="height:220px;"></div></div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/echarts.min.js' %}"></script>
+    <script>
+        (function () {
+            var months = {{ chart_months|safe }};
+            var amounts = {{ chart_amounts|safe }};
+            var topCustomers = {{ chart_top_customers_labels|safe }};
+            var topValues = {{ chart_top_customers_values|safe }};
+            var monthCustomers = {{ chart_month_customers_labels|safe }};
+            var monthValues = {{ chart_month_customers_values|safe }};
+
+            var monthChart = echarts.init(document.getElementById('invoiceMonthChart'));
+            monthChart.setOption({
+                tooltip: {trigger: 'axis'},
+                grid: {left: 20, right: 15, top: 28, bottom: 20, containLabel: true},
+                xAxis: {type: 'category', data: months, axisLabel: {fontSize: 10}},
+                yAxis: {type: 'value', splitLine: {lineStyle: {color: '#eef2f3'}}},
+                series: [{
+                    type: 'bar',
+                    data: amounts,
+                    barMaxWidth: 26,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#14a9a3'},
+                            {offset: 1, color: '#0b7486'}
+                        ]),
+                        borderRadius: [4, 4, 0, 0]
+                    }
+                }]
+            });
+
+            var topChart = echarts.init(document.getElementById('invoiceTopChart'));
+            topChart.setOption({
+                tooltip: {trigger: 'axis', axisPointer: {type: 'shadow'}},
+                grid: {left: 20, right: 15, top: 28, bottom: 20, containLabel: true},
+                xAxis: {type: 'value'},
+                yAxis: {type: 'category', data: topCustomers, axisLabel: {fontSize: 10}},
+                series: [{
+                    type: 'bar',
+                    data: topValues,
+                    barMaxWidth: 20,
+                    itemStyle: {color: '#2b9ea0', borderRadius: [0, 4, 4, 0]}
+                }]
+            });
+
+            var pieChart = echarts.init(document.getElementById('invoiceMonthPieChart'));
+            pieChart.setOption({
+                tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
+                series: [{
+                    type: 'pie',
+                    radius: ['38%', '68%'],
+                    center: ['50%', '50%'],
+                    label: {
+                        show: true,
+                        formatter: function (item) {
+                            var name = item.name || '';
+                            var shortName = name.length > 8 ? name.slice(0, 8) + '…' : name;
+                            return shortName + '\n' + item.percent + '%';
+                        },
+                        fontSize: 11,
+                        color: '#4e6c74',
+                        lineHeight: 14
+                    },
+                    labelLine: {length: 8, length2: 10},
+                    avoidLabelOverlap: true,
+                    data: monthCustomers.map(function (name, i) {
+                        return {name: name, value: monthValues[i]};
+                    }),
+                    itemStyle: {borderRadius: 6, borderColor: '#fff', borderWidth: 2}
+                }]
+            });
+        })();
+    </script>
+    <section class="contract-filter">
+        <div class="filter-head">
+            <span class="filter-title">
+                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                检索条件
+            </span>
+            <a class="filter-clear" href="javascript:void(0);" onclick="clearFilter()">
+                <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+                清空条件
+            </a>
+        </div>
+        <form method="get" id="invoiceFilterForm">
+            <div class="filter-body">
+                <div class="filter-grid">
+                    <div class="filter-field">
+                        <label for="id_filter_start">
+                            <span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>
+                            开始日期
+                        </label>
+                        <input id="id_filter_start" type="date" name="date_from" class="form-control"
+                               value="{{ date_from|default:'' }}">
+                    </div>
+                    <div class="filter-field">
+                        <label for="id_filter_end">
+                            <span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>
+                            结束日期
+                        </label>
+                        <input id="id_filter_end" type="date" name="date_to" class="form-control"
+                               value="{{ date_to|default:'' }}">
+                    </div>
+                    <div class="filter-field" style="grid-column: span 5;">
+                        <label for="id_filter_keyword">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                            快速检索
+                        </label>
+                        <input id="id_filter_keyword" type="text" name="keyword" class="form-control"
+                               placeholder="请输入客户名称或发票号" value="{{ keyword|default:'' }}">
+                    </div>
+                    <div class="filter-field" style="grid-column: span 1; display: flex; align-items: center; justify-content: flex-end;">
+                        <button class="filter-btn is-search" type="submit" style="height: 34px; padding: 0 12px;">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                            查询
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </section>
+    <div class="invoice-table-card">
+        <div class="panel-heading" style="padding: 14px 18px; border-bottom: 1px solid #e2ecee;">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            发票记录
+            <span style="float: right; color: #6b838a; font-size: 13px;">
+                共 {{ queryset|length }} 条
+            </span>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="table table-bordered" style="margin: 0;">
+                <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>客户名称</th>
+                    <th>合同号码</th>
+                    <th>开票金额</th>
+                    <th>开票日期</th>
+                    <th>发票号</th>
+                    <th>开票人</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in queryset %}
+                    <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td>{{ obj.customer }}</td>
+                    <td><a href="/contract/detail/{{ obj.contract.id }}">{{ obj.contract }}</a></td>
+                    <td>{{ obj.amount }}</td>
+                    <td>{{ obj.date }}</td>
+                    <td>{{ obj.invoice_number }}</td>
+                    <td>{{ obj.invoice_man }}</td>
+                    <td>
+                        <a class="btn btn-primary btn-xs" href="/invoice/{{ obj.id }}/edit/"><span
+                                class="glyphicon glyphicon-wrench m-r-5" aria-hidden="true"></span>编辑</a>
+                        <a class="btn btn-danger btn-xs" onclick="showDeleteModal({{ obj.id }});"><span
+                                class="glyphicon glyphicon-trash m-r-5" aria-hidden="true"></span>删除</a>
+                    </td>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">暂无发票数据</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="clearfix" style="margin-top: 14px;">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+    {% include 'delete.html' %}
+    <script>
+        function clearFilter() {
+            // 清空表单字段
+            $('#invoiceFilterForm')[0].reset();
+            // 使用AJAX提交，不刷新页面
+            $.ajax({
+                url: '/invoice/list/',
+                type: 'GET',
+                data: {},  // 无参数，清空所有筛选条件
+                success: function (data) {
+                    // 解析返回的HTML，提取主要内容区域
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(data, 'text/html');
+                    var newTable = doc.querySelector('.invoice-table-card');
+                    var newPagination = doc.querySelector('.pagination');
+                    if (newTable) {
+                        $('.invoice-table-card').replaceWith(newTable);
+                    }
+                    if (newPagination) {
+                        $('.pagination').replaceWith(newPagination);
+                    }
+                    // 简化处理，直接刷新整个页面
+                    location.reload();
+                },
+                error: function () {
+                    location.reload();
+                }
+            });
+        }
+
+        function confirmDelete() {
+            $.ajax({
+                url: '{% url 'invoice_delete' %}',
+                type: 'GET',
+                data: {'nid': delete_id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                        location.reload()
+                    } else {
+                        (data.error)
+                    }
+                }
+            })
+        }
+    </script>
+{% endblock %}

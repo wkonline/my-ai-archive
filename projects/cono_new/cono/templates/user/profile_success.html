@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+    <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header text-center">
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-ok-circle text-success" aria-hidden="true"></span>
+                        {{ title }}
+                    </h4>
+                </div>
+                <div class="modal-body text-center">
+                    <p>操作已成功完成。</p>
+                </div>
+                <div class="modal-footer" style="text-align: center;">
+                    <a class="btn btn-default" href="/">返回首页</a>
+                    <a class="btn btn-success" href="{{ continue_url|default:'/' }}">继续操作</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            $('#successModal').modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,331 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+{% block css %}
+    <style>
+        .data-stat-page {
+            padding: 18px 0 30px;
+        }
+
+        .data-stat-page .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .data-stat-page .page-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #17363e;
+        }
+
+        .data-stat-page .page-title .glyphicon {
+            color: #0d8f92;
+        }
+
+        .data-stat-page .stat-summary {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .data-stat-page .summary-card {
+            min-width: 120px;
+            padding: 6px 14px;
+            border: 1px solid #dce8ea;
+            border-radius: 10px;
+            background: #ffffff;
+            box-shadow: 0 8px 20px rgba(15, 52, 60, .06);
+        }
+
+        .data-stat-page .summary-card .label {
+            display: inline;
+            color: #5b7780;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .data-stat-page .summary-card .label::after {
+            content: ' ';
+        }
+
+        .data-stat-page .summary-card .value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #17363e;
+            white-space: nowrap;
+        }
+
+        .data-stat-page .summary-card.warn .value {
+            color: #c75450;
+        }
+
+        .data-stat-page .summary-card.info .value {
+            color: #0d8f92;
+        }
+
+        .data-stat-page .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .data-stat-page .filter-card {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border: 1px solid #d8e5e7;
+            border-radius: 10px;
+            background: #ffffff;
+            box-shadow: 0 8px 22px rgba(15, 52, 60, .06);
+        }
+
+        .data-stat-page .filter-card label {
+            margin: 0;
+            color: #4e6c74;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .data-stat-page .filter-card select {
+            min-width: 140px;
+            height: 36px;
+        }
+
+        .data-stat-page .filter-card input[type="text"] {
+            min-width: 160px;
+            height: 36px;
+        }
+
+        .data-stat-page .btn {
+            height: 36px;
+            padding: 0 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .data-stat-page .btn-primary {
+            background: linear-gradient(135deg, #0d8d8a, #087078);
+            border-color: #087078;
+            color: #ffffff;
+            box-shadow: 0 7px 18px rgba(9, 116, 118, .2);
+        }
+
+        .data-stat-page .panel {
+            margin-bottom: 18px;
+            border: 1px solid #dce8ea;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(15, 52, 60, .07);
+        }
+
+        .data-stat-page .panel-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #f7fbfb;
+            color: #244750;
+            font-size: 15px;
+            font-weight: 700;
+            border-bottom: 1px solid #e3eef0;
+        }
+
+        .data-stat-page .panel-heading .count {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #eef7f7;
+            color: #38686f;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .data-stat-page .panel-body {
+            padding: 0;
+            overflow-x: auto;
+        }
+
+        .data-stat-page .table {
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .data-stat-page .table th,
+        .data-stat-page .table td {
+            vertical-align: middle;
+            font-size: 13px;
+        }
+
+        .data-stat-page .table thead th {
+            background: #f4f9f9;
+            color: #3f636c;
+            font-weight: 700;
+        }
+
+        .data-stat-page .amount {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .data-stat-page .empty-tip {
+            padding: 24px 0;
+            color: #7d9096;
+            text-align: center;
+        }
+
+        .data-stat-page .toolbar {
+            align-items: center;
+        }
+
+        .data-stat-page .toolbar-summary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .data-stat-page .col-index {
+            width: 40px;
+            min-width: 40px;
+            max-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            color: #5b7780;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container data-stat-page">
+        <div class="page-header">
+            <div class="page-title"><span class="glyphicon glyphicon-money"></span>{{ title }}</div>
+        </div>
+
+        <div class="toolbar">
+            <form method="get" class="filter-card">
+                <label for="customer_name">客户名称</label>
+                <input type="text" name="customer_name" id="customer_name" class="form-control"
+                       value="{{ selected_customer_name }}" placeholder="输入客户名称关键词">
+                <label for="salesperson">业务员</label>
+                <select name="salesperson" id="salesperson" class="form-control">
+                    <option value="">全部业务员</option>
+                    {% for sid, username in salespeople %}
+                        <option value="{{ sid }}" {% if selected_salesperson == sid %}selected{% endif %}>{{ username }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">查询</button>
+                {% if selected_salesperson or selected_customer_name %}<a class="btn btn-default" href="/chart/list/">重置</a>{% endif %}
+            </form>
+            <div class="stat-summary toolbar-summary">
+                <div class="summary-card warn">
+                    <span class="label">开票未付款</span>
+                    <span class="value">{{ invoiced_unpaid_count }} 单</span>
+                </div>
+                <div class="summary-card info">
+                    <span class="label">未开票未付款</span>
+                    <span class="value">{{ uninvoiced_unpaid_count }} 单</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-heading">
+                <span>开票未付款合同</span>
+                <span class="count"><span class="glyphicon glyphicon-file"></span>{{ invoiced_unpaid_count }}</span>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="col-index">#</th>
+                            <th>合同号</th>
+                            <th>合同日期</th>
+                            <th>客户名称</th>
+                            <th>业务员</th>
+                            <th class="amount">合同金额</th>
+                            <th class="amount">已开票</th>
+                            <th class="amount">已回款</th>
+                            <th class="amount">应收余额</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in invoiced_unpaid %}
+                            <tr>
+                                <td class="col-index">{{ forloop.counter }}</td>
+                                <td><a href="/contract/detail/{{ row.id }}">{{ row.contract_number }}</a></td>
+                                <td>{{ row.date|date:"Y-m-d" }}</td>
+                                <td>{{ row.customer.company_name }}</td>
+                                <td>{{ row.customer.saler.username }}</td>
+                                <td class="amount">{{ row.total_price|floatformat:2 }}</td>
+                                <td class="amount">{{ row.invoiced_amount|floatformat:2 }}</td>
+                                <td class="amount">{{ row.collected_amount|floatformat:2 }}</td>
+                                <td class="amount">{{ row.outstanding_balance|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="empty-tip">暂无开票未付款合同</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-heading">
+                <span>未开票未付款合同</span>
+                <span class="count"><span class="glyphicon glyphicon-inbox"></span>{{ uninvoiced_unpaid_count }}</span>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="col-index">#</th>
+                            <th>合同号</th>
+                            <th>合同日期</th>
+                            <th>客户名称</th>
+                            <th>业务员</th>
+                            <th class="amount">合同金额</th>
+                            <th class="amount">已开票</th>
+                            <th class="amount">已回款</th>
+                            <th class="amount">应收余额</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in uninvoiced_unpaid %}
+                            <tr>
+                                <td class="col-index">{{ forloop.counter }}</td>
+                                <td><a href="/contract/detail/{{ row.id }}">{{ row.contract_number }}</a></td>
+                                <td>{{ row.date|date:"Y-m-d" }}</td>
+                                <td>{{ row.customer.company_name }}</td>
+                                <td>{{ row.customer.saler.username }}</td>
+                                <td class="amount">{{ row.total_price|floatformat:2 }}</td>
+                                <td class="amount">0.00</td>
+                                <td class="amount">{{ row.collected_amount|floatformat:2 }}</td>
+                                <td class="amount">{{ row.outstanding_balance|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="empty-tip">暂无未开票未付款合同</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

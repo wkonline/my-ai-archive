@@ -1,0 +1,161 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block css %}
+    <style>
+        .task-page { margin-top: 4px; }
+        .task-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
+        .task-head h2 { display: inline-flex; align-items: center; gap: 9px; margin: 0; color: #17363e; font-size: 20px; font-weight: 700; }
+        .task-head h2 .glyphicon { color: #0a8387; }
+        .filter-card { margin-bottom: 14px; border: 1px solid #d8e5e7; border-radius: 8px; background: #fff; box-shadow: 0 8px 24px rgba(15,52,60,.07); }
+        .filter-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #e4eef0; background: #f8fcfc; }
+        .filter-title { display: inline-flex; align-items: center; gap: 7px; color: #23464f; font-size: 15px; font-weight: 700; }
+        .filter-title .glyphicon { color: #0d8f92; }
+        .filter-body { padding: 14px 16px 2px; }
+        .filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 14px; }
+        .filter-field label { display: block; margin-bottom: 6px; color: #4e6c74; font-size: 13px; font-weight: 600; }
+        .filter-field .form-control { height: 40px; border-radius: 6px; }
+        .filter-foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 12px 16px; border-top: 1px solid #e4eef0; background: #fbfdfe; }
+        .panel-list { border: 1px solid #d8e5e7; border-radius: 8px; background: #fff; box-shadow: 0 8px 22px rgba(15,52,60,.07); }
+        .panel-list .table { margin: 0; }
+        .group-card { margin-bottom: 16px; border: 1px solid #d8e5e7; border-radius: 8px; overflow: hidden; background: #fff; box-shadow: 0 8px 22px rgba(15,52,60,.07); }
+        .group-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #e4eef0; background: #f8fcfc; }
+        .group-title { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+        .group-number { color: #17363e; font-size: 15px; font-weight: 700; }
+        .badge-light { display: inline-block; padding: 4px 9px; border-radius: 999px; background: #eaf7f6; color: #086f78; font-size: 12px; font-weight: 700; }
+        .group-body .table { margin: 0; table-layout: fixed; }
+        .group-body .table th:nth-child(1) { width: 150px; }
+        .group-body .table th:nth-child(2) { width: 190px; }
+        .group-body .table th:nth-child(3) { width: 90px; }
+        .group-body .table th:nth-child(4) { width: 90px; }
+        .group-body .table th:nth-child(5) { width: 120px; }
+        .group-body .table th:nth-child(6) { width: 100px; }
+        .group-body .table th:nth-child(7) { width: 170px; }
+        .group-body .table td:nth-child(3),
+        .group-body .table td:nth-child(4) { text-align: center; }
+        .group-body .table > tbody > tr:last-child > td { border-bottom: 0; }
+        .row-actions { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+        @media (max-width: 991px) { .filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 640px) { .filter-grid { grid-template-columns: 1fr; } }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="task-page">
+        <div class="task-head">
+            <h2><span class="glyphicon glyphicon-send" aria-hidden="true"></span>派任务单</h2>
+            <div>
+                <a class="btn btn-success" href="/task/add/">
+                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>新派任务单
+                </a>
+            </div>
+        </div>
+
+        <section class="filter-card">
+            <div class="filter-head">
+                <span class="filter-title"><span class="glyphicon glyphicon-search" aria-hidden="true"></span>检索条件</span>
+                <a class="btn btn-default btn-xs" href="/task/list/">清空条件</a>
+            </div>
+            <form method="get">
+                <div class="filter-body">
+                    <div class="filter-grid">
+                        <div class="filter-field">
+                            <label>开始日期</label>
+                            <input type="date" name="start_date" class="form-control" value="{{ start_date|default:'' }}">
+                        </div>
+                        <div class="filter-field">
+                            <label>结束日期</label>
+                            <input type="date" name="end_date" class="form-control" value="{{ end_date|default:'' }}">
+                        </div>
+                        <div class="filter-field">
+                            <label>项目号 / 合同号</label>
+                            <input type="text" name="contract_number" class="form-control" placeholder="输入项目号或合同号"
+                                   value="{{ contract_number|default:'' }}">
+                        </div>
+                        <div class="filter-field">
+                            <label>产品名称 / 型号</label>
+                            <input type="text" name="keyword" class="form-control" placeholder="输入产品名称或型号"
+                                   value="{{ keyword|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-foot">
+                    <a class="btn btn-default" href="/task/list/">重置</a>
+                    <button class="btn btn-info" type="submit">
+                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>查询
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        {% for group in task_groups %}
+            <div class="group-card">
+                <div class="group-head">
+                    <div class="group-title">
+                        <span class="group-number">{% if group.is_temp %}临时计划{% else %}{{ group.contract_number }}{% endif %}</span>
+                    </div>
+                    <span class="badge-light">{{ group.rows|length }} 项产品</span>
+                </div>
+                <div class="group-body">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>产品名称</th>
+                                <th>产品型号</th>
+                                <th>计划数量</th>
+                                <th>下单数量</th>
+                                <th>下发日期</th>
+                                <th>负责人</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in group.rows %}
+                                <tr>
+                                    <td>{{ row.productcategory }}</td>
+                                    <td>{{ row.product }}</td>
+                                    <td>{{ row.contract.quantity }}</td>
+                                    <td>{{ row.quantity }}</td>
+                                    <td>{{ row.date|date:"Y-m-d" }}</td>
+                                    <td>{{ row.production_man }}</td>
+                                    <td>
+                                        <div class="row-actions">
+                                            <a class="btn btn-primary btn-xs" href="/task/{{ row.id }}/edit/">
+                                                <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>编辑
+                                            </a>
+                                            <a class="btn btn-danger btn-xs" onclick="showDeleteModal({{ row.id }});">
+                                                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>删除
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% empty %}
+            <div class="panel panel-default">
+                <div class="panel-body text-center">暂无任务单数据</div>
+            </div>
+        {% endfor %}
+
+        <div class="clearfix">
+            <ul class="pagination">{{ page_string }}</ul>
+        </div>
+    </div>
+    {% include 'delete.html' %}
+    <script>
+        function confirmDelete() {
+            $.ajax({
+                url: '{% url 'task_delete' %}',
+                type: 'GET',
+                data: {'nid': delete_id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                        location.reload();
+                    }
+                }
+            });
+        }
+    </script>
+{% endblock %}

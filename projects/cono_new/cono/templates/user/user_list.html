@@ -1,0 +1,86 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+
+    <div class="m-t-10">
+        <a class="btn btn-success" href="/user/add/">
+            <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+            新建用户
+        </a>
+    </div>
+    <div class="panel panel-default m-t-10">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            {{ title }}
+        </div>
+
+        <!-- Table -->
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>姓名</th>
+                <th>性别</th>
+                <th>身份证号</th>
+                <th>电话</th>
+                <th>地址</th>
+                <th>入职时间</th>
+                <th>所属部门</th>
+                <th>所属角色</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+                <tr>
+                    <th>{{ obj.id }}</th>
+                    <td>{{ obj.username }}</td>
+                    <td>{{ obj.get_gender_display }}</td>
+                    <td>{{ obj.id_number }}</td>
+                    <td>{{ obj.phone }}</td>
+                    <td>{{ obj.address }}</td>
+                    <td>{{ obj.create_date|date:"Y-m-d" }}</td>
+                    <td>{{ obj.department }}</td>
+                    <td>{{ obj.role }}</td>
+                    <td>
+                        {% if request.info_dict_role == 'admin' %}
+                            <a class="btn btn-warning btn-xs" href="/auth/user/{{ obj.id }}/permission/">
+                                <span class="glyphicon glyphicon-lock" aria-hidden="true"></span>权限
+                            </a>
+                        {% endif %}
+                        <a class="btn btn-primary btn-xs" href="/user/{{ obj.id }}/edit/"><span
+                                class="glyphicon glyphicon-wrench m-r-5" aria-hidden="true"></span>编辑</a>
+<a class="btn btn-danger btn-xs" onclick="showDeleteModal({{ obj.id }});"><span class="glyphicon glyphicon-trash m-r-5" aria-hidden="true"></span>删除</a>
+                    </td>
+                </tr>
+            {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+    <div class="clearfix">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+    {% include 'delete.html' %}
+<script>
+        function confirmDelete() {
+            $.ajax({
+                url: '{% url 'user_delete' %}',
+                type: 'GET',
+                data: {'nid': delete_id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                        location.reload()
+                    } else {
+                        (data.error)
+                    }
+                }
+            })
+        }
+</script>
+{% endblock %}

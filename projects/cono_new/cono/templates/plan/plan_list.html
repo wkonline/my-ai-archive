@@ -1,0 +1,466 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block css %}
+    <style>
+        .plan-page-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 18px 0 12px;
+        }
+
+        .plan-page-head h2 {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #17363e;
+            letter-spacing: 0;
+        }
+
+        .plan-page-head h2::before {
+            content: "";
+            width: 4px;
+            height: 20px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, #19b4ad, #0b7486);
+        }
+
+        .plan-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .plan-filter-card {
+            overflow: hidden;
+            margin-bottom: 14px;
+            border: 1px solid #d8e5e7;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(15, 52, 60, .07);
+        }
+
+        .plan-filter-card form[method="get"] {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .plan-filter-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 13px 16px;
+            border-bottom: 1px solid #e4eef0;
+            background: #f8fcfc;
+        }
+
+        .plan-filter-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #23464f;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .plan-filter-title .glyphicon {
+            color: #0d8f92;
+            font-size: 14px;
+        }
+
+        .filter-clear {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #6a838b;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .filter-clear:hover {
+            color: #c0453f;
+            text-decoration: none;
+        }
+
+        .plan-filter-body {
+            padding: 16px 16px 14px;
+        }
+
+        .plan-filter-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 12px 14px;
+        }
+
+        .plan-field {
+            grid-column: span 3;
+        }
+
+        .plan-field label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 7px;
+            color: #4e6c74;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .plan-field label .glyphicon {
+            color: #72a2a6;
+            font-size: 12px;
+        }
+
+        .plan-field input.form-control {
+            width: 100%;
+            height: 40px;
+            padding: 0 11px;
+            border: 1px solid #cedde0;
+            border-radius: 6px;
+            background: #ffffff;
+            box-shadow: inset 0 1px 2px rgba(18, 50, 58, .04);
+            color: #203c44;
+            font-size: 14px;
+        }
+
+        .plan-field input.form-control:focus {
+            border-color: #36a9a5;
+            box-shadow: 0 0 0 3px rgba(45, 187, 178, .14);
+            outline: none;
+        }
+
+        .status-row {
+            grid-column: span 12;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 0 16px;
+            border-top: 1px dashed #dce8ea;
+            margin-top: 2px;
+        }
+
+        .status-chip {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .status-chip input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+
+        .chip-ui {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            height: 32px;
+            padding: 0 13px;
+            border: 1px solid #c8d9dc;
+            border-radius: 16px;
+            background: #ffffff;
+            color: #506970;
+            cursor: pointer;
+            font-size: 13px;
+            user-select: none;
+        }
+
+        .chip-ui::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border: 1px solid #9aadb2;
+            border-radius: 50%;
+        }
+
+        .status-chip input:checked + .chip-ui {
+            border-color: #25a49e;
+            background: #eaf9f8;
+            color: #0b6a6d;
+        }
+
+        .status-chip input:checked + .chip-ui::before {
+            border-color: #159c96;
+            background: #159c96;
+            box-shadow: 0 0 0 3px rgba(21, 156, 150, .16);
+        }
+
+        .plan-filter-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 13px 16px;
+            border-top: 1px solid #e4eef0;
+            background: #fbfdfe;
+        }
+
+        .plan-filter-actions .btn {
+            min-width: 92px;
+        }
+
+        .filter-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            height: 40px;
+            padding: 0 16px;
+            border: 1px solid #c8d8da;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #4a666e;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+        }
+
+        .filter-btn:hover {
+            color: #0b6e75;
+            text-decoration: none;
+        }
+
+        .filter-btn.is-search {
+            border-color: #0b7b82;
+            background: linear-gradient(135deg, #0e928e, #0a6f78);
+            color: #ffffff;
+            box-shadow: 0 7px 16px rgba(10, 112, 116, .2);
+        }
+
+        .filter-btn.is-search:hover {
+            color: #ffffff;
+            filter: brightness(1.06);
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 991px) {
+            .plan-field {
+                grid-column: span 6;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .plan-field {
+                grid-column: span 12;
+            }
+
+            .plan-actions {
+                width: 100%;
+            }
+
+            .plan-actions .btn {
+                flex: 1 1 0;
+            }
+
+            .plan-filter-actions {
+                justify-content: stretch;
+            }
+
+            .plan-filter-actions .btn {
+                flex: 1 1 0;
+            }
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="plan-page-head">
+        <h2>生产计划</h2>
+        <div class="plan-actions">
+            <a class="btn btn-success" href="/plan/add/">
+                <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+                新增登记
+            </a>
+            <a class="btn btn-info" href="{% url 'plan_download_excel' %}">
+                <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                数据下载
+            </a>
+        </div>
+    </div>
+
+    <section class="plan-filter-card">
+        <div class="plan-filter-head">
+            <span class="plan-filter-title">
+                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                检索条件
+            </span>
+            <a class="filter-clear" href="javascript:void(0);" onclick="clearFilter()">
+                <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+                清空条件
+            </a>
+        </div>
+        <form method="get" id="planFilterForm">
+            <div class="plan-filter-body">
+                <div class="plan-filter-grid">
+                    <div class="plan-field" style="grid-column: span 2;">
+                        <label for="id_plan_start">
+                            <span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>
+                            开始日期
+                        </label>
+                        <input id="id_plan_start" type="date" name="start_date" class="form-control"
+                               value="{{ start_date|default:'' }}">
+                    </div>
+                    <div class="plan-field" style="grid-column: span 2;">
+                        <label for="id_plan_end">
+                            <span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>
+                            结束日期
+                        </label>
+                        <input id="id_plan_end" type="date" name="end_date" class="form-control"
+                               value="{{ end_date|default:'' }}">
+                    </div>
+                    <div class="plan-field" style="grid-column: span 7;">
+                        <label for="id_plan_keyword">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                            快速检索
+                        </label>
+                        <input id="id_plan_keyword" type="text" name="keyword" class="form-control"
+                               placeholder="请输入产品名称、型号或合同号" value="{{ keyword|default:'' }}">
+                    </div>
+                    <div class="plan-field" style="grid-column: span 1; display: flex; align-items: center;">
+                        <button class="filter-btn is-search" type="submit" style="width: 100%; height: 40px;">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span> 查询
+                        </button>
+                    </div>
+                </div>
+                <!-- 快捷筛选 -->
+                <div class="plan-filter-quick" style="padding: 10px 20px; border-top: 1px solid #e4eef0; background: #f8fcfc;">
+                    <span style="color: #6a8086; font-size: 13px; margin-right: 10px;">快捷筛选：</span>
+                    <a href="?completed=False" class="filter-btn {% if completed == 'False' %}is-search{% endif %}" style="height: 32px; padding: 0 12px; font-size: 13px;">
+                        <span class="glyphicon glyphicon-time" aria-hidden="true"></span> 未完工
+                    </a>
+                    <a href="?completed=True" class="filter-btn {% if completed == 'True' %}is-search{% endif %}" style="height: 32px; padding: 0 12px; font-size: 13px; margin-left: 8px;">
+                        <span class="glyphicon glyphicon-ok" aria-hidden="true"></span> 已完结
+                    </a>
+                    <a href="." class="filter-btn" style="height: 32px; padding: 0 12px; font-size: 13px; margin-left: 8px;">
+                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span> 全部
+                    </a>
+                </div>
+            </div>
+        </form>
+    </section>
+    {% for group in plan_groups %}
+    <div class="panel panel-default m-t-10">
+        <div class="panel-heading clearfix">
+            <div class="float-left"><span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+                项目编号：{{ group.contract_number }}
+            </div>
+        </div>
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th style="width:40px">#</th>
+                <th>产品名称</th>
+                <th>型号</th>
+                <th>数量</th>
+                <th>单位</th>
+                <th>生效日期</th>
+                <th>交货日期</th>
+                <th>制单人</th>
+                <th>生产状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in group.rows %}
+            <tr>
+                <td rowspan="2" class="text-center align-middle">{{ forloop.counter }}</td>
+                <td>{{ obj.productcategory.name }}</td>
+                <td>{{ obj.product.model }}</td>
+                <td>{{ obj.quantity }}</td>
+                <td>{{ obj.get_unit_display }}</td>
+                <td>{{ obj.effective_date }}</td>
+                <td>{{ obj.delivery_date }}</td>
+                <td>{{ obj.production_man }}</td>
+                <td>
+                    {% if obj.get_completed_status_display == "待生产" %}
+                        <span style="color: red;">{{ obj.get_completed_status_display }}</span>
+                    {% elif obj.get_completed_status_display == "生产中" %}
+                        <span style="color: lawngreen;">{{ obj.get_completed_status_display }}</span>
+                    {% else %}
+                        {{ obj.get_completed_status_display }}
+                    {% endif %}
+                </td>
+                <td>
+                    <a class="btn btn-primary btn-xs" href="/plan/{{ obj.id }}/edit/"><span class="glyphicon glyphicon-wrench m-r-5" aria-hidden="true"></span>编辑</a>
+                    <a class="btn btn-danger btn-xs" onclick="showDeleteModal({{ obj.id }});"><span class="glyphicon glyphicon-trash m-r-5" aria-hidden="true"></span>删除</a>
+                </td>
+            </tr>
+            <tr style="background:#f9f9f9;">
+                <td colspan="10" style="padding:8px 12px;">
+                    <strong>配置信息：</strong>{{ obj.configuration|default:'无' }}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% empty %}
+    <div class="panel panel-default">
+        <div class="panel-body text-center">暂无生产计划数据</div>
+    </div>
+    {% endfor %}
+    <div class="clearfix">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+    {% include 'delete.html' %}
+    <script>
+        function confirmDelete() {
+            $.ajax({
+                url: '{% url 'plan_delete' %}',
+                type: 'GET',
+                data: {'nid': delete_id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                        location.reload()
+                    } else {
+                        (data.error)
+                    }
+                }
+            })
+        }
+    </script>
+    <script>
+        $(document).ready(function () {
+            $('#submit-plan-form').click(function () {
+                var form = $('#plan-form');
+                $.ajax({
+                    url: '{% url "plan_list" %}',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (data) {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            console.log(data.errors);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(error);
+                    }
+                });
+            });
+        });
+    </script>
+    <script>
+        function clearFilter() {
+            $('#planFilterForm')[0].reset();
+            $('#planFilterForm').submit();
+        }
+    </script>
+{% endblock %}

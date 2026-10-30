@@ -1,0 +1,209 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block css %}
+    <style>
+        .vault-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+        .vault-search { width: 320px; max-width: 100%; }
+        .vault-table td { vertical-align: middle !important; }
+        .vault-name { color: #17363e; font-weight: 700; }
+        .vault-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #eaf7f6; color: #086f78; font-size: 12px; font-weight: 700; }
+        .vault-remark { max-width: 260px; color: #5c747c; word-break: break-all; }
+        .vault-link { color: #0b8182; word-break: break-all; }
+        .pwd-text { display: inline-block; min-width: 62px; letter-spacing: 1px; color: #34505a; }
+        .vault-actions { white-space: nowrap; }
+        .vault-empty { padding: 26px; color: #8ea3a9; text-align: center; }
+        .copy-tip { position: fixed; left: 50%; top: 18px; transform: translateX(-50%); z-index: 3000; display: none; padding: 7px 16px; border-radius: 4px; background: #0b8182; color: #fff; font-size: 13px; }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="vault-head">
+        <a class="btn btn-success" href="/account_vault/add/">
+            <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>
+            新增平台账号
+        </a>
+        <form method="get" class="vault-search">
+            <div class="input-group">
+                <input type="text" name="keyword" value="{{ keyword }}" class="form-control"
+                       placeholder="平台名称 / 网址 / 账号 / 备注...">
+                <span class="input-group-btn">
+                    <button class="btn btn-info" type="submit">
+                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    </button>
+                </span>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel panel-default m-t-10">
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-lock" aria-hidden="true"></span>
+            {{ title }}（共 {{ total_count }} 条记录）
+        </div>
+
+        <table class="table table-bordered vault-table">
+            <thead>
+            <tr>
+                <th style="width: 56px;">序号</th>
+                <th style="width: 110px;">分类</th>
+                <th>平台名称</th>
+                <th>网址</th>
+                <th>登录账号</th>
+                <th style="width: 190px;">登录密码</th>
+                <th>备注</th>
+                <th style="width: 170px;">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for obj in queryset %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td>{% if obj.category %}<span class="vault-tag">{{ obj.category }}</span>{% endif %}</td>
+                    <td class="vault-name">{{ obj.name }}</td>
+                    <td>
+                        {% if obj.url %}
+                            <a class="vault-link" href="{{ obj.url }}" target="_blank" rel="noopener">{{ obj.url }}</a>
+                            <a class="btn btn-default btn-xs" data-copy="{{ obj.url }}" title="复制网址">
+                                <span class="glyphicon glyphicon-duplicate" aria-hidden="true"></span>
+                            </a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if obj.account %}
+                            <span>{{ obj.account }}</span>
+                            <a class="btn btn-default btn-xs" data-copy="{{ obj.account }}" title="复制账号">
+                                <span class="glyphicon glyphicon-duplicate" aria-hidden="true"></span>
+                            </a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if can_view_password %}
+                            <span class="pwd-text" id="pwd-text-{{ obj.id }}">••••••</span>
+                            <a class="btn btn-default btn-xs" data-password-url="{% url 'account_vault_password' obj.id %}"
+                               data-target="pwd-text-{{ obj.id }}" title="查看密码">
+                                <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                            </a>
+                            <a class="btn btn-default btn-xs" data-password-url="{% url 'account_vault_password' obj.id %}"
+                               data-copy-password="1" title="复制密码">
+                                <span class="glyphicon glyphicon-duplicate" aria-hidden="true"></span>
+                            </a>
+                        {% else %}
+                            <span class="text-muted">无查看权限</span>
+                        {% endif %}
+                    </td>
+                    <td><div class="vault-remark" title="{{ obj.remark }}">{{ obj.remark|default:""|truncatechars:60 }}</div></td>
+                    <td class="vault-actions">
+                        <a class="btn btn-primary btn-xs" href="/account_vault/{{ obj.id }}/edit/">
+                            <span class="glyphicon glyphicon-wrench m-r-5" aria-hidden="true"></span>编辑
+                        </a>
+                        <a class="btn btn-danger btn-xs" onclick="showDeleteModal({{ obj.id }});">
+                            <span class="glyphicon glyphicon-trash m-r-5" aria-hidden="true"></span>删除
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8" class="vault-empty">
+                        还没有记录，点左上角“新增平台账号”把网址、账号、密码存进来吧。
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="clearfix">
+        <ul class="pagination">
+            {{ page_string }}
+        </ul>
+    </div>
+
+    <div class="copy-tip" id="copyTip"></div>
+    {% include 'delete.html' %}
+    <datalist id="category_options">
+        {% for item in category_options %}
+            <option value="{{ item }}"></option>
+        {% endfor %}
+    </datalist>
+{% endblock %}
+{% block js %}
+    <script>
+        function showCopyTip(message) {
+            var $tip = $('#copyTip');
+            $tip.text(message).fadeIn(120);
+            clearTimeout(window.copyTipTimer);
+            window.copyTipTimer = setTimeout(function () {
+                $tip.fadeOut(120);
+            }, 1600);
+        }
+
+        function copyText(text, message) {
+            if (!text) {
+                showCopyTip('内容为空');
+                return;
+            }
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(function () {
+                    showCopyTip(message);
+                }).catch(function () {
+                    fallbackCopy(text, message);
+                });
+                return;
+            }
+            fallbackCopy(text, message);
+        }
+
+        function fallbackCopy(text, message) {
+            var input = document.createElement('textarea');
+            input.value = text;
+            input.setAttribute('readonly', 'readonly');
+            input.style.position = 'fixed';
+            input.style.top = '-1000px';
+            document.body.appendChild(input);
+            input.select();
+            try {
+                document.execCommand('copy');
+                showCopyTip(message);
+            } catch (err) {
+                showCopyTip('复制失败，请手动选择复制');
+            }
+            document.body.removeChild(input);
+        }
+
+        $(function () {
+            $(document).on('click', '[data-copy]', function () {
+                copyText($(this).attr('data-copy'), '已复制');
+            });
+
+            $(document).on('click', '[data-password-url]', function () {
+                var $btn = $(this);
+                $.get($btn.attr('data-password-url'), function (data) {
+                    if (!data.status) {
+                        showCopyTip(data.error || '读取失败');
+                        return;
+                    }
+                    if (!$btn.attr('data-copy-password')) {
+                        $('#' + $btn.attr('data-target')).text(data.password || '（空）');
+                        return;
+                    }
+                    copyText(data.password, '密码已复制');
+                });
+            });
+        });
+
+        function confirmDelete() {
+            $.ajax({
+                url: '{% url 'account_vault_delete' %}',
+                type: 'GET',
+                data: {'nid': delete_id},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                        location.reload()
+                    } else {
+                        (data.error)
+                    }
+                }
+            })
+        }
+    </script>
+{% endblock %}

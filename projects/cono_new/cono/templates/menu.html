@@ -1,0 +1,4 @@
+{% for item in user_menu_list %}
+    <li class="{{ item.class }} m-r-10 m-t-10"><a href="{{ item.url }}list/"><span class="glyphicon {{ item.icon }} m-r-5" aria-hidden="true"></span>{{ item.title }} </a></li>
+{% endfor %}
+<li class="{% if request.path_info == '/' %}active{% endif %} m-r-10 m-t-10"><a href="/"><span class="glyphicon glyphicon-home m-r-5" aria-hidden="true"></span>返回首页</a></li>

@@ -1,0 +1,244 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+{% block css %}
+    <style>
+        .plan-add-wrap { margin: 4px 0 10px; }
+        .add-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+        .add-head h2 { display: inline-flex; align-items: center; gap: 9px; margin: 0; color: #17363e; font-size: 20px; font-weight: 700; }
+        .add-head h2 .glyphicon { color: #0a8387; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid #c9d8da; border-radius: 6px; background: #fff; color: #45656d; font-size: 13px; font-weight: 600; text-decoration: none; }
+        .back-link:hover { border-color: #83c2be; color: #0a7076; text-decoration: none; }
+        .base-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .base-field label { display: block; margin-bottom: 7px; color: #4e6c74; font-size: 13px; font-weight: 600; }
+        .base-field .form-control { height: 42px; border-radius: 6px; }
+        .product-table-wrap { overflow-x: auto; border: 1px solid #dde8ea; border-radius: 6px; background: #fff; }
+        .product-table { width: 100%; min-width: 980px; margin: 0; table-layout: fixed; }
+        .product-table th, .product-table td { vertical-align: middle; }
+        .product-table textarea.form-control { min-height: 64px; resize: vertical; }
+        .footer-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+        .plan-tip { margin-top: 10px; color: #658088; font-size: 13px; }
+        @media (max-width: 767px) { .base-grid { grid-template-columns: 1fr; } }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="plan-add-wrap">
+        <div class="add-head">
+            <h2><span class="glyphicon glyphicon-cog" aria-hidden="true"></span>{{ title }}</h2>
+            <a class="back-link" href="/plan/list/">
+                <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>返回生产计划
+            </a>
+        </div>
+
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="panel panel-default">
+                <div class="panel-heading">项目信息</div>
+                <div class="panel-body">
+                    <div class="base-grid">
+                        <div class="base-field">
+                            <label>项目号</label>
+                            <select name="contract" id="id_contract" class="form-control" required>
+                                <option value="">请选择项目编号</option>
+                                {% for item in contract_list %}
+                                    <option value="{{ item.id }}"
+                                            {% if form_data.contract == item.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ item.contract_number }}
+                                    </option>
+                                {% endfor %}
+                                {% if placeholder_contract %}
+                                    <option value="reserve"
+                                            {% if form_data.contract == 'reserve' %}selected{% endif %}>
+                                        备用编号（无合同临时计划）
+                                    </option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="base-field">
+                            <label>生产生效日期</label>
+                            <input type="date" name="effective_date" id="effective_date" class="form-control"
+                                   value="{{ form_data.effective_date|default:'' }}" required>
+                        </div>
+                        <div class="base-field">
+                            <label>交货日期</label>
+                            <input type="date" name="delivery_date" id="delivery_date" class="form-control"
+                                   value="{{ form_data.delivery_date|default:'' }}" required>
+                        </div>
+                    </div>
+                    <div class="form-group" id="reserveGroup" style="display:none;">
+                        <label>备用编号</label>
+                        <input type="text" name="contract_reserve" id="contract_reserve" class="form-control"
+                               value="{{ form_data.contract_reserve|default:'' }}"
+                               placeholder="输入备用编号，例如 BY20260910">
+                    </div>
+                    <p class="plan-tip">选择项目号后，将自动读取该项目下的合同产品，并在下方展开明细。</p>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">产品明细</div>
+                <div class="panel-body">
+                    <div class="clearfix" style="margin-bottom:10px;">
+                        <button type="button" id="addReserveRow" class="btn btn-info btn-sm float-right" style="display:none;">
+                            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>添加产品行
+                        </button>
+                    </div>
+                    <div class="product-table-wrap">
+                        <table class="table product-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:180px;">产品名称</th>
+                                    <th style="width:220px;">产品型号</th>
+                                    <th style="width:120px;">数量</th>
+                                    <th style="width:120px;">单位</th>
+                                    <th>详细配置</th>
+                                    <th style="width:70px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productItems">
+                                <tr>
+                                    <td colspan="6" class="text-center" style="padding:22px;color:#8a9ca2;">
+                                        请先选择项目号
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-actions">
+                <a class="btn btn-default" href="/plan/list/">取消</a>
+                <button type="submit" class="btn btn-success">
+                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>保存生产计划
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+{% block js %}
+    <script>
+        var unitOptions = [
+            {% for value, label in unit_choices %}
+                {value: {{ value }}, label: '{{ label }}'},
+            {% endfor %}
+        ];
+
+        var reserveCategories = [
+            {% for cat in categorys %}
+                {id: {{ cat.id }}, name: '{{ cat.name|escapejs }}'},
+            {% endfor %}
+        ];
+
+        function unitSelectHtml() {
+            var html = '';
+            $.each(unitOptions, function (i, item) {
+                html += '<option value="' + item.value + '">' + item.label + '</option>';
+            });
+            return html;
+        }
+
+        function addReserveRow() {
+            var catHtml = '<option value="">请选择产品名称</option>';
+            $.each(reserveCategories, function (i, cat) {
+                catHtml += '<option value="' + cat.id + '">' + cat.name + '</option>';
+            });
+            var $row = $(
+                '<tr>' +
+                '<td><select name="productcategory" class="form-control row-category">' + catHtml + '</select></td>' +
+                '<td><select name="product" class="form-control row-product"><option value="">请先选择产品名称</option></select></td>' +
+                '<td><input type="number" min="1" name="quantity" class="form-control" value="1"></td>' +
+                '<td><select name="unit" class="form-control">' + unitSelectHtml() + '</select></td>' +
+                '<td><textarea name="configuration" class="form-control" placeholder="填写详细配置要求"></textarea></td>' +
+                '<td class="text-center"><button type="button" class="btn btn-danger btn-xs row-remove">删除</button></td>' +
+                '</tr>'
+            );
+            $('#productItems').append($row);
+        }
+
+        function renderProducts(products) {
+            var $body = $('#productItems');
+            $body.empty();
+            if (!products || !products.length) {
+                $body.append('<tr><td colspan="6" class="text-center" style="padding:22px;color:#8a9ca2;">该项目暂无可计划的产品</td></tr>');
+                return;
+            }
+            $.each(products, function (index, product) {
+                var unitHtml = '';
+                $.each(unitOptions, function (i, item) {
+                    unitHtml += '<option value="' + item.value + '">' + item.label + '</option>';
+                });
+                var $row = $(
+                    '<tr>' +
+                    '<td><input class="form-control" value="' + (product.category__name || '') + '" readonly>' +
+                    '<input type="hidden" name="productcategory" value="' + product.category_id + '"></td>' +
+                    '<td><input class="form-control" value="' + (product.product__model || '') + '" readonly>' +
+                    '<input type="hidden" name="product" value="' + product.product_id + '"></td>' +
+                    '<td><input type="number" min="1" name="quantity" class="form-control" value="' + (product.quantity || 1) + '"></td>' +
+                    '<td><select name="unit" class="form-control">' + unitHtml + '</select></td>' +
+                    '<td><textarea name="configuration" class="form-control" placeholder="填写详细配置要求"></textarea></td>' +
+                    '<td class="text-center"><button type="button" class="btn btn-danger btn-xs row-remove">删除</button></td>' +
+                    '</tr>'
+                );
+                $body.append($row);
+            });
+        }
+
+        $('#productItems').on('change', '.row-category', function () {
+            var $row = $(this).closest('tr');
+            var categoryId = $(this).val();
+            var $product = $row.find('.row-product');
+            $product.empty().append('<option value="">请选择产品型号</option>');
+            if (!categoryId) return;
+            $.ajax({
+                url: '{% url 'get_productcategory_product' %}',
+                type: 'GET',
+                data: {productcategory_id: categoryId},
+                dataType: 'json',
+                success: function (data) {
+                    $.each(data, function (index, product) {
+                        $product.append($('<option>', {
+                            value: product.id,
+                            text: product.model
+                        }));
+                    });
+                }
+            });
+        });
+
+        $('#productItems').on('click', '.row-remove', function () {
+            $(this).closest('tr').remove();
+        });
+
+        $(function () {
+            $('#id_contract').change(function () {
+                var contractId = $(this).val();
+                if (contractId === 'reserve') {
+                    $('#reserveGroup').show();
+                    $('#addReserveRow').show();
+                    $('#productItems').empty();
+                    addReserveRow();
+                    return;
+                } else {
+                    $('#reserveGroup').hide();
+                    $('#addReserveRow').hide();
+                }
+                if (!contractId) {
+                    renderProducts([]);
+                    return;
+                }
+                $.ajax({
+                    url: '{% url 'plan_contract_products' %}',
+                    type: 'GET',
+                    data: {contract_id: contractId},
+                    dataType: 'json',
+                    success: renderProducts
+                });
+            });
+        });
+    </script>
+{% endblock %}

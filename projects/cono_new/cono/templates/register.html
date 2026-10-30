@@ -1,0 +1,256 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>科诺智能业务平台 - 注册</title>
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-3.4.1/css/bootstrap.min.css' %}">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #eef5f6;
+            color: #203c44;
+            font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .register-stage {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 32px 16px;
+            background:
+                linear-gradient(150deg, rgba(5, 25, 32, .08), rgba(13, 64, 64, .12)),
+                url("{% static 'img/bg.png' %}") center/cover no-repeat;
+        }
+
+        .register-card {
+            width: min(780px, 100%);
+            overflow: hidden;
+            border: 1px solid #d5e4e6;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 22px 60px rgba(8, 31, 38, .18);
+        }
+
+        .register-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            padding: 22px 28px;
+            border-bottom: 1px solid #e3edef;
+            background: #f8fcfc;
+        }
+
+        .register-head .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .register-head img {
+            height: 30px;
+            width: auto;
+        }
+
+        .register-head h1 {
+            margin: 0;
+            color: #17363e;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        .register-head a {
+            color: #0a777b;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .register-head a:hover {
+            color: #075f63;
+            text-decoration: underline;
+        }
+
+        .register-body {
+            padding: 24px 28px 28px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 14px 16px;
+        }
+
+        .field {
+            grid-column: span 6;
+        }
+
+        .field.code-field {
+            grid-column: span 6;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            color: #45666e;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .field input.form-control,
+        .field select.form-control {
+            width: 100%;
+            height: 40px;
+            padding: 0 11px;
+            border: 1px solid #cedde0;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #203c44;
+            font-size: 14px;
+            box-shadow: inset 0 1px 2px rgba(18, 50, 58, .04);
+        }
+
+        .field input.form-control:focus,
+        .field select.form-control:focus {
+            border-color: #36a9a5;
+            box-shadow: 0 0 0 3px rgba(45, 187, 178, .14);
+            outline: none;
+        }
+
+        .field-error {
+            display: block;
+            margin-top: 6px;
+            color: #c04a42;
+            font-size: 12px;
+        }
+
+        .captcha-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 142px;
+            gap: 10px;
+        }
+
+        .captcha-row .form-control {
+            height: 40px;
+        }
+
+        .captcha-box {
+            height: 40px;
+            overflow: hidden;
+            border: 1px solid #cedde0;
+            border-radius: 6px;
+            background: #ffffff;
+            cursor: pointer;
+        }
+
+        .captcha-box img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid #e7eff1;
+        }
+
+        .form-actions .btn {
+            min-width: 120px;
+        }
+
+        @media (max-width: 640px) {
+            .register-stage {
+                padding: 12px 8px;
+            }
+
+            .register-body {
+                padding: 18px 16px 22px;
+            }
+
+            .field,
+            .field.code-field {
+                grid-column: span 12;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="register-stage">
+    <section class="register-card">
+        <header class="register-head">
+            <div class="brand">
+                <img src="{% static 'img/logo.png' %}" alt="洛阳科诺">
+                <h1>注册账号</h1>
+            </div>
+            <a href="/login/">返回登录</a>
+        </header>
+        <div class="register-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="form-grid">
+                    {% for field in form %}
+                        {% if field.name != 'code' %}
+                            <div class="field">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                <span class="field-error">{{ field.errors.0 }}</span>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    <div class="field code-field">
+                        <label for="{{ form.code.id_for_label }}">验证码</label>
+                        <div class="captcha-row">
+                            <div>
+                                {{ form.code }}
+                            </div>
+                            <button type="button" class="captcha-box" id="captcha-button" aria-label="刷新验证码">
+                                <img id="image_code" src="/image/code/" alt="验证码">
+                            </button>
+                        </div>
+                        <span class="field-error">{{ form.code.errors.0 }}</span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <a class="btn btn-default" href="/login/">
+                        <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+                        返回登录
+                    </a>
+                    <button class="btn btn-success" type="submit">
+                        <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+                        注册账号
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+<script>
+    function refreshCaptcha() {
+        var image = document.getElementById('image_code');
+        image.src = '/image/code/?r=' + Date.now();
+    }
+
+    document.getElementById('captcha-button').addEventListener('click', refreshCaptcha);
+    document.getElementById('image_code').addEventListener('click', function (event) {
+        event.stopPropagation();
+        refreshCaptcha();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+     <div class=" clearfix">
+        <div class="float-left">
+            <a class="btn btn-success" href="/database/restore/list/">
+                <span class="glyphicon glyphicon-folder-open m-r-5" aria-hidden="true"></span>
+                数据还原
+            </a>
+        </div>
+     </div>
+    <div class="panel panel-default m-t-10">
+        <div class="panel-heading">
+            <h3 class="panel-title">{{ title }}</h3>
+        </div>
+        <div class="panel-body">
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <button class="btn btn-info" type="submit">开始备份</button>
+            </form>
+            <p class="m-t-10" style="color: #9d9d9d"> 备份文件存放在：{{ backup_dir }}</p>
+            <div class="alert alert-info m-t-10" style="margin-bottom: 0">
+                <p style="margin-bottom: 5px">
+                    <span class="glyphicon glyphicon-time" aria-hidden="true"></span>
+                    <strong>自动备份</strong>：每天 {{ auto_backup_hour }}:00 自动备份一次，
+                    自动备份保留最近 {{ auto_backup_keep }} 份
+                </p>
+                {% if auto_backup_latest %}
+                    <p style="margin-bottom: 0">
+                        最近一次自动备份：{{ auto_backup_latest.time }}
+                        （{{ auto_backup_latest.name }}，{{ auto_backup_latest.size }} 字节）
+                        {% if auto_backup_done_today %}· 今天已完成{% endif %}
+                    </p>
+                {% else %}
+                    <p style="margin-bottom: 0">还没有自动备份记录，首次自动备份将在下一个 {{ auto_backup_hour }}:00 执行。</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

@@ -1,0 +1,237 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <style>
+        .collection-edit-wrap { margin: 4px 0 10px; }
+
+        .edit-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .edit-head h2 {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0;
+            color: #17363e;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .edit-head h2 .glyphicon {
+            color: #0a8387;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 36px;
+            padding: 0 14px;
+            border: 1px solid #c9d8da;
+            border-radius: 6px;
+            background: #fff;
+            color: #45656d;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            border-color: #83c2be;
+            color: #0a7076;
+            text-decoration: none;
+        }
+
+        .summary-card {
+            border: 1px solid #dce8ea;
+            border-radius: 10px;
+            padding: 16px;
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(14, 68, 76, .07);
+        }
+
+        .summary-label {
+            color: #5f7d85;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .summary-value {
+            margin-top: 6px;
+            color: #17363e;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .summary-value.text-teal {
+            color: #0a7a7e;
+        }
+
+        .edit-panel {
+            overflow: hidden;
+            border-color: #d8e5e7;
+        }
+
+        .form-section {
+            padding: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .field-card label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 7px;
+            color: #4e6c74;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .field-card label .glyphicon {
+            color: #63a3a6;
+            font-size: 12px;
+        }
+
+        .field-card .form-control {
+            height: 42px;
+            border-radius: 6px;
+        }
+
+        .field-card .readonly-field {
+            background: #f4f8f8;
+            color: #536f76;
+            font-weight: 600;
+        }
+
+        .field-error {
+            display: block;
+            margin-top: 6px;
+            color: #c04a42;
+            font-size: 12px;
+        }
+
+        .footer-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 14px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+        }
+
+        @media (max-width: 767px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="collection-edit-wrap">
+        <div class="edit-head">
+            <h2>
+                <span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span>
+                {{ title }}
+            </h2>
+            <a class="back-link" href="/collection/list/">
+                <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>返回回款列表
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="summary-card">
+                    <div class="summary-label">客户名称</div>
+                    <div class="summary-value">{{ collection.customer.company_name }}</div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="summary-card">
+                    <div class="summary-label">合同编号</div>
+                    <div class="summary-value">{{ collection.contract.contract_number }}</div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="summary-card">
+                    <div class="summary-label">合同金额</div>
+                    <div class="summary-value text-teal">¥{{ collection.contract.total_price|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" novalidate class="m-t-10">
+            {% csrf_token %}
+            <div class="panel panel-default edit-panel">
+                <div class="panel-heading">回款信息</div>
+                <div class="form-section">
+                    <div class="form-grid">
+                        <div class="field-card">
+                            <label for="{{ form.date.id_for_label }}">
+                                <span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>{{ form.date.label }}
+                            </label>
+                            {{ form.date }}
+                            <span class="field-error">{{ form.date.errors.0 }}</span>
+                        </div>
+                        <div class="field-card">
+                            <label for="{{ form.amount.id_for_label }}">
+                                <span class="glyphicon glyphicon-usd" aria-hidden="true"></span>{{ form.amount.label }}
+                            </label>
+                            {{ form.amount }}
+                            <span class="field-error">{{ form.amount.errors.0 }}</span>
+                        </div>
+                        <div class="field-card">
+                            <label for="{{ form.collection_method.id_for_label }}">
+                                <span class="glyphicon glyphicon-credit-card" aria-hidden="true"></span>{{ form.collection_method.label }}
+                            </label>
+                            {{ form.collection_method }}
+                            <span class="field-error">{{ form.collection_method.errors.0 }}</span>
+                        </div>
+                        <div class="field-card" style="grid-column: span 3;">
+                            <label>当前已回款（含本笔）</label>
+                            <input class="form-control readonly-field" value="¥{{ collection.contract.total_collection|floatformat:2 }}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-actions">
+                <a class="btn btn-default" href="/collection/list/">取消</a>
+                <button type="submit" class="btn btn-success">
+                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>保存修改
+                </button>
+            </div>
+        </form>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+    <script>
+        $(function () {
+            $('#{{ form.date.id_for_label }}').datepicker({
+                format: 'yyyy-mm-dd',
+                startDate: '-333333',
+                language: "zh-CN",
+                autoclose: true
+            });
+        })
+    </script>
+{% endblock %}

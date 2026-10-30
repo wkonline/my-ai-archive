@@ -1,0 +1,139 @@
+{% extends 'layout.html' %}
+{% block title %}{% if role %}编辑角色{% else %}新建角色{% endif %}{% endblock %}
+{% block css %}
+    <style>
+        .auth-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin: 4px 0 16px; }
+        .auth-head h2 { display: inline-flex; align-items: center; gap: 9px; margin: 0; color: #17363e; font-size: 20px; font-weight: 700; }
+        .auth-head h2 .glyphicon { color: #0a8387; }
+        .base-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .base-field label { display: block; margin-bottom: 7px; color: #4e6c74; font-size: 13px; font-weight: 600; }
+        .base-field .form-control { height: 42px; border-radius: 6px; }
+        .group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+        .group-card { border: 1px solid #dce8ea; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 8px 22px rgba(14, 68, 76, .07); }
+        .group-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #e6eef0; background: #f8fcfc; }
+        .group-title { display: inline-flex; align-items: center; gap: 7px; color: #17363e; font-size: 15px; font-weight: 700; }
+        .group-title .glyphicon { color: #0a8387; }
+        .group-count { color: #658088; font-size: 12px; font-weight: 600; }
+        .group-actions { display: flex; gap: 6px; }
+        .permission-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 12px 14px; }
+        .menu-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; padding: 12px 14px; }
+        .permission-item { display: flex; align-items: flex-start; gap: 6px; padding: 7px 8px; border-radius: 6px; background: #fbfdfd; color: #34505a; font-size: 13px; line-height: 1.4; margin: 0; }
+        .menu-item { display: flex; align-items: center; gap: 6px; padding: 7px 9px; border-radius: 6px; background: #f8fcfc; color: #34505a; font-size: 13px; font-weight: 600; margin: 0; }
+        .permission-item:hover, .menu-item:hover { background: #eef9f8; color: #086f78; }
+        .permission-item input, .menu-item input { margin-top: 2px; }
+        .permission-code { display: block; color: #8ea3a9; font-size: 11px; }
+        .footer-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+        @media (max-width: 991px) { .group-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) { .base-grid, .group-grid { grid-template-columns: 1fr; } .permission-list { grid-template-columns: 1fr; } .menu-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="auth-head">
+        <h2><span class="glyphicon glyphicon-lock" aria-hidden="true"></span>{% if role %}编辑角色：{{ role.name }}{% else %}新建角色{% endif %}</h2>
+        <a class="back-link btn btn-default" href="/auth/role/list/">
+            <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>返回角色列表
+        </a>
+    </div>
+
+    {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="panel panel-default">
+            <div class="panel-heading">基础信息</div>
+            <div class="panel-body">
+                <div class="base-grid">
+                    <div class="base-field">
+                        <label>角色标识</label>
+                        <input class="form-control" name="key" value="{{ role.key|default:'' }}" maxlength="32" {% if role %}readonly{% endif %} required>
+                    </div>
+                    <div class="base-field">
+                        <label>角色名称</label>
+                        <input class="form-control" name="name" value="{{ role.name|default:'' }}" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title m-t-10"><h4>可访问功能</h4></div>
+        <div class="group-grid">
+            {% for group in permission_groups %}
+                <div class="group-card">
+                    <div class="group-head">
+                        <div class="group-title"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>{{ group.name }}</div>
+                        <div class="group-actions">
+                            <span class="group-count"><b class="js-selected-count">0</b> / {{ group.items|length }}</span>
+                            <button type="button" class="btn btn-default btn-xs js-select-group">全选</button>
+                            <button type="button" class="btn btn-default btn-xs js-clear-group">清空</button>
+                        </div>
+                    </div>
+                    <div class="permission-list">
+                        {% for permission in group.items %}
+                            <label class="permission-item">
+                                <input type="checkbox" name="permissions" value="{{ permission.code }}" {% if role and permission.code in role.permissions %}checked{% endif %}>
+                                <span>
+                                    {{ permission.label }}
+                                    <span class="permission-code">{{ permission.code }}</span>
+                                </span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="section-title m-t-10"><h4>顶部可见栏目</h4></div>
+        <div class="group-grid">
+            {% for group in menu_groups %}
+                <div class="group-card">
+                    <div class="group-head">
+                        <div class="group-title"><span class="glyphicon glyphicon-th-large" aria-hidden="true"></span>{{ group.name }}</div>
+                        <div class="group-actions">
+                            <span class="group-count"><b class="js-selected-count">0</b> / {{ group.items|length }}</span>
+                            <button type="button" class="btn btn-default btn-xs js-select-group">全选</button>
+                            <button type="button" class="btn btn-default btn-xs js-clear-group">清空</button>
+                        </div>
+                    </div>
+                    <div class="menu-list">
+                        {% for item in group.items %}
+                            <label class="menu-item">
+                                <input type="checkbox" name="menus" value="{{ item.title }}" {% for m in role.menus %}{% if m.title == item.title %}checked{% endif %}{% endfor %}>
+                                <span>{{ item.title }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="footer-actions">
+            <a class="btn btn-default" href="/auth/role/list/">取消</a>
+            <button class="btn btn-success" type="submit">
+                <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>保存角色
+            </button>
+        </div>
+    </form>
+{% endblock %}
+{% block js %}
+    <script>
+        function updateGroupCounts() {
+            $('.group-card').each(function () {
+                var $card = $(this);
+                $card.find('.js-selected-count').text($card.find('input[type="checkbox"]:checked').length);
+            });
+        }
+
+        $(function () {
+            $('.js-select-group').on('click', function () {
+                $(this).closest('.group-card').find('input[type="checkbox"]').prop('checked', true);
+                updateGroupCounts();
+            });
+            $('.js-clear-group').on('click', function () {
+                $(this).closest('.group-card').find('input[type="checkbox"]').prop('checked', false);
+                updateGroupCounts();
+            });
+            $(document).on('change', '.permission-item input, .menu-item input', updateGroupCounts);
+            updateGroupCounts();
+        });
+    </script>
+{% endblock %}

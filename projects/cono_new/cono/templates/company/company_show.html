@@ -1,0 +1,25 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+    <div class="panel panel-default m-t-10">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            {{ title }}
+        </div>
+        <div class="p-l-10 line-height-40" style="padding:30px;line-height: 30px">
+            {% for obj in queryset %}
+                <p>公司名称：{{ obj.company_name }}</p>
+                <p>公司税号：{{ obj.company_tax_number }}</p>
+                <p>银行账号：{{ obj.company_bank_account }}</p>
+                <p>开户银行：{{ obj.company_bank }}</p>
+                <p>银行行号：{{ obj.company_bank_code }}</p>
+                <p>公司地址：{{ obj.company_address }}</p>
+                <p>公司电话：{{ obj.company_phone }}</p>
+                <p>公司传真：{{ obj.company_fax }}</p>
+                <p>公司邮箱：{{ obj.company_email }}</p>
+                <p>公司网址：{{ obj.company_website }}</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

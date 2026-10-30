@@ -1,0 +1,176 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="container" style="padding: 20px 0;">
+
+    {# 售后服务信息 #}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-earphone"></span> 售后服务情况
+            <div class="pull-right">
+                <a href="/service/{{ service.id }}/edit/" class="btn btn-primary btn-xs">
+                    <span class="glyphicon glyphicon-wrench"></span> 编辑
+                </a>
+            </div>
+        </div>
+        <div class="panel-body" style="padding: 0;">
+            <table class="table table-bordered table-striped" style="margin-bottom: 0;">
+                <tr>
+                    <th style="width: 15%;">维修编号</th>
+                    <td style="width: 35%;"><strong>{{ service.service_number }}</strong></td>
+                    <th style="width: 15%;">产品类别</th>
+                    <td style="width: 35%;">{{ service.productcategory }}</td>
+                </tr>
+                <tr>
+                    <th>客户名称</th>
+                    <td>{{ service.customer.company_name }}</td>
+                    <th>产品型号</th>
+                    <td>{{ service.product }}</td>
+                </tr>
+                <tr>
+                    <th>电路板编号</th>
+                    <td>{{ service.product_number|default:"-" }}</td>
+                    <th>质保状态</th>
+                    <td>{{ service.get_warranty_display }}</td>
+                </tr>
+                <tr>
+                    <th>接收日期</th>
+                    <td>{{ service.date|date:"Y-m-d" }}</td>
+                    <th>责任人</th>
+                    <td>{{ service.repairman.username }}</td>
+                </tr>
+                <tr>
+                    <th>维修情况</th>
+                    <td>
+                        {% if service.warranty_end == 1 %}
+                            <span style="color: red; font-weight: bold;">{{ service.get_warranty_end_display }}</span>
+                        {% else %}
+                            {{ service.get_warranty_end_display }}
+                        {% endif %}
+                    </td>
+                    <th>返件状态</th>
+                    <td>
+                        {% if service.return_status == 1 %}
+                            <span style="color: red; font-weight: bold;">{{ service.get_return_status_display }}</span>
+                        {% else %}
+                            {{ service.get_return_status_display }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if service.description %}
+                <tr>
+                    <th>备注</th>
+                    <td colspan="3">{{ service.description }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    {# 维修记录 #}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-list-alt"></span> 维修记录
+            <span class="pull-right" style="font-size: 13px; font-weight: normal; color: #888;">
+                共 {{ service_details|length }} 条
+            </span>
+        </div>
+        <div class="panel-body" style="padding: 0;">
+            {% for obj in service_details %}
+            <div class="panel panel-info m-t-10">
+                <div class="panel-heading clearfix">
+                    <div class="float-left">
+                        <strong>维修记录 #{{ forloop.counter }}</strong>
+                        <span class="label label-primary m-l-10">{{ obj.customer.company_name }}</span>
+                        <span class="label label-default m-l-5">{{ obj.productcategory }}</span>
+                        <span class="label label-default m-l-5">{{ obj.product }}</span>
+                    </div>
+                    <div class="float-right">
+                        <span class="text-muted m-r-10"><span class="glyphicon glyphicon-time"></span> 接收：{{ obj.service.date|date:"Y-m-d" }}</span>
+                        <span class="text-muted m-r-10"><span class="glyphicon glyphicon-check"></span> 完成：{{ obj.repair_date|date:"Y-m-d" }}</span>
+                        <span class="text-muted m-r-10"><span class="glyphicon glyphicon-user"></span> 维修人：{{ obj.repairman.username }}</span>
+                        <a class="btn btn-primary btn-xs" href="/servicedetail/{{ obj.id }}/edit/">
+                            <span class="glyphicon glyphicon-wrench"></span> 编辑
+                        </a>
+                    </div>
+                </div>
+                <div class="panel-body" style="padding: 10px 15px;">
+                    <table class="table table-bordered" style="margin-bottom: 0;">
+                        <tr>
+                            <th style="width: 15%; background: #f5f5f5;">故障现象</th>
+                            <td colspan="3">{{ obj.fault_text|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th style="background: #f5f5f5;">故障原因</th>
+                            <td colspan="3">{{ obj.fault_reason|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th style="background: #f5f5f5;">维修方法</th>
+                            <td colspan="3">{{ obj.repair_method|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding: 20px; text-align: center; color: #999;">暂无维修记录</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# 售后返件 #}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-truck"></span> 售后返件
+            <span class="pull-right" style="font-size: 13px; font-weight: normal; color: #888;">
+                共 {{ return_products|length }} 条
+            </span>
+        </div>
+        <div class="panel-body" style="padding: 0;">
+            <table class="table table-bordered table-striped" style="margin-bottom: 0;">
+                <thead>
+                <tr>
+                    <th class="text-center" style="width: 5%;">#</th>
+                    <th>客户名称</th>
+                    <th>产品名称</th>
+                    <th>产品型号</th>
+                    <th class="text-center" style="width: 10%;">数量</th>
+                    <th>发货人</th>
+                    <th>发货时间</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in return_products %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td>{{ obj.customer.company_name }}</td>
+                    <td>{{ obj.service.productcategory }}</td>
+                    <td>{{ obj.service.product }}</td>
+                    <td class="text-center">{{ obj.quantity|default:"-" }}</td>
+                    <td>{{ obj.user.username }}</td>
+                    <td>{{ obj.date|date:"Y-m-d" }}</td>
+                    <td>
+                        <a class="btn btn-primary btn-xs" href="/return_product/{{ obj.id }}/edit/">
+                            <span class="glyphicon glyphicon-wrench"></span> 编辑
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center" style="color: #999; padding: 20px 0;">暂无售后返件</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# 操作按钮 #}
+    <div style="margin: 16px 0;">
+        <a href="/service/list/" class="btn btn-default">
+            <span class="glyphicon glyphicon-arrow-left"></span> 返回列表
+        </a>
+    </div>
+
+</div>
+{% endblock %}

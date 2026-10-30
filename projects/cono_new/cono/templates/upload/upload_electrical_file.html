@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
+    <script src={% static 'plugins/select2/js/select2.min.js' %}></script>
+{% endblock %}
+{% block content %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title"> 新增登记 </h3>
+        </div>
+        <div class="panel-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_contract">项目编号</label>
+                    <select name="contract" class="form-control" id="id_contract">
+                        <option value="" selected>---请选择项目编号---</option>
+                        {% for contract in contracts %}
+                            <option value="{{ contract.pk }}">{{ contract.contract }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% for field in form %}
+                    <div class="form-group">
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                        <span style="color: red;">{{ field.errors.0 }}</span>
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">提 交</button>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}

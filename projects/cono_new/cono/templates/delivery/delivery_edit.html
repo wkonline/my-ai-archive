@@ -1,0 +1,168 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <style>
+        .footer-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 14px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">{{ title }}</h3>
+        </div>
+        <div class="panel-body">
+            <form method="post" novalidate autocomplete="off">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_customer">客户名称</label>
+                    <select name="customer" class="form-control" id="id_customer">
+                        <option value="" selected>---请选择客户名称---</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.pk }}"
+                                {% if row_object and row_object.customer_id == customer.pk %}selected{% endif %}>
+                                {{ customer.company_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% for field in form %}
+                    <div class="form-group">
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                        <span style="color: red;">{{ field.errors.0 }}</span>
+                    </div>
+                {% endfor %}
+                <div class="form-group">
+                    <label for="contract">项目编号</label>
+                    <select name="contract" class="form-control" id="contract">
+                        <option value="" selected>---请选择项目编号---</option>
+                        {% for contract in contracts %}
+                            <option value="{{ contract.pk }}"
+                                data-customer="{{ contract.contract.customer_id }}"
+                                data-contact="{{ contract.contract.customer.contact_person|default:'' }}"
+                                data-phone="{{ contract.contract.customer.phone|default:'' }}"
+                                data-address="{{ contract.contract.customer.address|default:'' }}"
+                                {% if row_object and row_object.contract_id == contract.pk %}selected{% endif %}>
+                                {{ contract.contract.contract_number }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_productcategory">产品名称</label>
+                    <input type="text" name="productcategory" class="form-control" placeholder="产品名称"
+                           id="id_productcategory" value="{{ row_object.productcategory|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label for="id_product">产品型号</label>
+                    <input type="text" name="product" class="form-control" placeholder="产品型号"
+                           id="id_product" value="{{ row_object.product|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label for="id_quantity">数量</label>
+                    <input type="number" min="1" name="quantity" class="form-control" placeholder="产品数量"
+                           id="id_quantity" value="{{ row_object.quantity|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label for="id_receiver">收货人</label>
+                    <input type="text" name="receiver" class="form-control" placeholder="收货人"
+                           id="id_receiver" value="{{ row_object.customer.contact_person|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label for="id_receiver_phone">收货人联系电话</label>
+                    <input type="text" name="receiver_phone" class="form-control" placeholder="收货人联系电话"
+                           id="id_receiver_phone" value="{{ row_object.customer.phone|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label for="id_receiver_address">收货地址</label>
+                    <input type="text" name="receiver_address" class="form-control" placeholder="收货地址"
+                           id="id_receiver_address" value="{{ row_object.customer.address|default:'' }}">
+                </div>
+                <div class="footer-actions">
+                    <a class="btn btn-default" href="/delivery/list/">取消</a>
+                    <button type="submit" class="btn btn-success">保存发货</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        $('#contract').change(function () {
+            var contract = $(this).val();
+            var customerId = $(this).find(':selected').data('customer');
+            if (customerId) {
+                $('#id_customer').val(customerId);
+            }
+            $.ajax({
+                url: '{% url 'get_product_model' %}',
+                type: 'GET',
+                data: {'contract': contract},
+                dataType: 'json',
+                success: function (data) {
+                    $.each(data, function (index, product) {
+                        $("#id_productcategory").val(product.productcategory__name || '');
+                        $("#id_product").val(product.product__model || '');
+                        $("#id_quantity").attr('max', product.quantity || 999999);
+                        if (!$("#id_quantity").val()) {
+                            $("#id_quantity").val(product.quantity || '');
+                        }
+                        $("#id_receiver").val(product.contract__customer__contact_person || '');
+                        $("#id_receiver_phone").val(product.contract__customer__phone || '');
+                        $("#id_receiver_address").val(product.contract__customer__address || '');
+                    });
+                }
+            });
+        });
+
+        $('#id_customer').change(function () {
+            var customerId = $(this).val();
+            if (!customerId) return;
+            $.ajax({
+                url: '{% url 'delivery_customer_info' %}',
+                type: 'GET',
+                data: {'customer': customerId},
+                dataType: 'json',
+                success: function (data) {
+                    $("#id_receiver").val(data.contact_person || '');
+                    $("#id_receiver_phone").val(data.phone || '');
+                    $("#id_receiver_address").val(data.address || '');
+                }
+            });
+        });
+
+        // 初始化：页面加载时根据当前值触发一次 contract 和 customer 的自动填充
+        $(function () {
+            var initialContract = $('#contract').val();
+            var initialCustomer = $('#id_customer').val();
+            if (initialContract) {
+                $('#contract').trigger('change');
+            } else if (initialCustomer) {
+                $('#id_customer').trigger('change');
+            }
+        });
+    </script>
+{% endblock %}
+{% block js %}
+    <script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+    <script src="{% static 'js/datepicker.js' %}"></script>
+    <script>
+        $(document).ready(function () {
+            $('#id_date').datepicker({
+                weekStart: 1,
+                autoclose: true,
+                daysOfWeekHighlighted: "0,6",
+                format: "yyyy-mm-dd",
+                language: "zh-CN"
+            }).datepicker("setDate", '{{ row_object.date|date:"Y-m-d"|default:"now" }}');
+        });
+    </script>
+{% endblock %}
