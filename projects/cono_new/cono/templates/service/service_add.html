@@ -98,6 +98,17 @@
                                        placeholder="输入客户名称，回车搜索…"
                                        autocomplete="off">
                                 <input type="hidden" name="customer" id="id_customer" value="{{ form.customer.value|default:'' }}">
+                                <script>
+                                    (function () {
+                                        var hid = document.getElementById('id_customer');
+                                        var disp = document.getElementById('customer_search_input');
+                                        if (disp && !disp.value && '{{ copy_customer_name|default:"" }}') {
+                                            // 复制时：回显客户名称，同时回填 hidden 字段的 ID
+                                            hid.value = '{{ form.customer.value|default:"" }}';
+                                            disp.value = '{{ copy_customer_name|default:"" }}';
+                                        }
+                                    })();
+                                </script>
                                 <div class="customer-dropdown" id="customer_dropdown"></div>
                             </div>
                             {% if form.customer.errors %}<span class="field-error">{{ form.customer.errors.0 }}</span>{% endif %}

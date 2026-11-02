@@ -140,6 +140,7 @@ def service_copy(request, nid):
         'title': '复制新增售后',
         'form': form,
         'service_number': _next_service_number(),
+        'copy_customer_name': row.customer.company_name,
     })
 def service_delete(request):
     """ 删除售后服务 """
