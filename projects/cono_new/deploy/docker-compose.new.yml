@@ -1,0 +1,32 @@
+services:
+  cono_api:
+    build: ./api
+    container_name: cono_api
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: nas-cono-new-api-key-2026
+      DJANGO_DEBUG: "false"
+      USE_MYSQL: "1"
+      DJANGO_DB_NAME: cono
+      DJANGO_DB_USER: cono
+      DJANGO_DB_PASSWORD: cono2024
+      DJANGO_DB_HOST: cono_db
+      DJANGO_DB_PORT: "3306"
+    volumes:
+      - /volume1/docker/cono_media:/app/media
+    expose:
+      - "8001"
+    depends_on:
+      - cono_db
+
+  cono_web_new:
+    image: nginx:alpine
+    container_name: cono_web_new
+    restart: unless-stopped
+    ports:
+      - "8001:80"
+    volumes:
+      - /volume1/docker/cono_app/frontend/dist:/usr/share/nginx/html:ro
+      - /volume1/docker/cono_app/deploy/nginx-new.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - cono_api

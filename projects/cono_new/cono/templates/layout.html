@@ -78,6 +78,35 @@
             color: #ffffff;
         }
 
+        .nav > .entry-new-version > a {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+            margin-right: 6px;
+            padding: 8px 14px;
+            border: 1px solid #bfe3e1;
+            border-radius: 6px;
+            background: #edf9f8;
+            color: #0a6f74;
+            font-weight: 600;
+            line-height: 20px;
+            text-decoration: none;
+            transition: border-color .16s ease, background .16s ease, color .16s ease;
+        }
+
+        .nav > .entry-new-version > a:hover,
+        .nav > .entry-new-version > a:focus {
+            border-color: #0d918d;
+            background: #0d918d;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .nav > .entry-new-version > a .glyphicon {
+            font-size: 12px;
+        }
+
         @media (max-width: 767px) {
             .logo_img {
                 width: 100%;
@@ -120,6 +149,11 @@
     {% endif %}
     <div class="clearfix">
         <ul class="nav navbar-nav float-right">
+            <li class="dropdown entry-new-version">
+                <a href="{{ new_app_url }}" target="_blank" rel="noopener noreferrer" title="打开尝鲜版（新程序）首页">
+                    <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>尝鲜版
+                </a>
+            </li>
             <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                    aria-expanded="false" style="padding: 8px 12px;">

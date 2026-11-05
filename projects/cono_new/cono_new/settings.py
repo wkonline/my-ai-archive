@@ -28,6 +28,10 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'  #开关调试�
 # ALLOWED_HOSTS = []
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
 
+# 新版（尝鲜版）前端首页地址：老版页面右上角“尝鲜版”入口的跳转目标。
+# 本地开发可设置为 http://127.0.0.1:5173/（Vite 开发服务器）。
+NEW_APP_URL = os.environ.get('CONO_NEW_APP_URL', 'http://192.168.1.202:8001/')
+
 
 # Application definition
 
@@ -67,6 +71,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'cono.tools.context_processors.new_app_url',
             ],
         },
     },

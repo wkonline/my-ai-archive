@@ -1,0 +1,68 @@
+/* ── 淡蓝科技风统一样式 ── */
+.stat-card {
+  background: #fff !important;
+  border: 1px solid rgba(56,189,248,0.15) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(14,165,233,0.06) !important;
+  transition: all .2s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.12) !important; }
+.stat-card .stat-value { font-size: 28px; font-weight: 700; color: #0c4a6e; font-variant-numeric: tabular-nums; }
+.stat-card .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+.toolbar-card, .filter-card { background: #fff !important; border: 1px solid rgba(56,189,248,0.15) !important; border-radius: 12px !important; box-shadow: 0 2px 8px rgba(14,165,233,0.06) !important; margin-bottom: 16px; }
+.chart-card { background: #fff !important; border: 1px solid rgba(56,189,248,0.15) !important; border-radius: 12px !important; box-shadow: 0 2px 8px rgba(14,165,233,0.06) !important; }
+.chart-title { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #0c4a6e; }
+.chart-title .el-icon { color: #38bdf8; }
+.btn-tech { background: linear-gradient(135deg, #60a5fa, #3b82f6) !important; border-color: transparent !important; box-shadow: 0 2px 8px rgba(59,130,246,0.25) !important; }
+.btn-tech:hover { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.35) !important; }
+.btn-tech-outline { background: transparent !important; border: 1px solid rgba(59,130,246,0.3) !important; color: #3b82f6 !important; }
+.btn-tech-outline:hover { background: rgba(59,130,246,0.08) !important; border-color: #3b82f6 !important; }
+.tech-table { background: #fff !important; border-radius: 12px !important; overflow: hidden !important; border: 1px solid rgba(56,189,248,0.15) !important; box-shadow: 0 2px 8px rgba(14,165,233,0.06) !important; }
+.tech-table :deep(.el-table__header) th { background: #f0f9ff !important; color: #475569 !important; font-weight: 600; border-bottom: 1px solid rgba(56,189,248,0.15) !important; }
+.tech-table :deep(.el-table__body) tr:hover > td { background: #f0f9ff !important; }
+.tech-table :deep(.el-table__body) td { border-bottom: 1px solid rgba(56,189,248,0.06) !important; color: #334155; }
+.tech-input :deep(.el-input__wrapper) { background: #f8fafc !important; border-color: rgba(56,189,248,0.2) !important; box-shadow: 0 0 0 1px rgba(56,189,248,0.1) inset !important; }
+.tech-input :deep(.el-input__wrapper.is-focus) { border-color: #38bdf8 !important; box-shadow: 0 0 0 2px rgba(56,189,248,0.2) !important; }
+.page-title { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid rgba(56,189,248,0.15); }
+.page-title h2 { margin: 0; font-size: 20px; font-weight: 700; color: #0c4a6e; }
+.page-title .el-icon { font-size: 24px; color: #38bdf8; }
+
+/* ── 通用工具栏按钮（参照合同管理） ── */
+.btn-add, .btn-import, .btn-export, .btn-goods, .btn-filter {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 12px !important;
+  border-radius: 8px !important;
+}
+.btn-add { background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important; border-color: #2563eb !important; color: #fff !important; box-shadow: 0 2px 8px rgba(59,130,246,0.25) !important; }
+.btn-add:hover { background: linear-gradient(135deg, #60a5fa, #2563eb) !important; border-color: #3b82f6 !important; color: #fff !important; transform: translateY(-1px); }
+.btn-import { background: linear-gradient(135deg, #10b981, #059669) !important; border-color: #059669 !important; color: #fff !important; box-shadow: 0 2px 8px rgba(16,185,129,0.25) !important; }
+.btn-import:hover { background: linear-gradient(135deg, #34d399, #059669) !important; border-color: #10b981 !important; color: #fff !important; transform: translateY(-1px); }
+.btn-export { background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important; border-color: #7c3aed !important; color: #fff !important; box-shadow: 0 2px 8px rgba(139,92,246,0.25) !important; }
+.btn-export:hover { background: linear-gradient(135deg, #a78bfa, #7c3aed) !important; border-color: #8b5cf6 !important; color: #fff !important; transform: translateY(-1px); }
+.btn-goods { background: linear-gradient(135deg, #f59e0b, #d97706) !important; border-color: #d97706 !important; color: #fff !important; box-shadow: 0 2px 8px rgba(245,158,11,0.25) !important; }
+.btn-goods:hover { background: linear-gradient(135deg, #fbbf24, #d97706) !important; border-color: #f59e0b !important; color: #fff !important; transform: translateY(-1px); }
+.btn-filter { background: #f4f6f8 !important; border-color: #dcdfe6 !important; color: #606266 !important; }
+.btn-filter:hover { background: #eef2f7 !important; color: #303133 !important; }
+
+/* ── 通用操作列按钮（参照合同管理） ── */
+.op-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 6px;
+  font-size: 12px !important;
+  line-height: 1;
+  padding: 4px 8px !important;
+}
+.op-btn .el-icon { font-size: 12px !important; }
+.op-btn + .op-btn { margin-left: 4px; }
+.op-detail { color: #3b82f6 !important; border-color: #93c5fd !important; background: #eff6ff !important; }
+.op-detail:hover { background: #3b82f6 !important; color: #fff !important; border-color: #3b82f6 !important; }
+.op-edit { color: #f59e0b !important; border-color: #fcd34d !important; background: #fffbeb !important; }
+.op-edit:hover { background: #f59e0b !important; color: #fff !important; border-color: #f59e0b !important; }
+.op-delete { color: #ef4444 !important; border-color: #fca5a5 !important; background: #fef2f2 !important; }
+.op-delete:hover { background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important; }
+.op-download { color: #10b981 !important; border-color: #6ee7b7 !important; background: #ecfdf5 !important; }
+.op-download:hover { background: #10b981 !important; color: #fff !important; border-color: #10b981 !important; }

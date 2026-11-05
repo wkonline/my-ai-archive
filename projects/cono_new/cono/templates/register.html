@@ -81,6 +81,31 @@
             text-decoration: underline;
         }
 
+        .register-head .head-links {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .register-head .head-links .new-app-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            border: 1px solid #bfe3e1;
+            border-radius: 6px;
+            background: #edf9f8;
+            color: #0a6f74;
+            line-height: 18px;
+        }
+
+        .register-head .head-links .new-app-link:hover {
+            border-color: #0d918d;
+            background: #0d918d;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
         .register-body {
             padding: 24px 28px 28px;
         }
@@ -198,7 +223,12 @@
                 <img src="{% static 'img/logo.png' %}" alt="洛阳科诺">
                 <h1>注册账号</h1>
             </div>
-            <a href="/login/">返回登录</a>
+            <div class="head-links">
+                <a class="new-app-link" href="{{ new_app_url }}" target="_blank" rel="noopener noreferrer" title="打开尝鲜版（新程序）首页">
+                    <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>尝鲜版入口
+                </a>
+                <a href="/login/">返回登录</a>
+            </div>
         </header>
         <div class="register-body">
             <form method="post" novalidate>
