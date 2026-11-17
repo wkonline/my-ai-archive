@@ -22,3 +22,4 @@ node_modules/
 .vite/
 .chrome-profile/
 staticfiles/
+backups/
