@@ -1,26 +1,90 @@
 #!/bin/bash
-set -e
+# 新版前后端分离系统 · 部署到 NAS（192.168.1.202）
+#
+# 线上架构：
+#   8001  cono_web_new(Nginx)  静态前端 + /api/ 反代到 127.0.0.1:8002
+#   8002  cono_api(Gunicorn)   新版 DRF 后端，代码通过 bind mount 挂载
+#                              (/volume1/docker/cono_app -> /app)
+#   8000  cono_web             老版系统，本脚本不触碰
+#
+# 部署策略：整仓同步 → 只重建前端 → 重启 API 容器。
+#   * 新版后端依赖仓库根目录的 cono/（复用老版模型）和 cono_new/settings.py
+#     （CONO_PERMISSION / CONO_MENU），所以必须整仓同步，不能只传 api/。
+#   * 后端代码是 bind mount，改代码后重启容器即可，不需要 docker build。
+#   * NAS 上的 /usr/bin/rsync 是群晖 setuid 特制版，不支持 --server 模式
+#     （报 "rsync service is no running"），所以这里用 tar over ssh，
+#     与 sync_to_nas.sh 保持一致。
+set -euo pipefail
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 HOST="cono-nas"
 DEST="/volume1/docker/cono_app"
+DOCKER="/var/packages/ContainerManager/target/usr/bin/docker"
+SSH_OPTS=(-o BatchMode=yes -o ControlMaster=no -o ControlPath=none -o StrictHostKeyChecking=accept-new)
 
-echo "==> 构建前端 ..."
-cd "$ROOT/frontend" && npm run build
+# 排除本地/运行时产物。注意：NAS 上的 media、backups 是独立挂载目录，覆盖会丢数据；
+# frontend/dist 单独同步，避免同步过程中把正在使用的产物删掉。
+EXCLUDES=(
+  --exclude='.git'
+  --exclude='.venv'
+  --exclude='node_modules'
+  --exclude='__pycache__'
+  --exclude='*.pyc'
+  --exclude='.DS_Store'
+  --exclude='._*'
+  --exclude='.idea'
+  --exclude='.vscode'
+  --exclude='.chrome-profile'
+  --exclude='.vite'
+  --exclude='db.sqlite3'
+  --exclude='media'
+  --exclude='staticfiles'
+  --exclude='backups'
+  --exclude='frontend/dist'
+)
 
-echo "==> 上传新版后端（不含 venv/node_modules）..."
-rsync -az --delete --exclude '.venv' --exclude '__pycache__' --exclude '*.pyc' --exclude 'db.sqlite3' "$ROOT/api/" "$HOST:$DEST/api/"
+echo "==> 1/5 构建前端 ..."
+cd "$ROOT/frontend"
+npm run build
 
-echo "==> 上传前端产物 ..."
-rsync -az --delete "$ROOT/frontend/dist/" "$HOST:$DEST/frontend/dist/"
+echo "==> 2/5 整仓同步到 $HOST:$DEST ..."
+COPYFILE_DISABLE=1 tar -czf - "${EXCLUDES[@]}" -C "$ROOT" . \
+  | ssh "${SSH_OPTS[@]}" "$HOST" "tar -xzf - -C $DEST"
 
-echo "==> 上传部署配置 ..."
-rsync -az "$ROOT/deploy/" "$HOST:$DEST/deploy/"
+echo "==> 3/5 同步前端产物（原地覆盖 + 清理旧 hash 文件）..."
+# 必须原地覆盖：nginx 容器的 /usr/share/nginx/html 是 bind mount，
+# 一旦把 dist 目录整体换掉（mv 成新 inode），容器里的挂载仍指向已删除的旧目录，会 403。
+COPYFILE_DISABLE=1 tar -czf - -C "$ROOT/frontend/dist" . \
+  | ssh "${SSH_OPTS[@]}" "$HOST" "tar -xzf - -C $DEST/frontend/dist"
 
-echo "==> 重启新版容器 ..."
-ssh "$HOST" "sudo docker compose -f $DEST/deploy/docker-compose.new.yml up -d --build"
+tmp_remote=$(mktemp); tmp_local=$(mktemp); tmp_del=$(mktemp)
+ssh "${SSH_OPTS[@]}" "$HOST" "cd $DEST/frontend/dist && find . -type f" \
+  | sed 's|^\./||' | LC_ALL=C sort > "$tmp_remote"
+( cd "$ROOT/frontend/dist" && find . -type f | sed 's|^\./||' | LC_ALL=C sort ) > "$tmp_local"
+LC_ALL=C comm -23 "$tmp_remote" "$tmp_local" > "$tmp_del"
+if [ -s "$tmp_del" ]; then
+  { echo "cd '$DEST/frontend/dist'"; sed 's|^|rm -f -- "|; s|$|"|' "$tmp_del"; } \
+    | ssh "${SSH_OPTS[@]}" "$HOST" "bash -s"
+  echo "    清理旧文件 $(wc -l < "$tmp_del" | tr -d ' ') 个"
+fi
+rm -f "$tmp_remote" "$tmp_local" "$tmp_del"
 
-echo "==> 校验 ..."
-sleep 6
-curl -s -o /dev/null -w "新版前端: %{http_code}\n" http://192.168.1.202:8001/
-curl -s -o /dev/null -w "老版: %{http_code}\n" http://192.168.1.202:8000/
-echo "==> 新版上线完成 http://192.168.1.202:8001/"
+echo "==> 4/5 重启新版 API 容器 ..."
+ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER restart cono_api >/dev/null && sudo -n $DOCKER ps --filter name=cono_api --format '    {{.Names}}  {{.Status}}'"
+
+echo "==> 5/5 校验 ..."
+page=""; api=""; old=""
+for _ in $(seq 1 10); do
+  page=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://192.168.1.202:8001/ || true)
+  api=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://192.168.1.202:8001/api/ || true)
+  [ "$page" = "200" ] && [ "$api" = "401" ] && break
+  sleep 3
+done
+old=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://192.168.1.202:8000/login/ || true)
+echo "    新版前端 : $page   (期望 200)"
+echo "    新版 API  : $api   (期望 401，代表服务已响应未认证请求)"
+echo "    老版系统  : $old   (期望 200)"
+[ "$page" = "200" ] || { echo "!! 新版前端异常"; exit 1; }
+[ "$api" = "401" ] || { echo "!! 新版 API 异常"; exit 1; }
+[ "$old" = "200" ] || { echo "!! 老版系统异常"; exit 1; }
+echo "==> 部署完成: http://192.168.1.202:8001/"

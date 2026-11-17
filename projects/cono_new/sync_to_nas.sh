@@ -6,7 +6,7 @@ HOST="cono-nas"
 DEST="/volume1/docker/cono_app"
 DOCKER="/var/packages/ContainerManager/target/usr/bin/docker"
 
-SSH_OPTS=(-o BatchMode=yes)
+SSH_OPTS=(-o BatchMode=yes -o ControlMaster=no)
 
 echo "==> 正在上传代码到 NAS:$DEST ..."
 # 代码目录以 bind mount 挂载进容器，无需重建镜像，上传后重启即可生效
