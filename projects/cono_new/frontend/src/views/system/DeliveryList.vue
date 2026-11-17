@@ -61,18 +61,18 @@
         <span class="card-title"><el-icon><List /></el-icon> 发货流水单</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="90" align="center" fixed />
+        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
         <el-table-column prop="customer_name" label="客户名称" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="date" label="发货日期" width="110" align="center" />
-        <el-table-column prop="contract_number" label="项目编号" min-width="130" show-overflow-tooltip />
-        <el-table-column prop="productcategory" label="产品名称" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="product" label="产品型号" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="quantity" label="数量" width="80" align="center" />
-        <el-table-column prop="contact_person" label="收货人" min-width="100" show-overflow-tooltip />
-        <el-table-column prop="phone" label="收货人联系电话" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="address" label="收货地址" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="delivery_man_name" label="发货人" width="100" />
-        <el-table-column label="操作" width="170" fixed="right">
+        <el-table-column prop="date" label="发货日期" width="100" align="center" />
+        <el-table-column prop="contract_number" label="项目编号" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="productcategory" label="产品名称" min-width="110" show-overflow-tooltip />
+        <el-table-column prop="product" label="产品型号" min-width="110" show-overflow-tooltip />
+        <el-table-column prop="quantity" label="数量" width="70" align="center" />
+        <el-table-column prop="contact_person" label="收货人" min-width="90" show-overflow-tooltip />
+        <el-table-column prop="phone" label="收货人联系电话" min-width="110" show-overflow-tooltip />
+        <el-table-column prop="address" label="收货地址" min-width="130" show-overflow-tooltip />
+        <el-table-column prop="delivery_man_name" label="发货人" width="90" />
+        <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>
@@ -96,6 +96,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Download, Search, Refresh, TrendCharts, Histogram, List, Edit, Delete } from '@element-plus/icons-vue'
 import BaseChart from '../../components/BaseChart.vue'
+import { pickColors } from '../../components/chartColors'
 import request from '../../api/request'
 
 const router = useRouter()
@@ -109,24 +110,23 @@ const endDate = ref('')
 const customerName = ref('')
 const stats = ref({})
 
-const monthChartOption = computed(() => ({
-  tooltip: { trigger: 'axis' },
-  grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
-  xAxis: { type: 'category', data: stats.value.months || [], axisLabel: { fontSize: 10 } },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef2f3' } } },
-  series: [{
-    type: 'bar',
-    data: stats.value.values || [],
-    barMaxWidth: 30,
-    itemStyle: {
-      color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [
-        { offset: 0, color: '#14a9a3' },
-        { offset: 1, color: '#0b7486' }
-      ]},
-      borderRadius: [4, 4, 0, 0]
-    }
-  }]
-}))
+const monthChartOption = computed(() => {
+  const colors = pickColors((stats.value.values || []).length)
+  return {
+    tooltip: { trigger: 'axis' },
+    grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
+    xAxis: { type: 'category', data: stats.value.months || [], axisLabel: { fontSize: 10 } },
+    yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef3f8' } } },
+    series: [{
+      type: 'bar',
+      data: (stats.value.values || []).map((v, idx) => ({
+        value: v,
+        itemStyle: { color: colors[idx % colors.length], borderRadius: [4, 4, 0, 0] }
+      })),
+      barMaxWidth: 30,
+    }]
+  }
+})
 
 const fetchList = async () => {
   loading.value = true
@@ -183,12 +183,12 @@ onMounted(() => {
 .toolbar-card { margin-bottom: 12px; }
 .toolbar-row { display: flex; align-items: center; gap: 8px; }
 .spacer { flex: 1; }
-.stat-text { color: #6b838a; font-size: 13px; }
+.stat-text { color: #4a5a6a; font-size: 13px; }
 .chart-row { margin-bottom: 12px; }
 .chart-card :deep(.el-card__header) { padding: 10px 14px; }
 .chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
 .total-box { text-align: center; padding: 30px 0; }
-.total-num { font-size: 42px; font-weight: 700; color: #0a8387; }
+.total-num { font-size: 42px; font-weight: 700; color: #0078e0; }
 .total-label { font-size: 13px; color: #909399; margin-top: 6px; }
 .filter-card { margin-bottom: 12px; }
 .filter-head { display: flex; align-items: center; justify-content: space-between; }

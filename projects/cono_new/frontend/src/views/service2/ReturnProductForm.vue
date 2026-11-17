@@ -192,5 +192,5 @@ onMounted(loadData)
 .page-title { font-size: 18px; font-weight: 700; color: #303133; }
 .form-card { width: 100%; }
 .footer-actions { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e4e7ed; display: flex; justify-content: flex-end; gap: 8px; }
-.batch-hint { margin-top: 8px; color: #658088; font-size: 13px; }
+.batch-hint { margin-top: 8px; color: #4a5a6a; font-size: 13px; }
 </style>

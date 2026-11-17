@@ -42,7 +42,7 @@
     <el-row :gutter="12" class="stats-row">
       <el-col :span="8"><el-card shadow="hover" class="stat-card"><div class="stat-value">{{ stats.task_count || 0 }}</div><div class="stat-label">任务单数</div></el-card></el-col>
       <el-col :span="8"><el-card shadow="hover" class="stat-card"><div class="stat-value">{{ stats.total_qty || 0 }}</div><div class="stat-label">下单总数量</div></el-card></el-col>
-      <el-col :span="8"><el-card shadow="hover" class="stat-card"><div class="stat-value" style="color:#409eff">{{ Object.keys(stats.by_manufacturer || {}).length }}</div><div class="stat-label">负责人数</div></el-card></el-col>
+      <el-col :span="8"><el-card shadow="hover" class="stat-card"><div class="stat-value" style="color:#0078e0">{{ Object.keys(stats.by_manufacturer || {}).length }}</div><div class="stat-label">负责人数</div></el-card></el-col>
     </el-row>
 
     <!-- 分组列表 -->
@@ -55,14 +55,14 @@
           </div>
         </template>
         <el-table :data="group.rows" stripe border size="small">
-          <el-table-column prop="order_number" label="序号" width="90" align="center" />
-          <el-table-column prop="productcategory" label="产品名称" min-width="140" />
-          <el-table-column prop="product" label="产品型号" min-width="140" />
-          <el-table-column prop="plan_quantity" label="计划数量" width="90" align="center" />
-          <el-table-column prop="quantity" label="下单数量" width="90" align="center" />
-          <el-table-column prop="date" label="下发日期" width="110" align="center" />
-          <el-table-column prop="production_man_name" label="负责人" width="100" />
-          <el-table-column label="操作" width="170" fixed="right">
+          <el-table-column prop="order_number" label="序号" width="55" align="center" />
+          <el-table-column prop="productcategory" label="产品名称" min-width="120" />
+          <el-table-column prop="product" label="产品型号" min-width="120" />
+          <el-table-column prop="plan_quantity" label="计划数量" width="80" align="center" />
+          <el-table-column prop="quantity" label="下单数量" width="80" align="center" />
+          <el-table-column prop="date" label="下发日期" width="100" align="center" />
+          <el-table-column prop="production_man_name" label="负责人" width="90" />
+          <el-table-column label="操作" width="160" fixed="right">
             <template #default="{ row }">
               <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
             </template>
@@ -88,6 +88,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Download, Search, Refresh, Promotion, List, Edit, Delete } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
 
 const router = useRouter()
@@ -175,7 +176,7 @@ onMounted(() => {
 
 <style scoped>
 .page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.page-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; font-weight: 700; color: #17363e; }
+.page-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; font-weight: 700; color: #1a2533; }
 .page-actions { display: flex; align-items: center; gap: 8px; }
 .filter-card { margin-bottom: 12px; }
 .filter-head { display: flex; align-items: center; justify-content: space-between; }
@@ -183,10 +184,10 @@ onMounted(() => {
 .filter-body { padding-top: 4px; }
 .stats-row { margin-bottom: 12px; }
 .stat-card { text-align: center; }
-.stat-value { font-size: 24px; font-weight: 700; color: #0a8387; }
+.stat-value { font-size: 24px; font-weight: 700; color: #0078e0; }
 .stat-label { font-size: 12px; color: #909399; margin-top: 4px; }
 .group-card { margin-bottom: 14px; }
 .group-head { display: flex; align-items: center; justify-content: space-between; }
-.group-number { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; color: #17363e; }
+.group-number { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; color: #1a2533; }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
 </style>

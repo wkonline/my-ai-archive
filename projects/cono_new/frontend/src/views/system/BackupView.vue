@@ -12,10 +12,10 @@
         </el-button>
       </el-space>
       <el-table :data="backups" stripe border style="margin-top:12px" v-loading="loading">
-        <el-table-column prop="name" label="备份名称" min-width="200" />
-        <el-table-column prop="size" label="大小" width="100" />
-        <el-table-column prop="created" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200">
+        <el-table-column prop="name" label="备份名称" min-width="180" />
+        <el-table-column prop="size" label="大小" width="90" />
+        <el-table-column prop="created" label="创建时间" width="140" />
+        <el-table-column label="操作" width="160">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="restoreBackup(row)">恢复</el-button>
             <el-button link type="danger" size="small" @click="deleteBackup(row)">删除</el-button>

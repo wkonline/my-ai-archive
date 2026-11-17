@@ -24,15 +24,15 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="产品名称" required>
-              <el-select v-model="form.productcategory" filterable style="width:100%">
+              <el-select v-model="form.productcategory" filterable style="width:100%" @change="onCategoryChange">
                 <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="产品型号" required>
-              <el-select v-model="form.product" filterable style="width:100%">
-                <el-option v-for="p in products" :key="p.id" :label="p.model" :value="p.id" />
+              <el-select v-model="form.product" filterable :disabled="!form.productcategory" :placeholder="form.productcategory ? '请选择产品型号' : '请先选择产品名称'" style="width:100%">
+                <el-option v-for="p in productOptions" :key="p.id" :label="p.model" :value="p.id" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -90,7 +90,21 @@ const form = reactive({
 })
 const customers = ref([])
 const categories = ref([])
-const products = ref([])
+const productOptions = ref([])
+
+// 选择产品名称后，按分类从后端拉取对应的产品型号，并清空上一次已选型号
+const onCategoryChange = async (categoryId) => {
+  form.product = null
+  await loadProductOptions(categoryId)
+}
+
+const loadProductOptions = async (categoryId) => {
+  if (!categoryId) { productOptions.value = []; return }
+  try {
+    const data = await request.get('/product/', { params: { productcategory: categoryId, page_size: 200 } })
+    productOptions.value = data.results || data || []
+  } catch { productOptions.value = [] }
+}
 
 const searchCustomers = async (q) => {
   try {
@@ -101,13 +115,13 @@ const searchCustomers = async (q) => {
 const loadData = async () => {
   try {
     categories.value = (await request.get('/productcategory/?page_size=200')).results || []
-    products.value = (await request.get('/product/?page_size=200')).results || []
     searchCustomers('')
   } catch {}
   const id = route.params.id
   if (isEdit.value && !isCopy.value) {
     try {
       const data = await request.get(`/service/${id}/`)
+      await loadProductOptions(data.productcategory)
       Object.assign(form, {
         id: data.id, service_number: data.service_number || '', customer: data.customer || null,
         productcategory: data.productcategory || null, product: data.product || null,
@@ -129,6 +143,7 @@ const loadData = async () => {
   if (isCopy.value && isEdit.value) {
     try {
       const data = await request.get(`/service/${id}/`)
+      await loadProductOptions(data.productcategory)
       Object.assign(form, {
         id: null, service_number: form.service_number, customer: data.customer || null,
         productcategory: data.productcategory || null, product: data.product || null,

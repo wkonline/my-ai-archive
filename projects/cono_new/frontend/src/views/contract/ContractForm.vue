@@ -165,7 +165,7 @@ const isEdit = computed(() => !!route.params.id)
 const saving = ref(false)
 const formRef = ref()
 const form = reactive({
-  id: null, date: '', customer: null, contract_number: '',
+  id: null, date: new Date().toISOString().slice(0,10), customer: null, contract_number: '',
   quantity: 1, total_price: 0, remark: '', attachment: ''
 })
 const rules = {
@@ -253,7 +253,7 @@ const defaultContractNumber = () => {
 const loadData = async () => {
   try {
     const [custData, catData] = await Promise.all([
-      request.get('/customer/'),
+      request.get('/customer/', { params: { page_size: 2000 } }),
       request.get('/productcategory/', { params: { page_size: 200 } }),
     ])
     customers.value = custData.results || custData || []
@@ -284,7 +284,7 @@ const loadData = async () => {
       }
     } catch {}
   } else {
-    Object.assign(form, { id: null, date: '', customer: null, contract_number: defaultContractNumber(), quantity: 1, total_price: 0, remark: '', attachment: '' })
+    Object.assign(form, { id: null, date: new Date().toISOString().slice(0,10), customer: null, contract_number: defaultContractNumber(), quantity: 1, total_price: 0, remark: '', attachment: '' })
     productRows.value = [emptyProductRow()]
   }
 }
@@ -369,14 +369,14 @@ onMounted(loadData)
 .product-table { width: 100%; }
 .product-table :deep(.el-select) { width: 100%; }
 .product-table :deep(.el-input-number) { width: 100%; }
-.amount-cell { font-weight: 600; color: #0a8387; }
+.amount-cell { font-weight: 600; color: #0078e0; }
 .summary-strip {
   display: flex; align-items: center; justify-content: flex-end; gap: 24px;
   margin-top: 12px; padding: 10px 14px;
-  border: 1px solid #e4e7ed; border-radius: 6px; background: #f8fcfc;
+  border: 1px solid #e4e7ed; border-radius: 6px; background: #f4f6f9;
   font-size: 13px; color: #606266;
 }
-.summary-strip strong { color: #0a8387; font-size: 14px; }
+.summary-strip strong { color: #0078e0; font-size: 14px; }
 .summary-amount strong { color: #f56c6c; font-size: 16px; }
 .attachment-area { width: 100%; }
 .attachment-area .upload-dragger {
@@ -393,16 +393,16 @@ onMounted(loadData)
   transition: all .2s;
 }
 .attachment-area .upload-dragger :deep(.el-upload-dragger:hover) {
-  border-color: #0a8387;
-  background: #f0faf9;
+  border-color: #0078e0;
+  background: #eaf5ff;
 }
 .uploaded-file {
   display: flex; align-items: center; gap: 12px;
   margin-top: 12px; padding: 10px 14px;
   border: 1px solid #e4e7ed; border-radius: 8px;
-  background: #f8fcfc;
+  background: #f4f6f9;
 }
-.file-icon { font-size: 24px; color: #0a8387; }
+.file-icon { font-size: 24px; color: #0078e0; }
 .file-info { flex: 1; min-width: 0; }
 .file-name { font-size: 13px; color: #303133; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-size { font-size: 12px; color: #909399; margin-top: 2px; }

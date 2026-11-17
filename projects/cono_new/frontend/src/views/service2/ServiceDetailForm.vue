@@ -108,13 +108,17 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="产品名称">
-              <el-input :model-value="form.productcategory_name" disabled />
+            <el-form-item label="产品名称" required>
+              <el-select v-model="form.productcategory_id" filterable style="width:100%">
+                <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="产品型号">
-              <el-input :model-value="form.product_model" disabled />
+              <el-select v-model="form.product_id" filterable :placeholder="'请选择产品型号'" style="width:100%">
+                <el-option v-for="p in productsByCategoryId(form.productcategory_id)" :key="p.id" :label="p.model" :value="p.id" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -171,6 +175,14 @@ const form = reactive({
 const customers = ref([])
 const services = ref([])
 
+const productCategories = ref([])
+const allProducts = ref([])
+
+const productsByCategoryId = (catId) => {
+  if (!catId) return []
+  return allProducts.value.filter(p => p.productcategory === catId)
+}
+
 const batchCustomer = ref(null)
 const batchDate = ref(new Date().toISOString().slice(0, 10))
 const batchServices = ref([])
@@ -195,13 +207,20 @@ const onCustomerChange = async (cid) => {
 
 const onServiceChange = (val) => {
   const s = services.value.find(i => i.id === val)
-  if (s) {
-    form.productcategory_name = s.productcategory__name || ''
-    form.product_model = s.product__model || ''
-  }
+  if (!s) return
+  const catId = s.productcategory_id || null
+  const prodId = s.product_id || null
+  form.productcategory_id = catId
+  form.product_id = prodId
+  form.productcategory_name = s.productcategory__name || ''
+  form.product_model = prodId ? (allProducts.value.find(p => p.id === prodId)?.model || '') : ''
 }
 
 const loadData = async () => {
+  try {
+    productCategories.value = (await request.get('/productcategory/?page_size=200')).results || []
+    allProducts.value = (await request.get('/product/?page_size=200')).results || []
+  } catch {}
   if (isBatch.value || isKnowledge.value) {
     searchCustomers('')
     return
@@ -214,12 +233,17 @@ const loadData = async () => {
     const data = await request.get(`/servicedetail/${route.params.id}/`)
     Object.assign(form, {
       id: data.id, customer: data.customer || null, service: data.service || null,
-      productcategory_name: data.productcategory_name || '', product_model: data.product_model || '',
+      productcategory_id: data.productcategory || null, productcategory_name: data.productcategory_name || '',
+      product_id: data.product || null, product_model: data.product_model || '',
       fault_text: data.fault_text || '', fault_reason: data.fault_reason || '',
       repair_method: data.repair_method || '', repair_date: data.repair_date || '',
     })
     customers.value = [{ id: data.customer, company_name: data.customer_name }]
-    services.value = [{ id: data.service, service_number: data.service_number }]
+    services.value = [{
+      id: data.service, service_number: data.service_number,
+      productcategory_id: data.productcategory || null, product_id: data.product || null,
+      productcategory__name: data.productcategory_name || '', product__model: data.product_model || '',
+    }]
   } catch {}
 }
 
@@ -232,7 +256,7 @@ const handleSave = async () => {
   try {
     const payload = {
       customer: form.customer, service: form.service,
-      productcategory: null, product: null,
+      productcategory: form.productcategory_name || '', product: form.product_model || '',
       fault_text: form.fault_text, fault_reason: form.fault_reason,
       repair_method: form.repair_method, repair_date: form.repair_date,
     }
@@ -265,7 +289,12 @@ const handleBatchSave = async () => {
     await request.post('/servicedetail/batch/', {
       customer: batchCustomer.value,
       repair_date: batchDate.value,
-      items,
+      items: items.map((s, i) => ({
+        service_id: s.id,
+        productcategory_id: s.productcategory_id,
+        product_id: s.product_id,
+        fault_text: s.fault_text, fault_reason: s.fault_reason, repair_method: s.repair_method,
+      })),
     })
     ElMessage.success('批量登记成功')
     router.push('/servicedetail')
@@ -288,14 +317,14 @@ onMounted(loadData)
 .page-title { font-size: 18px; font-weight: 700; color: #303133; }
 .form-card { width: 100%; }
 .footer-actions { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e4e7ed; display: flex; justify-content: flex-end; gap: 8px; }
-.batch-hint { margin-top: 8px; color: #658088; font-size: 13px; }
+.batch-hint { margin-top: 8px; color: #4a5a6a; font-size: 13px; }
 .kb-search { margin-bottom: 12px; }
 .kb-summary { margin-bottom: 12px; }
-.kb-col-title { margin: 0 0 8px; color: #0a8387; font-size: 13px; font-weight: 700; }
-.kb-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 6px; background: #fbfdfd; margin-bottom: 6px; font-size: 13px; color: #34505a; line-height: 1.5; }
-.kb-case { border: 1px solid #e6eef0; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
-.kb-case-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; color: #17363e; font-weight: 700; font-size: 13px; }
-.kb-field { font-size: 13px; color: #34505a; line-height: 1.6; margin-bottom: 5px; }
-.kb-field b { color: #4e6c74; }
-.kb-meta { color: #8ea3a9; font-size: 12px; }
+.kb-col-title { margin: 0 0 8px; color: #0078e0; font-size: 13px; font-weight: 700; }
+.kb-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 6px; background: #f4f6f9; margin-bottom: 6px; font-size: 13px; color: #1a2533; line-height: 1.5; }
+.kb-case { border: 1px solid #eaf5ff; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
+.kb-case-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; color: #1a2533; font-weight: 700; font-size: 13px; }
+.kb-field { font-size: 13px; color: #1a2533; line-height: 1.6; margin-bottom: 5px; }
+.kb-field b { color: #4a5a6a; }
+.kb-meta { color: #8a97a5; font-size: 12px; }
 </style>

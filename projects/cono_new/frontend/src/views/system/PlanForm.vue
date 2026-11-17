@@ -60,6 +60,15 @@
               <el-date-picker v-model="form.delivery_date" type="date" value-format="YYYY-MM-DD" style="width:100%" />
             </el-form-item>
           </el-col>
+          <el-col :span="12">
+            <el-form-item label="生产状态">
+              <el-select v-model="form.completed_status" style="width:100%">
+                <el-option :value="1" label="待生产" />
+                <el-option :value="2" label="生产中" />
+                <el-option :value="3" label="已完成" />
+              </el-select>
+            </el-form-item>
+          </el-col>
           <el-col :span="24">
             <el-form-item label="详细配置">
               <el-input v-model="form.configuration" type="textarea" :rows="3" placeholder="请输入详细配置信息" />
@@ -80,6 +89,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useDictStore } from '../../stores/dictCache'
 import { Calendar } from '@element-plus/icons-vue'
 import request from '../../api/request'
 
@@ -91,11 +101,13 @@ const formRef = ref()
 const form = reactive({
   id: null, contract: null, contract_reserve: '', productcategory: null, product: null,
   quantity: 1, unit: 1, configuration: '', effective_date: '', delivery_date: '',
-  completed: false,
+  completed_status: 1,
 })
-const categories = ref([])
-const products = ref([])
-const contractOptions = ref([])
+const dictStore = useDictStore()
+// 直接引用 store 的数据，保证响应式联动
+const categories = computed(() => dictStore.categories)
+const products = computed(() => dictStore.products)
+const contractOptions = computed(() => dictStore.contracts)
 
 // 根据已选产品名称自动过滤型号
 const filteredProducts = computed(() => {
@@ -106,38 +118,41 @@ const filteredProducts = computed(() => {
 // 用户手动切换产品名称时清空已选型号；编辑回填时不会触发 change，避免把型号清掉。
 const onCategoryChange = () => { form.product = null }
 
-// 编辑的数据可能不在下拉框已加载的 200 条里，单独补上，保证型号/合同能正常回显。
-const ensureOption = async (list, id, endpoint) => {
-  if (!id || list.value.some(item => item.id === id)) return
-  try { list.value.push(await request.get(`/${endpoint}/${id}/`)) } catch {}
+// 编辑时若选项不在缓存中，单独拉取单条补全
+const ensureOption = async (storeKey, id) => {
+  const arr = dictStore[storeKey]
+  if (!id || arr.some(item => item.id === id)) return
+  try {
+    const item = await request.get(`/${storeKey.replace('s','')}/${id}/`)
+    dictStore[storeKey].push(item)
+  } catch {}
 }
 
 const loadData = async () => {
   try {
-    categories.value = (await request.get('/productcategory/?page_size=200')).results || []
-    products.value = (await request.get('/product/?page_size=200')).results || []
-    contractOptions.value = (await request.get('/contract/?page_size=200')).results || []
+    // 优先使用缓存字典（60秒内复用），过期自动刷新
+    await dictStore.fetchAll()
   } catch {}
   if (!isEdit.value) {
     Object.assign(form, {
       id: null, contract: null, contract_reserve: '', productcategory: null, product: null,
       quantity: 1, unit: 1, configuration: '', effective_date: new Date().toISOString().slice(0, 10),
-      delivery_date: '', completed: false,
+      delivery_date: '', completed_status: 1,
     })
     return
   }
   try {
     const data = await request.get(`/plan/${route.params.id}/`)
     await Promise.all([
-      ensureOption(products, data.product, 'product'),
-      ensureOption(contractOptions, data.contract, 'contract'),
+      ensureOption('products', data.product),
+      ensureOption('contracts', data.contract),
     ])
     Object.assign(form, {
       id: data.id, contract: data.contract || null, contract_reserve: data.contract_reserve || '',
       productcategory: data.productcategory || null, product: data.product || null,
       quantity: data.quantity ?? 1, unit: data.unit ?? 1, configuration: data.configuration || '',
       effective_date: data.effective_date || '', delivery_date: data.delivery_date || '',
-      completed: !!data.completed,
+      completed_status: data.completed_status ?? 1,
     })
   } catch {}
 }

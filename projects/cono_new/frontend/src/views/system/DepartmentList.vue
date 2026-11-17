@@ -15,10 +15,10 @@
         <span class="card-title"><el-icon><List /></el-icon> 部门列表</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="100" align="center" fixed />
-        <el-table-column prop="title" label="部门名称" min-width="160" />
-        <el-table-column prop="description" label="部门描述" min-width="220" show-overflow-tooltip />
-        <el-table-column label="操作" width="170" fixed="right">
+        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
+        <el-table-column prop="title" label="部门名称" min-width="140" />
+        <el-table-column prop="description" label="部门描述" min-width="180" show-overflow-tooltip />
+        <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

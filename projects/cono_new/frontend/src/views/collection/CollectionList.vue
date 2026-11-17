@@ -62,37 +62,42 @@
         <span class="card-title"><el-icon><List /></el-icon> 回款记录</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="90" align="center" fixed />
-        <el-table-column prop="customer_name" label="客户名称" min-width="160" show-overflow-tooltip />
-        <el-table-column label="合同号码" min-width="140" show-overflow-tooltip>
+        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
+        <el-table-column prop="customer_name" label="客户名称" width="280" show-overflow-tooltip />
+        <el-table-column label="合同号码" width="120" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button type="primary" link @click="openContract(row)">{{ row.contract_number }}</el-button>
           </template>
         </el-table-column>
-        <el-table-column label="合同金额" width="120" align="right">
+        <el-table-column label="合同金额" width="105" align="right">
           <template #default="{ row }">¥{{ Number(row.contract_total_price || 0).toLocaleString() }}</template>
         </el-table-column>
-        <el-table-column label="欠款余额" width="120" align="right">
+        <el-table-column label="欠款余额" width="105" align="right">
           <template #default="{ row }">
             <span :style="{ color: Number(row.contract_balance || 0) > 0 ? '#f56c6c' : '#67c23a' }">
               ¥{{ Number(row.contract_balance || 0).toLocaleString() }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="date" label="回款日期" width="110" align="center" />
-        <el-table-column label="回款金额" width="120" align="right">
+        <el-table-column prop="date" label="回款日期" width="100" align="center" />
+        <el-table-column label="回款金额" width="105" align="right">
           <template #default="{ row }">
             <span class="amount">¥{{ Number(row.amount || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="回款比例" width="120" align="center">
+        <el-table-column label="回款比例" width="100" align="center">
           <template #default="{ row }">
-            <el-progress :percentage="row.collection_ratio || 0" :stroke-width="8" />
+            <el-progress :percentage="Math.round((Number(row.amount) / (Number(row.contract_total_price) || 1)) * 100)" :stroke-width="8" />
           </template>
         </el-table-column>
-        <el-table-column prop="collection_method_display" label="回款方式" width="100" align="center" />
-        <el-table-column prop="saler_name" label="业务经理" width="100" show-overflow-tooltip />
-        <el-table-column label="操作" width="170" fixed="right">
+        <el-table-column prop="collection_method_display" label="回款方式" width="85" align="center" />
+        <el-table-column label="总回款比例" width="100" align="center">
+          <template #default="{ row }">
+            <el-progress :percentage="row.collection_ratio || 0" :stroke-width="8" :status="row.collection_ratio >= 100 ? 'success' : ''" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="saler_name" label="业务经理" width="85" show-overflow-tooltip />
+        <el-table-column label="操作" width="350" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>
@@ -118,6 +123,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, PieChart, List, Edit, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
 import BaseChart from '../../components/BaseChart.vue'
+import { pickColors } from '../../components/chartColors'
 
 const router = useRouter()
 
@@ -134,36 +140,40 @@ const keyword = ref('')
 
 const collectionMethods = { 1: '电汇', 2: '银承', 3: '现金', 4: '万纳信', 5: '迪链' }
 
-const monthChartOption = computed(() => ({
-  tooltip: { trigger: 'axis' },
-  grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
-  xAxis: { type: 'category', data: stats.value.monthly || [], axisLabel: { fontSize: 10 } },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef2f3' } } },
-  series: [{
-    type: 'bar',
-    data: stats.value.monthly_amounts || [],
-    barMaxWidth: 26,
-    itemStyle: {
-      color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [
-        { offset: 0, color: '#f5a623' },
-        { offset: 1, color: '#e8780f' }
-      ]},
-      borderRadius: [4, 4, 0, 0]
-    }
-  }]
-}))
+const monthChartOption = computed(() => {
+  const colors = pickColors((stats.value.monthly_amounts || []).length)
+  return {
+    tooltip: { trigger: 'axis' },
+    grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
+    xAxis: { type: 'category', data: stats.value.monthly || [], axisLabel: { fontSize: 10 } },
+    yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef3f8' } } },
+    series: [{
+      type: 'bar',
+      data: (stats.value.monthly_amounts || []).map((v, idx) => ({
+        value: v,
+        itemStyle: { color: colors[idx % colors.length], borderRadius: [4, 4, 0, 0] }
+      })),
+      barMaxWidth: 26,
+    }]
+  }
+})
 
-const salesmanChartOption = computed(() => ({
-  tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-  legend: { bottom: 0, textStyle: { fontSize: 11 } },
-  series: [{
-    type: 'pie',
-    radius: ['40%', '66%'],
-    center: ['50%', '43%'],
-    data: stats.value.quarter_salesman || [],
-    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 }
-  }]
-}))
+const salesmanChartOption = computed(() => {
+  const data = stats.value.quarter_salesman || []
+  return {
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: { bottom: 0, textStyle: { fontSize: 11 } },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '66%'],
+      center: ['50%', '43%'],
+      data,
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      color: pickColors(data.length),
+      label: { show: true, fontSize: 11, formatter: '{b}: {d}%' },
+    }]
+  }
+})
 
 const fetchList = async () => {
   loading.value = true
@@ -225,7 +235,7 @@ onMounted(() => {
 .toolbar-card { margin-bottom: 12px; }
 .toolbar-row { display: flex; align-items: center; gap: 8px; }
 .spacer { flex: 1; }
-.stat-text { color: #6b838a; font-size: 13px; }
+.stat-text { color: #4a5a6a; font-size: 13px; }
 .chart-row { margin-bottom: 12px; }
 .chart-card :deep(.el-card__header) { padding: 10px 14px; }
 .chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }

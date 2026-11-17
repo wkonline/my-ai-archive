@@ -70,8 +70,15 @@ const isEdit = computed(() => !!route.params.id)
 const saving = ref(false)
 const formRef = ref()
 
+// 新增发票时开票日期默认当天
+const today = () => {
+  const d = new Date()
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 const form = reactive({
-  id: null, customer: null, contract: null, date: '', amount: 0,
+  id: null, customer: null, contract: null, date: today(), amount: 0,
   invoice_number: '', invoice_man_name: ''
 })
 
@@ -96,7 +103,7 @@ const onCustomerChange = async (cid) => {
 
 const loadData = async () => {
   if (!isEdit.value) {
-    Object.assign(form, { id: null, customer: null, contract: null, date: '', amount: 0, invoice_number: '', invoice_man_name: '' })
+    Object.assign(form, { id: null, customer: null, contract: null, date: today(), amount: 0, invoice_number: '', invoice_man_name: '' })
     searchCustomers('')
     return
   }
@@ -130,11 +137,17 @@ const handleSave = async () => {
       amount: form.amount,
       invoice_number: form.invoice_number,
     }
-    if (form.id) await request.put(`/invoice/${form.id}/`, payload)
-    else await request.post('/invoice/', payload)
+    console.log('Saving invoice:', payload)
+    const url = form.id ? `/invoice/${form.id}/` : '/invoice/'
+    const method = form.id ? 'put' : 'post'
+    const res = await request[method](url, payload)
+    console.log('Save response:', res)
     ElMessage.success('保存成功')
     router.push('/invoice')
-  } finally {
+  } catch (e) {
+    console.error('Save error:', e)
+    const msg = e?.response?.data?.detail || e?.message || '保存失败，请重试'
+    ElMessage.error(typeof msg === 'string' ? msg : JSON.stringify(msg))
     saving.value = false
   }
 }

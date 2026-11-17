@@ -75,7 +75,7 @@
       <div class="panel home-table">
         <div class="panel-heading"><el-icon><Document /></el-icon><span>最新合同</span><router-link to="/contract" class="see-all">查看全部</router-link></div>
         <table class="table">
-          <thead><tr><th class="col-index">#</th><th class="col-contract">合同号</th><th class="col-customer">客户</th><th>业务员</th><th class="col-date">日期</th><th class="col-amount text-right">金额</th></tr></thead>
+          <thead><tr><th class="col-index">#</th><th class="col-contract">合同号</th><th class="col-customer">客户</th><th>业务员</th><th class="col-date">日期</th><th class="col-amount">金额</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentContracts" :key="row.id">
               <td class="col-index">{{ i + 1 }}</td>
@@ -83,7 +83,7 @@
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td>{{ row.saler_name }}</td>
               <td>{{ row.date }}</td>
-              <td class="text-right amount-cell">{{ fmt(row.total_price) }}</td>
+              <td class="amount-cell">{{ fmt(row.total_price) }}</td>
             </tr>
             <tr v-if="!recentContracts.length"><td colspan="6" class="empty">暂无合同数据</td></tr>
           </tbody>
@@ -93,14 +93,14 @@
       <div class="panel home-table">
         <div class="panel-heading"><el-icon><Money /></el-icon><span>最新回款</span><router-link to="/collection" class="see-all">查看全部</router-link></div>
         <table class="table">
-          <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-contract">合同</th><th class="col-date">日期</th><th class="col-amount text-right">金额</th></tr></thead>
+          <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-contract">合同</th><th class="col-date">日期</th><th class="col-amount">金额</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentCollections" :key="row.id">
               <td class="col-index">{{ i + 1 }}</td>
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td><router-link :to="`/contract/${row.contract_id}`">{{ row.contract_number }}</router-link></td>
               <td>{{ row.date }}</td>
-              <td class="text-right amount-cell">{{ fmt(row.amount) }}</td>
+              <td class="amount-cell">{{ fmt(row.amount) }}</td>
             </tr>
             <tr v-if="!recentCollections.length"><td colspan="5" class="empty">暂无回款数据</td></tr>
           </tbody>
@@ -110,14 +110,14 @@
       <div class="panel home-table">
         <div class="panel-heading"><el-icon><List /></el-icon><span>最新发票</span><router-link to="/invoice" class="see-all">查看全部</router-link></div>
         <table class="table">
-          <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-contract">合同</th><th class="col-date">日期</th><th class="col-amount text-right">金额</th></tr></thead>
+          <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-contract">合同</th><th class="col-date">日期</th><th class="col-amount">金额</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentInvoices" :key="row.id">
               <td class="col-index">{{ i + 1 }}</td>
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td><router-link :to="`/contract/${row.contract_id}`">{{ row.contract_number }}</router-link></td>
               <td>{{ row.date }}</td>
-              <td class="text-right amount-cell">{{ fmt(row.amount) }}</td>
+              <td class="amount-cell">{{ fmt(row.amount) }}</td>
             </tr>
             <tr v-if="!recentInvoices.length"><td colspan="5" class="empty">暂无发票数据</td></tr>
           </tbody>
@@ -204,6 +204,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import request from '../api/request'
 import BaseChart from '../components/BaseChart.vue'
+import { pickColors } from '../components/chartColors'
 import {
   Monitor, Document, Money, Calendar, Briefcase, TrendCharts, List, User,
   PieChart, Grid, PhoneFilled, Tools, RefreshLeft, Setting,
@@ -230,7 +231,7 @@ const quickMenus = [
   { title: '发票登记', url: '/invoice', icon: List },
   { title: '生产计划', url: '/plan', icon: Calendar },
   { title: '客户管理', url: '/customer', icon: User },
-  { title: '应收应付', url: '/chart', icon: TrendCharts },
+  { title: '应收应付', url: '/accounts', icon: TrendCharts },
   { title: '售后服务', url: '/service', icon: Tools },
   { title: '维修服务', url: '/servicedetail', icon: Setting },
 ]
@@ -248,43 +249,50 @@ const metricCards = computed(() => [
 const statusClass = (val) => val === 2 ? 'warning' : val === 3 ? 'success' : ''
 const warrantyClass = (val) => val === 1 ? 'danger' : val === 2 ? 'warning' : 'success'
 
-const yearChartOption = computed(() => ({
-  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-  grid: { left: 18, right: 18, top: 34, bottom: 28, containLabel: true },
-  xAxis: {
-    type: 'category', data: charts.value.year_labels,
-    axisLine: { lineStyle: { color: 'rgba(14,165,233,0.2)' } },
-    axisLabel: { color: '#475569', fontSize: 11 },
-  },
-  yAxis: {
-    type: 'value',
-    axisLabel: { color: '#475569', fontSize: 11 },
-    splitLine: { lineStyle: { color: 'rgba(14,165,233,0.06)' } },
-  },
-  series: [{
-    name: '合同金额', type: 'bar', data: charts.value.year_values, barMaxWidth: 48,
-    itemStyle: {
-      color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-        colorStops: [{ offset: 0, color: '#60a5fa' }, { offset: 0.5, color: '#3b82f6' }, { offset: 1, color: '#1d4ed8' }] },
-      borderRadius: [4, 4, 0, 0],
+const yearChartOption = computed(() => {
+  const colors = pickColors(charts.value.year_values.length)
+  return {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: 18, right: 18, top: 34, bottom: 28, containLabel: true },
+    xAxis: {
+      type: 'category', data: charts.value.year_labels,
+      axisLine: { lineStyle: { color: 'rgba(0,120,224,0.2)' } },
+      axisLabel: { color: '#4a5a6a', fontSize: 11 },
     },
-  }],
-}))
+    yAxis: {
+      type: 'value',
+      axisLabel: { color: '#4a5a6a', fontSize: 11 },
+      splitLine: { lineStyle: { color: 'rgba(0,120,224,0.06)' } },
+    },
+    series: [{
+      name: '合同金额', type: 'bar', data: charts.value.year_values, barMaxWidth: 48,
+      itemStyle: {
+        borderRadius: [6, 6, 0, 0],
+        color: (params) => {
+          const c = colors[params.dataIndex % colors.length]
+          return { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [{ offset: 0, color: c }, { offset: 1, color: c }] }
+        },
+      },
+      emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,120,224,0.35)' } },
+    }],
+  }
+})
 
 const pieChartOption = computed(() => ({
   tooltip: { trigger: 'item', formatter: '{b}: ¥{c}' },
   legend: {
     bottom: 0, type: 'scroll', orient: 'horizontal',
-    textStyle: { color: '#475569', fontSize: 11 },
+    textStyle: { color: '#4a5a6a', fontSize: 11 },
     itemWidth: 12, itemHeight: 8, pageIconSize: 8,
   },
   series: [{
     name: '销售业绩', type: 'pie', radius: ['38%', '64%'], center: ['50%', '44%'],
-    avoidLabelOverlap: true, label: { color: '#475569', fontSize: 11 },
+    avoidLabelOverlap: true, label: { color: '#4a5a6a', fontSize: 11 },
     data: charts.value.pie_labels.map((name, i) => ({ name, value: charts.value.pie_values[i] })),
-    itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
-    color: ['#93c5fd', '#60a5fa', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af'],
-    emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(14,165,233,0.25)' } },
+    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+    color: pickColors(charts.value.pie_labels.length),
+    emphasis: { itemStyle: { shadowBlur: 14, shadowColor: 'rgba(0,120,224,0.3)' } },
   }],
 }))
 
@@ -315,131 +323,131 @@ onMounted(load)
 .home-hero {
   position: relative; overflow: hidden; border-radius: 14px;
   padding: 28px 32px; margin-bottom: 20px;
-  background: linear-gradient(135deg, #e0f2fe 0%, #7dd3fc 50%, #38bdf8 100%);
-  border: 1px solid rgba(56,189,248,0.35);
-  box-shadow: 0 8px 32px rgba(56,189,248,0.15), inset 0 1px 0 rgba(255,255,255,0.5);
+  background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 45%, var(--navy-700) 100%);
+  border: 1px solid var(--border-bright);
+  box-shadow: 0 8px 32px rgba(0,31,63,0.35), 0 0 40px rgba(0,120,224,0.08);
 }
 .hero-glow { position: absolute; border-radius: 50%; pointer-events: none; }
-.glow-1 { top: -60px; right: -40px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%); }
-.glow-2 { bottom: -80px; left: 30%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
+.glow-1 { top: -60px; right: -40px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(0,120,224,0.18) 0%, transparent 70%); }
+.glow-2 { bottom: -80px; left: 30%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(0,120,224,0.12) 0%, transparent 70%); }
 .hero-label {
   display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
-  border-radius: 999px; background: rgba(255,255,255,0.35); border: 1px solid rgba(255,255,255,0.5);
-  color: #0369a1; font-size: 12px; font-weight: 600; letter-spacing: 1px;
+  border-radius: 999px; background: rgba(0,120,224,0.1); border: 1px solid rgba(0,120,224,0.3);
+  color: var(--navy-300); font-size: 12px; font-weight: 600; letter-spacing: 1px;
 }
-.home-hero h3 { margin: 14px 0 6px; color: #0c4a6e; font-size: 26px; font-weight: 700; }
-.hero-sub { margin: 0; color: #0284c7; font-size: 13px; }
+.home-hero h3 { margin: 14px 0 6px; color: var(--text-bright); font-size: 26px; font-weight: 700; text-shadow: 0 0 24px rgba(0,120,224,0.3); }
+.hero-sub { margin: 0; color: var(--navy-300); font-size: 13px; }
 .hero-actions { margin-top: 18px; display: flex; gap: 8px; }
 .btn-cyber {
-  background: linear-gradient(135deg, #38bdf8, #0284c7) !important;
+  background: linear-gradient(135deg, var(--navy-500), var(--navy-700)) !important;
   border: none !important; color: #fff !important;
-  box-shadow: 0 4px 16px rgba(2,132,199,0.3) !important;
+  box-shadow: 0 4px 16px rgba(0,120,224,0.35) !important;
 }
 .btn-outline {
-  background: rgba(255,255,255,0.4) !important; border: 1px solid rgba(2,132,199,0.35) !important;
-  color: #0369a1 !important;
+  background: rgba(0,120,224,0.06) !important; border: 1px solid var(--border-bright) !important;
+  color: var(--navy-500) !important;
 }
-.btn-outline:hover { background: rgba(255,255,255,0.7) !important; border-color: #0284c7 !important; }
+.btn-outline:hover { background: var(--navy-50) !important; border-color: var(--navy-500) !important; }
 
 /* ── 指标卡片 ── */
 .metric-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 14px; margin-bottom: 20px; }
 .home-card {
   position: relative; border-radius: 12px; padding: 16px 18px;
-  background: #fff; border: 1px solid var(--border);
-  box-shadow: 0 2px 8px rgba(14,165,233,0.06), 0 4px 16px rgba(14,165,233,0.03);
+  background: var(--bg-card); border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,31,63,0.06), 0 4px 16px rgba(0,31,63,0.08);
   transition: transform .18s, box-shadow .18s; overflow: hidden;
 }
-.home-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.1); }
+.home-card:hover { transform: translateY(-2px); box-shadow: 0 1px 4px rgba(0,31,63,0.08), 0 8px 28px rgba(0,31,63,0.12), 0 0 20px rgba(0,120,224,0.08); }
 .card-accent { position: absolute; top: 0; left: 0; right: 0; height: 2px; }
-.color-0 .card-accent { background: linear-gradient(90deg, #38bdf8, transparent); }
-.color-1 .card-accent { background: linear-gradient(90deg, #0ea5e9, transparent); }
+.color-0 .card-accent { background: linear-gradient(90deg, var(--navy-500), transparent); }
+.color-1 .card-accent { background: linear-gradient(90deg, var(--navy-600), transparent); }
 .color-2 .card-accent { background: linear-gradient(90deg, #8b5cf6, transparent); }
 .color-3 .card-accent { background: linear-gradient(90deg, #f59e0b, transparent); }
-.color-4 .card-accent { background: linear-gradient(90deg, #ef4444, transparent); }
-.color-5 .card-accent { background: linear-gradient(90deg, #60a5fa, transparent); }
+.color-4 .card-accent { background: linear-gradient(90deg, #d32f2f, transparent); }
+.color-5 .card-accent { background: linear-gradient(90deg, var(--navy-500), transparent); }
 .card-body { position: relative; z-index: 1; }
-.metric-label { display: flex; align-items: center; gap: 6px; color: #475569; font-size: 12px; font-weight: 600; letter-spacing: .5px; }
+.metric-label { display: flex; align-items: center; gap: 6px; color: var(--text-sub); font-size: 12px; font-weight: 600; letter-spacing: .5px; }
 .metric-label .el-icon { font-size: 14px; }
-.color-0 .metric-label .el-icon { color: #38bdf8; }
-.color-1 .metric-label .el-icon { color: #0ea5e9; }
+.color-0 .metric-label .el-icon { color: var(--navy-500); }
+.color-1 .metric-label .el-icon { color: var(--navy-600); }
 .color-2 .metric-label .el-icon { color: #8b5cf6; }
-.color-3 .metric-label .el-icon { color: #f59e0b; }
-.color-4 .metric-label .el-icon { color: #ef4444; }
-.color-5 .metric-label .el-icon { color: #3b82f6; }
-.metric-value { margin-top: 10px; font-size: 26px; font-weight: 700; color: #0c4a6e; line-height: 1.1; letter-spacing: -0.5px; }
-.metric-note { margin-top: 5px; color: #94a3b8; font-size: 11px; }
+.color-3 .metric-label .el-icon { color: #f5a623; }
+.color-4 .metric-label .el-icon { color: #d32f2f; }
+.color-5 .metric-label .el-icon { color: var(--navy-500); }
+.metric-value { margin-top: 10px; font-size: 26px; font-weight: 700; color: var(--text-main); line-height: 1.1; letter-spacing: -0.5px; }
+.metric-note { margin-top: 5px; color: var(--text-dim); font-size: 11px; }
 
 /* ── 图表行 ── */
 .charts-row { display: flex; gap: 16px; margin-bottom: 20px; }
 .panel {
-  flex: 1; border-radius: 12px; background: #fff;
+  flex: 1; border-radius: 12px; background: var(--bg-card);
   border: 1px solid var(--border);
-  box-shadow: 0 2px 8px rgba(14,165,233,0.06); overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,31,63,0.06), 0 4px 16px rgba(0,31,63,0.08); overflow: hidden;
 }
 .panel-heading {
   display: flex; align-items: center; gap: 8px; padding: 14px 18px;
   border-bottom: 1px solid var(--border); color: var(--text-main); font-size: 14px; font-weight: 600;
 }
-.panel-heading .el-icon { color: #38bdf8; }
-.panel-hint { margin-left: auto; color: #94a3b8; font-size: 11px; font-weight: 400; }
+.panel-heading .el-icon { color: var(--navy-500); }
+.panel-hint { margin-left: auto; color: var(--text-dim); font-size: 11px; font-weight: 400; }
 .panel-body { padding: 12px; }
 
 /* ── 常用功能 ── */
 .section-title { display: flex; align-items: center; justify-content: space-between; margin: 22px 0 12px; }
 .section-title h4 { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--text-main); font-size: 15px; font-weight: 600; }
-.section-title h4 .el-icon { color: #38bdf8; }
-.see-all { color: #0ea5e9; font-size: 12px; text-decoration: none; font-weight: 500; }
+.section-title h4 .el-icon { color: var(--navy-500); }
+.see-all { color: var(--navy-500); font-size: 12px; text-decoration: none; font-weight: 500; margin-left: auto; }
 .see-all:hover { text-decoration: underline; }
 
 .quick-grid { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
 .quick-card {
   display: flex; align-items: center; padding: 12px 20px;
-  border: 1px solid var(--border); border-radius: 10px; background: #fff;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--bg-card);
   color: var(--text-main); text-decoration: none; font-size: 13px; font-weight: 500;
   transition: all .2s; gap: 8px;
 }
-.quick-card:hover { border-color: rgba(56,189,248,0.4); background: var(--blue-50); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(14,165,233,0.1); }
+.quick-card:hover { border-color: var(--border-bright); background: var(--navy-50); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,31,63,0.1); }
 .quick-icon {
-  width: 32px; height: 32px; border-radius: 8px; background: var(--blue-100);
-  display: flex; align-items: center; justify-content: center; color: #0ea5e9;
+  width: 32px; height: 32px; border-radius: 8px; background: var(--navy-50);
+  display: flex; align-items: center; justify-content: center; color: var(--navy-600);
   transition: all .2s;
 }
-.quick-card:hover .quick-icon { background: #0ea5e9; color: #fff; }
+.quick-card:hover .quick-icon { background: var(--navy-500); color: #fff; }
 
 /* ── 表格 ── */
 .two-col { display: flex; gap: 16px; margin-bottom: 16px; }
 .home-lists { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; margin-bottom: 16px; }
-.home-table { border-radius: 12px; background: #fff; border: 1px solid var(--border); overflow: hidden; }
+.home-table { border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); overflow: hidden; }
 .home-table .table { table-layout: fixed; width: 100%; border-collapse: collapse; margin-bottom: 0; }
 .home-table .table thead th {
-  background: var(--blue-50); padding: 10px 10px; font-size: 12px; font-weight: 600;
-  color: #475569; text-align: left; border-bottom: 1px solid var(--border);
+  background: var(--navy-50); padding: 10px 10px; font-size: 12px; font-weight: 600;
+  color: var(--navy-700); text-align: left; border-bottom: 1px solid var(--border);
 }
 .home-table .table tbody td {
   height: 42px; padding: 6px 10px; vertical-align: middle;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  border-bottom: 1px solid rgba(14,165,233,0.06); color: var(--text-main); font-size: 13px;
+  border-bottom: 1px solid rgba(0,120,224,0.06); color: var(--text-main); font-size: 13px;
   transition: background .15s;
 }
-.home-table .table tbody tr:hover td { background: var(--blue-50); }
+.home-table .table tbody tr:hover td { background: var(--navy-50); }
 .col-customer { width: 196px; }
 .col-contract { width: 128px; }
 .col-code { width: 144px; }
 .col-date { width: 86px; }
 .col-amount { width: 114px; }
 .col-status { width: 100px; }
-.col-index { width: 40px !important; text-align: center; color: #94a3b8; font-variant-numeric: tabular-nums; font-size: 12px; }
+.col-index { width: 40px !important; text-align: center; color: var(--text-dim); font-variant-numeric: tabular-nums; font-size: 12px; }
 .text-right { text-align: right; }
-.amount-cell { font-variant-numeric: tabular-nums; color: #0ea5e9; font-weight: 600; }
-.empty { padding: 24px 0; text-align: center; color: #94a3b8; white-space: normal; font-size: 13px; }
-.home-table a { color: #0ea5e9; text-decoration: none; }
+.amount-cell { font-variant-numeric: tabular-nums; color: var(--navy-600); font-weight: 600; }
+.empty { padding: 24px 0; text-align: center; color: var(--text-dim); white-space: normal; font-size: 13px; }
+.home-table a { color: var(--navy-500); text-decoration: none; }
 .home-table a:hover { text-decoration: underline; }
 
 .status-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
-.status-pill { background: var(--blue-50); color: #0ea5e9; }
-.status-pill.warning { background: #fff7ed; color: #ea580c; }
-.status-pill.danger { background: #fef2f2; color: #dc2626; }
-.status-pill.success { background: #eff6ff; color: #0284c7; }
+.status-pill { background: var(--navy-50); color: var(--navy-600); }
+.status-pill.warning { background: #fff7ed; color: #b45309; }
+.status-pill.danger { background: #fef2f2; color: #b91c1c; }
+.status-pill.success { background: #eef3f8; color: var(--navy-700); }
 
 @media (max-width: 1200px) { .metric-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
 @media (max-width: 991px) {

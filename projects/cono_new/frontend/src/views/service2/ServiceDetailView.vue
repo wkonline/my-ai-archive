@@ -108,6 +108,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Download, Search, Refresh, TrendCharts, Histogram, PieChart, List, Reading, Document, Edit, Delete } from '@element-plus/icons-vue'
 import BaseChart from '../../components/BaseChart.vue'
+import { pickColors } from '../../components/chartColors'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
 
@@ -124,65 +125,71 @@ const searchCustomer = ref('')
 
 const chartData = ref({})
 
-const monthOption = computed(() => ({
-  tooltip: { trigger: 'axis' },
-  grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
-  xAxis: { type: 'category', data: chartData.value.chart_months || [], axisLabel: { fontSize: 10 } },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef2f3' } } },
-  series: [{
-    type: 'bar',
-    data: chartData.value.chart_month_values || [],
-    barMaxWidth: 26,
-    itemStyle: {
-      color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [
-        { offset: 0, color: '#f5a623' },
-        { offset: 1, color: '#e8780f' }
-      ]},
-      borderRadius: [4, 4, 0, 0]
-    }
-  }]
-}))
+const monthOption = computed(() => {
+  const colors = pickColors((chartData.value.chart_month_values || []).length)
+  return {
+    tooltip: { trigger: 'axis' },
+    grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
+    xAxis: { type: 'category', data: chartData.value.chart_months || [], axisLabel: { fontSize: 10 } },
+    yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef3f8' } } },
+    series: [{
+      type: 'bar',
+      data: (chartData.value.chart_month_values || []).map((v, idx) => ({
+        value: v,
+        itemStyle: { color: colors[idx % colors.length], borderRadius: [4, 4, 0, 0] }
+      })),
+      barMaxWidth: 26,
+    }]
+  }
+})
 
-const threeYearOption = computed(() => ({
-  tooltip: { trigger: 'axis' },
-  legend: { bottom: 0, textStyle: { fontSize: 11 } },
-  grid: { left: 20, right: 15, top: 28, bottom: 30, containLabel: true },
-  xAxis: { type: 'category', data: chartData.value.chart_months || [], axisLabel: { fontSize: 10 } },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef2f3' } } },
-  series: (chartData.value.chart_three_years || []).map((item, i) => ({
-    name: String(item.year),
-    type: 'line',
-    smooth: true,
-    data: item.values,
-    itemStyle: { color: ['#f5a623', '#14a9a3', '#7b6cc4', '#e05a6b', '#4c9fe8'][i % 5] },
-    lineStyle: { width: 3 },
-    symbolSize: 6
-  }))
-}))
+const threeYearOption = computed(() => {
+  const years = chartData.value.chart_three_years || []
+  const colors = pickColors(years.length)
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: { bottom: 0, textStyle: { fontSize: 11 } },
+    grid: { left: 20, right: 15, top: 28, bottom: 30, containLabel: true },
+    xAxis: { type: 'category', data: chartData.value.chart_months || [], axisLabel: { fontSize: 10 } },
+    yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef3f8' } } },
+    series: years.map((item, i) => ({
+      name: String(item.year),
+      type: 'line',
+      smooth: true,
+      data: item.values,
+      itemStyle: { color: colors[i % colors.length] },
+      lineStyle: { width: 3 },
+      symbolSize: 6
+    }))
+  }
+})
 
-const pieOption = computed(() => ({
-  tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-  legend: {
-    type: 'scroll',
-    orient: 'horizontal',
-    bottom: 0,
-    textStyle: { fontSize: 11 },
-    pageIconColor: '#aaa',
-    pageInactiveIconColor: '#ddd',
-    pageIconSize: 12
-  },
-  color: ['#f5a623', '#14a9a3', '#7b6cc4', '#e05a6b', '#4c9fe8'],
-  series: [{
-    type: 'pie',
-    radius: ['40%', '66%'],
-    center: ['50%', '43%'],
-    data: (chartData.value.chart_repairman_labels || []).map((name, i) => ({
-      name,
-      value: (chartData.value.chart_repairman_values || [])[i] || 0
-    })),
-    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 }
-  }]
-}))
+const pieOption = computed(() => {
+  const labels = chartData.value.chart_repairman_labels || []
+  return {
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: {
+      type: 'scroll',
+      orient: 'horizontal',
+      bottom: 0,
+      textStyle: { fontSize: 11 },
+      pageIconColor: '#aaa',
+      pageInactiveIconColor: '#ddd',
+      pageIconSize: 12
+    },
+    color: pickColors(labels.length),
+    series: [{
+      type: 'pie',
+      radius: ['40%', '66%'],
+      center: ['50%', '43%'],
+      data: labels.map((name, i) => ({
+        name,
+        value: (chartData.value.chart_repairman_values || [])[i] || 0
+      })),
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 }
+    }]
+  }
+})
 
 const fetchList = async () => {
   loading.value = true
@@ -244,7 +251,7 @@ onMounted(() => {
 .toolbar-card { margin-bottom: 12px; }
 .toolbar-row { display: flex; align-items: center; gap: 8px; }
 .spacer { flex: 1; }
-.stat-text { color: #6b838a; font-size: 13px; }
+.stat-text { color: #4a5a6a; font-size: 13px; }
 .chart-row { margin-bottom: 12px; }
 .chart-card :deep(.el-card__header) { padding: 10px 14px; }
 .chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
@@ -255,20 +262,20 @@ onMounted(() => {
 .record-card { margin-bottom: 12px; }
 .record-card :deep(.el-card__header) { padding: 10px 14px; }
 .record-head { display: flex; align-items: center; justify-content: space-between; }
-.record-number { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #17363e; }
+.record-number { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #1a2533; }
 .detail-row { display: flex; padding: 8px 14px; border-bottom: 1px solid #ebeef5; font-size: 13px; }
 .detail-row:last-child { border-bottom: none; }
 .detail-label { width: 100px; flex-shrink: 0; color: #909399; font-weight: 600; }
 .detail-value { flex: 1; color: #303133; line-height: 1.6; }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
-.batch-hint { margin-top: 8px; color: #658088; font-size: 13px; }
+.batch-hint { margin-top: 8px; color: #4a5a6a; font-size: 13px; }
 .kb-search { margin-bottom: 12px; }
 .kb-summary { margin-bottom: 12px; }
-.kb-col-title { margin: 0 0 8px; color: #0a8387; font-size: 13px; font-weight: 700; }
-.kb-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 6px; background: #fbfdfd; margin-bottom: 6px; font-size: 13px; color: #34505a; line-height: 1.5; }
-.kb-case { border: 1px solid #e6eef0; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
-.kb-case-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; color: #17363e; font-weight: 700; font-size: 13px; }
-.kb-field { font-size: 13px; color: #34505a; line-height: 1.6; margin-bottom: 5px; }
-.kb-field b { color: #4e6c74; }
-.kb-meta { color: #8ea3a9; font-size: 12px; }
+.kb-col-title { margin: 0 0 8px; color: #0078e0; font-size: 13px; font-weight: 700; }
+.kb-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 6px; background: #f4f6f9; margin-bottom: 6px; font-size: 13px; color: #1a2533; line-height: 1.5; }
+.kb-case { border: 1px solid #eaf5ff; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
+.kb-case-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; color: #1a2533; font-weight: 700; font-size: 13px; }
+.kb-field { font-size: 13px; color: #1a2533; line-height: 1.6; margin-bottom: 5px; }
+.kb-field b { color: #4a5a6a; }
+.kb-meta { color: #8a97a5; font-size: 12px; }
 </style>

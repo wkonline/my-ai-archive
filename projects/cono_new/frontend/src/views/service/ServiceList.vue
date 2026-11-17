@@ -64,30 +64,30 @@
         <span class="card-title"><el-icon><List /></el-icon> 售后列表</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="90" align="center" fixed />
-        <el-table-column prop="customer_name" label="客户名称" min-width="140" show-overflow-tooltip fixed />
-        <el-table-column prop="productcategory_name" label="产品名称" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="product_model" label="型号" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="service_number" label="维修编号" min-width="130">
+        <el-table-column prop="order_number" label="序号" width="80" align="center" fixed />
+        <el-table-column prop="customer_name" label="客户名称" width="260" show-overflow-tooltip fixed />
+        <el-table-column prop="productcategory_name" label="产品名称" width="100" show-overflow-tooltip />
+        <el-table-column prop="product_model" label="型号" width="120" show-overflow-tooltip />
+        <el-table-column prop="service_number" label="维修编号" width="130">
           <template #default="{ row }">
             <el-link type="primary" @click="openDetail(row)">{{ row.service_number }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="product_number" label="电路板编号" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="product_number" label="电路板编号" width="110" show-overflow-tooltip />
         <el-table-column prop="warranty_display" label="质保情况" width="100" align="center" />
         <el-table-column prop="warranty_end_display" label="维修情况" width="100" align="center">
           <template #default="{ row }">
-            <span :style="{ color: row.warranty_end_display === '正在维修' ? '#f56c6c' : '' }">{{ row.warranty_end_display }}</span>
+            <span :class="['status-badge', row.warranty_end_display === '正在维修' ? 'status-repairing' : 'status-normal']">{{ row.warranty_end_display }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="return_status_display" label="返件情况" width="100" align="center">
           <template #default="{ row }">
-            <span :style="{ color: row.return_status_display === '未发货' ? '#f56c6c' : '' }">{{ row.return_status_display }}</span>
+            <span :class="['status-badge', row.return_status_display === '未发货' ? 'status-not-shipped' : 'status-normal']">{{ row.return_status_display }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="date" label="接收时间" width="110" align="center" />
-        <el-table-column prop="description" label="备注" min-width="120" show-overflow-tooltip />
-        <el-table-column label="操作" width="230" fixed="right">
+        <el-table-column prop="description" label="备注" width="220" show-overflow-tooltip />
+        <el-table-column label="操作" width="260" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
             <el-button class="op-btn op-copy" size="small" @click="openCopy(row)"><el-icon><CopyDocument /></el-icon>&nbsp;复制</el-button>
@@ -114,6 +114,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, Histogram, PieChart, List, Edit, Delete, CopyDocument } from '@element-plus/icons-vue'
 import request from '../../api/request'
 import BaseChart from '../../components/BaseChart.vue'
+import { pickColors } from '../../components/chartColors'
 
 const router = useRouter()
 const list = ref([])
@@ -131,50 +132,62 @@ const monthOption = computed(() => ({
   tooltip: { trigger: 'axis' },
   grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
   xAxis: { type: 'category', data: chartData.value.chart_months || [], axisLabel: { fontSize: 10 } },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef2f3' } } },
+  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef3f8' } } },
   series: [{
     type: 'bar',
     data: chartData.value.chart_month_values || [],
     barMaxWidth: 26,
     itemStyle: {
       color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [
-        { offset: 0, color: '#14a9a3' },
-        { offset: 1, color: '#0b7486' }
+        { offset: 0, color: '#2dd4bf' },
+        { offset: 1, color: '#14b8a6' }
       ]},
       borderRadius: [4, 4, 0, 0]
     }
   }]
 }))
 
-const threeYearOption = computed(() => ({
-  tooltip: { trigger: 'axis' },
-  legend: { bottom: 0, type: 'scroll', textStyle: { fontSize: 11, overflow: 'truncate', width: 90, ellipsis: '..' }, itemWidth: 14, itemHeight: 10 },
-  grid: { left: 20, right: 15, top: 28, bottom: 30, containLabel: true },
-  xAxis: { type: 'category', data: chartData.value.chart_months || [], axisLabel: { fontSize: 10 } },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef2f3' } } },
-  series: (chartData.value.chart_three_years || []).map((item, i) => ({
-    name: String(item.year),
-    type: 'bar',
-    data: item.values,
-    barMaxWidth: 22,
-    itemStyle: { color: ['#14a9a3', '#f2a35e', '#7b6cc4', '#e05a6b', '#4c9fe8'][i % 5], borderRadius: [4, 4, 0, 0] }
-  }))
-}))
+const threeYearOption = computed(() => {
+  const years = chartData.value.chart_three_years || []
+  const colors = pickColors(years.length)
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: { bottom: 0, type: 'scroll', textStyle: { fontSize: 11, overflow: 'truncate', width: 90, ellipsis: '..' }, itemWidth: 14, itemHeight: 10 },
+    grid: { left: 20, right: 15, top: 28, bottom: 30, containLabel: true },
+    xAxis: { type: 'category', data: chartData.value.chart_months || [], axisLabel: { fontSize: 10 } },
+    yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef3f8' } } },
+    series: years.map((item, i) => ({
+      name: String(item.year),
+      type: 'bar',
+      data: item.values,
+      barMaxWidth: 22,
+      itemStyle: { color: colors[i % colors.length], borderRadius: [4, 4, 0, 0] }
+    }))
+  }
+})
 
-const pieOption = computed(() => ({
-  tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-  legend: { bottom: 0, textStyle: { fontSize: 11 } },
-  series: [{
-    type: 'pie',
-    radius: ['40%', '66%'],
-    center: ['50%', '43%'],
-    data: (chartData.value.chart_customer_labels || []).map((name, i) => ({
-      name,
-      value: (chartData.value.chart_customer_values || [])[i] || 0
-    })),
-    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 }
-  }]
-}))
+const pieOption = computed(() => {
+  const labels = chartData.value.chart_customer_labels || []
+  return {
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: {
+      bottom: 0, type: 'scroll', orient: 'horizontal',
+      textStyle: { color: '#4a5a6a', fontSize: 11 },
+      itemWidth: 12, itemHeight: 8, pageIconSize: 8,
+    },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '66%'],
+      center: ['50%', '43%'],
+      data: labels.map((name, i) => ({
+        name,
+        value: (chartData.value.chart_customer_values || [])[i] || 0
+      })),
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      color: pickColors(labels.length),
+    }]
+  }
+})
 
 const fetchList = async () => {
   loading.value = true
@@ -237,7 +250,7 @@ onMounted(() => {
 .toolbar-card { margin-bottom: 12px; }
 .toolbar-row { display: flex; align-items: center; gap: 8px; }
 .spacer { flex: 1; }
-.stat-text { color: #6b838a; font-size: 13px; }
+.stat-text { color: #4a5a6a; font-size: 13px; }
 .chart-row { margin-bottom: 12px; }
 .chart-card :deep(.el-card__header) { padding: 10px 14px; }
 .chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
@@ -247,6 +260,15 @@ onMounted(() => {
 .filter-body { padding-top: 4px; }
 .card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
-.op-copy { color: #6366f1 !important; border-color: #a5b4fc !important; background: #eef2ff !important; }
+.op-copy { color: #6366f1 !important; border-color: #a5b4fc !important; background: #eaf5ff !important; }
 .op-copy:hover { background: #6366f1 !important; color: #fff !important; border-color: #6366f1 !important; }
+/* 表头与行样式 */
+.el-table thead th { background: #f5f7fa; font-weight: 600; color: #303133; font-size: 13px; }
+.el-table td { font-size: 13px; }
+.el-table tr:hover td { background: #f0f7ff !important; }
+/* 状态列颜色更醒目 */
+.status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+.status-repairing { color: #f56c6c; border: 1px solid #f56c6c; background: #fef0f0; }
+.status-not-shipped { color: #f56c6c; border: 1px solid #f56c6c; background: #fef0f0; }
+.status-normal { color: #67c23a; border: 1px solid #67c23a; background: #f0f9eb; }
 </style>

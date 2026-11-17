@@ -68,26 +68,21 @@
       <el-collapse-transition>
         <el-form v-show="filterVisible" inline class="search-form">
           <el-form-item label="日期范围">
-            <el-date-picker v-model="searchRange" type="daterange" value-format="YYYY-MM-DD" placeholder="开始~结束" style="width:220px" />
-          </el-form-item>
-          <el-form-item label="客户">
-            <el-select v-model="searchCustomer" filterable placeholder="选择客户" clearable style="width:180px">
-              <el-option v-for="c in customers" :key="c.id" :label="c.company_name" :value="c.id" />
-            </el-select>
+            <el-date-picker v-model="searchRange" type="daterange" value-format="YYYY-MM-DD" placeholder="开始~结束" style="width:220px" @change="fetchList" />
           </el-form-item>
           <el-form-item label="状态">
-            <el-radio-group v-model="searchStatus">
+            <el-radio-group v-model="searchStatus" @change="fetchList">
               <el-radio-button :value="''">全部</el-radio-button>
-              <el-radio-button :value="'pending'">未完结</el-radio-button>
-              <el-radio-button :value="'done'">已完结</el-radio-button>
+              <el-radio-button :value="'invoiced_debt'">已开票欠款</el-radio-button>
+              <el-radio-button :value="'uninvoiced'">未开票合同</el-radio-button>
             </el-radio-group>
           </el-form-item>
-          <el-form-item label="关键词">
-            <el-input v-model="searchKeyword" placeholder="合同号/客户名" clearable style="width:180px" @keyup.enter="fetchList" />
+          <el-form-item label="检索">
+            <el-input v-model="searchKeyword" placeholder="请输入公司名称或合同号" clearable style="width:220px" @keyup.enter="fetchList" />
           </el-form-item>
           <el-form-item>
-            <el-button><el-icon><Search /></el-icon>&nbsp;查询</el-button>
-            <el-button><el-icon><Refresh /></el-icon>&nbsp;重置</el-button>
+            <el-button @click="fetchList"><el-icon><Search /></el-icon>&nbsp;查询</el-button>
+            <el-button @click="resetSearch"><el-icon><Refresh /></el-icon>&nbsp;重置</el-button>
           </el-form-item>
         </el-form>
       </el-collapse-transition>
@@ -96,10 +91,14 @@
 <!-- 列表 -->
     <el-card shadow="never">
       <el-table :data="list" stripe border v-loading="loading" @sort-change="onSortChange">
-        <el-table-column prop="order_number" label="序号" width="90" align="center" fixed />
-        <el-table-column prop="customer_name" label="客户名称" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="order_number" label="序号" width="80" align="center" fixed />
+        <el-table-column prop="customer_name" label="客户名称" width="220" fixed show-overflow-tooltip />
         <el-table-column prop="date" label="合同日期" width="110" sortable="custom" />
-        <el-table-column prop="contract_number" label="合同编号" min-width="130" />
+        <el-table-column prop="contract_number" label="合同编号" width="140">
+          <template #default="{ row }">
+            <router-link :to="`/contract/${row.id}`" class="link-cell">{{ row.contract_number }}</router-link>
+          </template>
+        </el-table-column>
         <el-table-column prop="total_price" label="合同金额" width="120" align="right">
           <template #default="{ row }">
             <span class="price">¥{{ Number(row.total_price || 0).toLocaleString() }}</span>
@@ -115,12 +114,12 @@
             <span>¥{{ Number(row.total_invoice || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="回款比例" width="120">
+        <el-table-column label="回款比例" width="110">
           <template #default="{ row }">
             <el-progress :percentage="row.payment_ratio || 0" :stroke-width="8" :status="row.payment_completed ? 'success' : ''" />
           </template>
         </el-table-column>
-        <el-table-column label="开票比例" width="120">
+        <el-table-column label="开票比例" width="110">
           <template #default="{ row }">
             <el-progress :percentage="row.invoice_ratio || 0" :stroke-width="8" :status="row.invoice_completed ? 'success' : ''" />
           </template>
@@ -131,7 +130,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="saler_name" label="业务经理" width="100" show-overflow-tooltip />
-        <el-table-column label="操作" width="290" fixed="right">
+        <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-detail" size="small" @click="openDetail(row)"><el-icon><View /></el-icon>&nbsp;详情</el-button>
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
@@ -162,6 +161,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, PieChart, List, View, Edit, ArrowDown, ArrowUp, Goods, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
 import BaseChart from '../../components/BaseChart.vue'
+import { pickColors } from '../../components/chartColors'
 
 const router = useRouter()
 
@@ -176,53 +176,59 @@ const stats = ref({ count: 0, total_amount: 0, pending_count: 0, done_count: 0 }
 const chartYear = ref(new Date().getFullYear())
 const chartData = ref({ monthly: [], top_customers: [], salesman: [] })
 
-const monthlyChartOption = computed(() => ({
-  tooltip: { trigger: 'axis' },
-  grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
-  xAxis: { type: 'category', data: chartData.value.monthly.map(i => i.month), axisLabel: { fontSize: 10 } },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef2f3' } } },
-  series: [{
-    type: 'bar',
-    data: chartData.value.monthly.map(i => i.amount),
-    barMaxWidth: 28,
-    itemStyle: {
-      color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [
-        { offset: 0, color: '#3b82f6' },
-        { offset: 1, color: '#1d4ed8' }
-      ]},
-      borderRadius: [4, 4, 0, 0]
-    }
-  }]
-}))
+const monthlyChartOption = computed(() => {
+  const colors = pickColors(chartData.value.monthly.length)
+  return {
+    tooltip: { trigger: 'axis' },
+    grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
+    xAxis: { type: 'category', data: chartData.value.monthly.map(i => i.month), axisLabel: { fontSize: 10 } },
+    yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef3f8' } } },
+    series: [{
+      type: 'bar',
+      data: chartData.value.monthly.map((i, idx) => ({
+        value: i.amount,
+        itemStyle: { color: colors[idx % colors.length], borderRadius: [4, 4, 0, 0] }
+      })),
+      barMaxWidth: 28,
+    }]
+  }
+})
 
-const topCustomerChartOption = computed(() => ({
-  tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-  grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
-  xAxis: { type: 'value' },
-  yAxis: { type: 'category', data: chartData.value.top_customers.map(i => i.name), axisLabel: { fontSize: 10 } },
-  series: [{
-    type: 'bar',
-    data: chartData.value.top_customers.map(i => i.value),
-    barMaxWidth: 20,
-    itemStyle: { color: '#8b5cf6', borderRadius: [0, 4, 4, 0] }
-  }]
-}))
+const topCustomerChartOption = computed(() => {
+  const colors = pickColors(chartData.value.top_customers.length)
+  return {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: 20, right: 15, top: 28, bottom: 20, containLabel: true },
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', data: chartData.value.top_customers.map(i => i.name), axisLabel: { fontSize: 10 } },
+    series: [{
+      type: 'bar',
+      data: chartData.value.top_customers.map((i, idx) => ({
+        value: i.value,
+        itemStyle: { color: colors[idx % colors.length], borderRadius: [0, 4, 4, 0] }
+      })),
+      barMaxWidth: 20,
+    }]
+  }
+})
 
-const salesmanChartOption = computed(() => ({
-  tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-  legend: { bottom: 0, textStyle: { fontSize: 11 } },
-  series: [{
-    type: 'pie',
-    radius: ['40%', '66%'],
-    center: ['50%', '43%'],
-    data: chartData.value.salesman,
-    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 }
-  }]
-}))
+const salesmanChartOption = computed(() => {
+  const colors = pickColors(chartData.value.salesman.length)
+  return {
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: { bottom: 0, textStyle: { fontSize: 11 } },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '66%'],
+      center: ['50%', '43%'],
+      data: chartData.value.salesman,
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      color: colors,
+    }]
+  }
+})
 
-const customers = ref([])
 const searchRange = ref(null)
-const searchCustomer = ref('')
 const searchStatus = ref('')
 const searchKeyword = ref('')
 const filterVisible = ref(false)
@@ -233,7 +239,7 @@ const sortOrder = ref('')
 const fetchStats = async () => {
   try {
     const data = await request.get('/contract/stats/')
-    stats.value = { ...data, pending_count: 0, done_count: 0 }
+    stats.value = { count: 0, total_amount: 0, pending_count: 0, done_count: 0, ...data }
   } catch {}
 }
 
@@ -257,9 +263,7 @@ const fetchList = async () => {
       params.start_date = searchRange.value[0]
       params.end_date = searchRange.value[1]
     }
-    if (searchCustomer.value) params.customer_id = searchCustomer.value
-    if (searchStatus.value === 'done') params.payment_completed = true
-    if (searchStatus.value === 'pending') params.payment_completed = false
+    if (searchStatus.value) params.status = searchStatus.value
     if (searchKeyword.value) params.keyword = searchKeyword.value
     if (sortField.value) params.order_by = sortField.value + (sortOrder.value === 'descending' ? '-' : '')
     const data = await request.get('/contract/', { params })
@@ -272,14 +276,8 @@ const fetchList = async () => {
   } finally { loading.value = false }
 }
 
-const fetchCustomers = async () => {
-  const data = await request.get('/customer/')
-  customers.value = data.results || data
-}
-
 const resetSearch = () => {
   searchRange.value = null
-  searchCustomer.value = ''
   searchStatus.value = ''
   searchKeyword.value = ''
   page.value = 1
@@ -313,10 +311,18 @@ const downloadAttachment = (row) => {
 const goContractProduct = () => router.push('/contract-product')
 
 const exportContracts = () => {
-  window.open('/api/contract/export/', '_blank')
+  const params = new URLSearchParams()
+  if (searchRange.value?.length === 2) {
+    params.set('start_date', searchRange.value[0])
+    params.set('end_date', searchRange.value[1])
+  }
+  if (searchStatus.value) params.set('status', searchStatus.value)
+  if (searchKeyword.value) params.set('keyword', searchKeyword.value)
+  const qs = params.toString()
+  window.open(`/api/contract/export/${qs ? '?' + qs : ''}`, '_blank')
 }
 
-onMounted(() => { fetchList(); fetchStats(); fetchCustomers(); fetchCharts() })
+onMounted(() => { fetchList(); fetchStats(); fetchCharts() })
 </script>
 
 <style scoped>
@@ -325,11 +331,11 @@ onMounted(() => { fetchList(); fetchStats(); fetchCustomers(); fetchCharts() })
 .chart-card :deep(.el-card__header) { padding: 10px 14px; }
 .chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
 .stat-card { text-align: center; cursor: default; border-top: 3px solid transparent; transition: all .2s; }
-.stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(14,165,233,0.12); }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,120,224,0.12); }
 .stat-value { font-size: 24px; font-weight: 700; }
 .stat-label { font-size: 12px; color: #909399; margin-top: 4px; }
-.stat-count { border-top-color: #3b82f6; }
-.stat-count .stat-value { color: #2563eb; }
+.stat-count { border-top-color: #0078e0; }
+.stat-count .stat-value { color: #005cc5; }
 .stat-amount { border-top-color: #10b981; }
 .stat-amount .stat-value { color: #059669; }
 .stat-pending { border-top-color: #f59e0b; }
@@ -345,8 +351,8 @@ onMounted(() => { fetchList(); fetchStats(); fetchCustomers(); fetchCharts() })
 
 /* 工具栏按钮 */
 .btn-add, .btn-import, .btn-export, .btn-goods, .btn-filter { display: inline-flex; align-items: center; font-weight: 500; }
-.btn-add { background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-color: #2563eb; color: #fff; }
-.btn-add:hover { background: linear-gradient(135deg, #60a5fa, #2563eb); border-color: #3b82f6; color: #fff; }
+.btn-add { background: linear-gradient(135deg, #0078e0, #004a99); border-color: #005cc5; color: #fff; }
+.btn-add:hover { background: linear-gradient(135deg, #60a5fa, #005cc5); border-color: #0078e0; color: #fff; }
 .btn-export { background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-color: #7c3aed; color: #fff; }
 .btn-export:hover { background: linear-gradient(135deg, #a78bfa, #7c3aed); border-color: #8b5cf6; color: #fff; }
 .btn-goods { background: linear-gradient(135deg, #f59e0b, #d97706); border-color: #d97706; color: #fff; }
@@ -383,10 +389,15 @@ onMounted(() => { fetchList(); fetchStats(); fetchCustomers(); fetchCharts() })
 }
 :deep(.op-btn .el-button__text),
 :deep(.op-btn span) { font-size: 12px !important; }
+.link-cell {
+  color: #0078e0;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
 .op-btn .el-icon { font-size: 12px !important; }
 .op-btn + .op-btn { margin-left: 4px; }
-.op-detail { color: #3b82f6; border-color: #93c5fd; background: #eff6ff; }
-.op-detail:hover { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+.op-detail { color: #0078e0; border-color: #7cc4f7; background: #eaf5ff; }
+.op-detail:hover { background: #0078e0; color: #fff; border-color: #0078e0; }
 .op-edit { color: #f59e0b; border-color: #fcd34d; background: #fffbeb; }
 .op-edit:hover { background: #f59e0b; color: #fff; border-color: #f59e0b; }
 .op-download { color: #10b981; border-color: #6ee7b7; background: #ecfdf5; }

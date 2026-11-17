@@ -73,11 +73,16 @@ const saving = ref(false)
 const formRef = ref()
 const form = reactive({ id: null, contract: null, date: '', rows: [] })
 const planOptions = ref([])
+const assignedPlanIds = ref(new Set())
 
-// 合同选项：按合同去重，用于项目编号下拉
+// 合同选项：只显示待生产且未派任务的计划
 const contractOptions = computed(() => {
   const seen = new Map()
   for (const p of planOptions.value) {
+    // 只显示待生产状态
+    if (p.completed_status !== 1) continue
+    // 跳过已派任务单的计划
+    if (assignedPlanIds.value.has(p.id)) continue
     const cid = p.contract
     if (!cid || seen.has(cid)) continue
     seen.set(cid, { id: cid, contract_number: p.contract_number || p.contract_reserve || String(cid) })
@@ -103,7 +108,15 @@ const removeRow = (idx) => form.rows.splice(idx, 1)
 
 const loadData = async () => {
   try {
-    planOptions.value = (await request.get('/plan/?page_size=200')).results || []
+    const [planRes, taskRes] = await Promise.all([
+      request.get('/plan/?page_size=2000'),
+      request.get('/task/?page_size=2000'),
+    ])
+    planOptions.value = planRes.results || []
+    // 收集已派任务单的计划ID
+    assignedPlanIds.value = new Set(
+      (taskRes.results || []).map(t => t.contract).filter(Boolean)
+    )
   } catch {}
   if (!isEdit.value) {
     Object.assign(form, { id: null, contract: null, date: new Date().toISOString().slice(0, 10), rows: [] })
@@ -163,7 +176,7 @@ onMounted(loadData)
 .page-header { margin-bottom: 16px; }
 .page-title { font-size: 18px; font-weight: 700; color: #303133; }
 .form-card { width: 100%; }
-.plan-tip { margin: 4px 0 0; color: #8a9ca2; font-size: 13px; }
+.plan-tip { margin: 4px 0 0; color: #8a97a5; font-size: 13px; }
 .product-table { margin-top: 8px; }
 .footer-actions { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e4e7ed; display: flex; justify-content: flex-end; gap: 8px; }
 </style>

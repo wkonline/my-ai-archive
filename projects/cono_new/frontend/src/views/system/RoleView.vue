@@ -6,7 +6,7 @@
 
     <el-card shadow="never">
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="90" align="center" fixed />
+        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
         <el-table-column prop="key" label="角色标识" width="120">
           <template #default="{ row }">
             <el-tag v-if="BUILTIN.includes(row.key)" type="info" size="small">{{ row.key }}（内置）</el-tag>
@@ -20,7 +20,7 @@
         <el-table-column label="菜单数" width="80">
           <template #default="{ row }">{{ (row.menus||[]).length }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="170" fixed="right">
+        <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

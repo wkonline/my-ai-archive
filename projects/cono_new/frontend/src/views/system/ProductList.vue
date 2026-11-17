@@ -12,19 +12,19 @@
 
     <el-row :gutter="12" class="stats-row">
       <el-col :span="12"><el-card shadow="hover" class="stat-card"><div class="stat-value">{{ stats.total || 0 }}</div><div class="stat-label">产品总数</div></el-card></el-col>
-      <el-col :span="12"><el-card shadow="hover" class="stat-card"><div class="stat-value" style="color:#409eff">{{ Object.keys(stats.by_category || {}).length }}</div><div class="stat-label">分类数</div></el-card></el-col>
+      <el-col :span="12"><el-card shadow="hover" class="stat-card"><div class="stat-value" style="color:#0078e0">{{ Object.keys(stats.by_category || {}).length }}</div><div class="stat-label">分类数</div></el-card></el-col>
     </el-row>
     <el-card shadow="never">
       <template #header>
         <span class="card-title"><el-icon><List /></el-icon> 产品型号列表</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="100" align="center" fixed />
-        <el-table-column prop="category_name" label="产品名称" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="model" label="产品型号" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="warehouse_name" label="仓库" min-width="120" />
-        <el-table-column prop="description" label="产品描述" min-width="180" show-overflow-tooltip />
-        <el-table-column label="操作" width="170" fixed="right">
+        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
+        <el-table-column prop="category_name" label="产品名称" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="model" label="产品型号" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="warehouse_name" label="仓库" min-width="100" />
+        <el-table-column prop="description" label="产品描述" min-width="160" show-overflow-tooltip />
+        <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>
@@ -92,7 +92,7 @@ onMounted(() => { fetchList(); fetchStats() })
 .spacer { flex: 1; }
 .stats-row { margin-bottom: 12px; }
 .stat-card { text-align: center; }
-.stat-value { font-size: 24px; font-weight: 700; color: #0a8387; }
+.stat-value { font-size: 24px; font-weight: 700; color: #0078e0; }
 .stat-label { font-size: 12px; color: #909399; margin-top: 4px; }
 .card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }

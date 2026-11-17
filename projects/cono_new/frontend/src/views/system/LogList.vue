@@ -17,13 +17,13 @@
         <span class="card-title"><el-icon><List /></el-icon> 操作日志</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="90" align="center" fixed />
-        <el-table-column label="日期" width="200">
+        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
+        <el-table-column label="日期" width="160">
           <template #default="{ row }">{{ formatTime(row.timestamp) }}</template>
         </el-table-column>
-        <el-table-column prop="user_name" label="用户" width="130" />
-        <el-table-column prop="action" label="操作内容" min-width="240" show-overflow-tooltip />
-        <el-table-column prop="ip" label="记录IP" width="140" />
+        <el-table-column prop="user_name" label="用户" width="110" />
+        <el-table-column prop="action" label="操作内容" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="ip" label="记录IP" width="120" />
       </el-table>
       <div class="pagination-row">
         <el-pagination v-model:current-page="page" :page-size="page_size" :total="total" layout="total, prev, pager, next, jumper" @current-change="fetchList" />

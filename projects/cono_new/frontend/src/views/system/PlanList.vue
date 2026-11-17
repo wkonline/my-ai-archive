@@ -32,10 +32,11 @@
         </el-form>
         <div class="quick-filter">
           <span class="quick-label">快捷筛选：</span>
-          <el-radio-group v-model="completed" @change="onSearch">
+          <el-radio-group v-model="filters.status" @change="handleStatusChange">
             <el-radio-button :value="''">全部</el-radio-button>
-            <el-radio-button value="False">未完工</el-radio-button>
-            <el-radio-button value="True">已完结</el-radio-button>
+            <el-radio-button :value="1">待生产</el-radio-button>
+            <el-radio-button :value="2">生产中</el-radio-button>
+            <el-radio-button :value="3">已完成</el-radio-button>
           </el-radio-group>
         </div>
       </div>
@@ -57,8 +58,8 @@
           </div>
         </template>
         <el-table :data="group.rows" stripe border size="small" :span-method="spanMethod" :row-class-name="rowClassName">
-          <el-table-column prop="order_number" label="序号" width="80" align="center" />
-          <el-table-column prop="productcategory_name" label="产品名称" min-width="140">
+          <el-table-column prop="order_number" label="序号" width="55" align="center" />
+          <el-table-column prop="productcategory_name" label="产品名称" min-width="120">
             <template #default="{ row }">
               <template v-if="row._rowType === 'config'">
                 <strong>配置信息：</strong>{{ row.configuration || '无' }}
@@ -66,16 +67,24 @@
               <template v-else>{{ row.productcategory_name }}</template>
             </template>
           </el-table-column>
-          <el-table-column prop="product_model" label="型号" min-width="140" />
-          <el-table-column prop="quantity" label="数量" width="80" align="center" />
-          <el-table-column prop="unit_display" label="单位" width="70" align="center" />
-          <el-table-column prop="effective_date" label="生效日期" width="110" align="center" />
-          <el-table-column prop="delivery_date" label="交货日期" width="110" align="center" />
-          <el-table-column prop="production_man_name" label="制单人" width="100" />
-          <el-table-column label="操作" width="170" fixed="right">
+          <el-table-column prop="product_model" label="型号" min-width="120" />
+          <el-table-column prop="quantity" label="数量" width="70" align="center" />
+          <el-table-column prop="unit_display" label="单位" width="60" align="center" />
+          <el-table-column prop="completed_status" label="生产状态" width="100" align="center">
+            <template #default="{ row }">
+              <span v-if="row.completed_status === 1" style="color:#f56c6c">待生产</span>
+              <span v-else-if="row.completed_status === 2" style="color:#e6a23c">生产中</span>
+              <span v-else style="color:#67c23a">已完成</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="effective_date" label="生效日期" width="100" align="center" />
+          <el-table-column prop="delivery_date" label="交货日期" width="100" align="center" />
+          <el-table-column prop="production_man_name" label="制单人" width="90" />
+          <el-table-column label="操作" width="160" fixed="right">
             <template #default="{ row }">
               <template v-if="row._rowType === 'main'">
-                <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
+                <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
+                <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
               </template>
             </template>
           </el-table-column>
@@ -90,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, PieChart, List, Edit, Delete } from '@element-plus/icons-vue'
@@ -106,12 +115,13 @@ const startDate = ref('')
 const endDate = ref('')
 const contractNumber = ref('')
 const keyword = ref('')
-const completed = ref('')
+// 用 reactive 统一管理筛选参数，避免类型问题
+const filters = reactive({
+  status: '',  // 空字符串=全部，1=待生产，2=生产中，3=已完成
+})
 const stats = ref({})
 
 const groups = computed(() => {
-  // 用 Map 保留接口返回顺序；普通对象会把数字合同 ID 键按升序重排，
-  // 导致最新添加的计划反而排到后面。
   const g = new Map()
   for (const row of list.value) {
     const key = row.contract_reserve || row.contract || 'default'
@@ -137,23 +147,54 @@ const fetchList = async () => {
     if (endDate.value) params.end_date = endDate.value
     if (contractNumber.value) params.contract_number = contractNumber.value
     if (keyword.value) params.keyword = keyword.value
-    if (completed.value) params.completed = completed.value
+    if (filters.status !== '') params.completed_status = filters.status
+    console.log('[PlanList] fetchList params:', params)
     const d = await request.get('/plan/', { params })
     const results = d.results || d
     list.value = results.map((item, idx) => ({ ...item, order_number: (page.value - 1) * 50 + idx + 1 }))
     total.value = d.count || list.value.length
-  } finally { loading.value = false }
+    console.log('[PlanList] fetched', list.value.length, 'items')
+  } catch (e) {
+    console.error('[PlanList] fetchList error:', e)
+  } finally {
+    loading.value = false
+  }
 }
 
 const fetchStats = async () => {
-  try { stats.value = await request.get('/plan/stats/') } catch {}
+  try {
+    const params = {}
+    if (filters.status !== '') params.completed_status = filters.status
+    console.log('[PlanList] fetchStats params:', params)
+    stats.value = await request.get('/plan/stats/', { params })
+    console.log('[PlanList] stats:', stats.value)
+  } catch {}
 }
 
-const onSearch = () => { page.value = 1; fetchList() }
-const resetFilter = () => {
-  startDate.value = ''; endDate.value = ''; contractNumber.value = ''; keyword.value = ''; completed.value = ''
-  page.value = 1; fetchList()
+const onSearch = () => {
+  page.value = 1
+  fetchList()
 }
+
+// 当用户点击快捷筛选时触发
+const handleStatusChange = () => {
+  console.log('[PlanList] status changed to:', filters.status)
+  page.value = 1
+  fetchList()
+  fetchStats()
+}
+
+const resetFilter = () => {
+  startDate.value = ''
+  endDate.value = ''
+  contractNumber.value = ''
+  keyword.value = ''
+  filters.status = ''
+  page.value = 1
+  fetchList()
+  fetchStats()
+}
+
 const exportData = () => window.open('/api/plan/export/', '_blank')
 const openAdd = () => router.push('/plan/new')
 const openEdit = (row) => router.push(`/plan/edit/${row.id}`)
@@ -164,47 +205,49 @@ const handleDelete = async (row) => {
     await request.delete(`/plan/${row.id}/`)
     ElMessage.success('删除成功')
     fetchList()
+    fetchStats()
   } catch (e) {
     if (e !== 'cancel') ElMessage.error('删除失败')
   }
 }
 
-// 单元格合并：每条计划两行 —— 第一行产品信息，第二行配置信息独占一整行
 const spanMethod = ({ row, column }) => {
   if (row._rowType === 'config') {
-    // 配置行：从「产品名称」列开始，向后合并覆盖到「操作」列（序号和操作列本身不重复占用）
-    if (column.label === '产品名称') return [1, 7]   // 产品名称+型号+数量+单位+生效+交货+制单人 = 7 列
+    if (column.label === '产品名称') return [1, 7]
     return [0, 0]
   }
-  // 主行：序号列跨两行
   if (column.label === '序号') return [2, 1]
   return [1, 1]
 }
 const rowClassName = ({ row }) => (row._rowType === 'config' ? 'config-row' : '')
 
-onMounted(() => { fetchList(); fetchStats() })
+onMounted(() => {
+  console.log('[PlanList] mounted')
+  fetchList()
+  fetchStats()
+})
 </script>
 
 <style scoped>
 .page-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
-.page-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; font-weight: 700; color: #17363e; }
-.page-head h2::before { content: ""; width: 4px; height: 20px; border-radius: 2px; background: linear-gradient(180deg, #19b4ad, #0b7486); }
+.page-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; font-weight: 700; color: #1a2533; }
+.page-head h2::before { content: ""; width: 4px; height: 20px; border-radius: 2px; background: linear-gradient(180deg, #1a8ce8, #004a99); }
 .page-actions { display: flex; align-items: center; gap: 8px; }
 .filter-card { margin-bottom: 12px; }
 .filter-head { display: flex; align-items: center; justify-content: space-between; }
 .filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
 .filter-body { padding-top: 4px; }
-.quick-filter { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px dashed #dce8ea; }
-.quick-label { color: #6a8086; font-size: 13px; }
+.quick-filter { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px dashed #d6ecff; }
+.quick-label { color: #4a5a6a; font-size: 13px; }
 .stats-row { margin-bottom: 12px; }
 .stat-card { text-align: center; }
-.stat-value { font-size: 24px; font-weight: 700; color: #0a8387; }
+.stat-value { font-size: 24px; font-weight: 700; color: #0078e0; }
 .stat-label { font-size: 12px; color: #909399; margin-top: 4px; }
 .group-card { margin-bottom: 14px; }
 .group-head { display: flex; align-items: center; justify-content: space-between; }
-.group-number { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; color: #17363e; }
+.group-number { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; color: #1a2533; }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
 .group-card :deep(.config-row td) { background: #f9f9f9 !important; }
 .group-card :deep(.config-row td .cell) { line-height: 1.6; }
-.group-card :deep(.config-row strong) { color: #17363e; }
+.group-card :deep(.config-row strong) { color: #1a2533; }
 </style>

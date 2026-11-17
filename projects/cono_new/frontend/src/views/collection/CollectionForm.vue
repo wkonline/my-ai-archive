@@ -77,8 +77,15 @@ const formRef = ref()
 
 const collectionMethods = { 1: '电汇', 2: '银承', 3: '现金', 4: '万纳信', 5: '迪链' }
 
+// 新增回款时日期默认当天
+const today = () => {
+  const d = new Date()
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 const form = reactive({
-  id: null, customer: null, contract: null, date: '', amount: 0,
+  id: null, customer: null, contract: null, date: today(), amount: 0,
   collection_method: 1, current_collection: 0
 })
 
@@ -109,7 +116,7 @@ const onContractChange = (cid) => {
 
 const loadData = async () => {
   if (!isEdit.value) {
-    Object.assign(form, { id: null, customer: null, contract: null, date: '', amount: 0, collection_method: 1, current_collection: 0 })
+    Object.assign(form, { id: null, customer: null, contract: null, date: today(), amount: 0, collection_method: 1, current_collection: 0 })
     searchCustomers('')
     return
   }

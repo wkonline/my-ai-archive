@@ -1,31 +1,78 @@
-/* ── 淡蓝科技风统一样式 ── */
-.stat-card {
-  background: #fff !important;
-  border: 1px solid rgba(56,189,248,0.15) !important;
+/* ── NAURA 深海军蓝科技风统一样式（高端稳重） ── */
+
+/* 卡片基底：纯白底 + 细蓝边 + 柔和阴影 */
+.stat-card,
+.toolbar-card,
+.filter-card,
+.chart-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 12px !important;
-  box-shadow: 0 2px 8px rgba(14,165,233,0.06) !important;
-  transition: all .2s;
+  box-shadow: 0 1px 4px rgba(0,31,63,0.06), 0 4px 16px rgba(0,31,63,0.08) !important;
+  backdrop-filter: blur(8px);
+  transition: border-color .22s, box-shadow .22s, transform .22s;
 }
-.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.12) !important; }
-.stat-card .stat-value { font-size: 28px; font-weight: 700; color: #0c4a6e; font-variant-numeric: tabular-nums; }
-.stat-card .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
-.toolbar-card, .filter-card { background: #fff !important; border: 1px solid rgba(56,189,248,0.15) !important; border-radius: 12px !important; box-shadow: 0 2px 8px rgba(14,165,233,0.06) !important; margin-bottom: 16px; }
-.chart-card { background: #fff !important; border: 1px solid rgba(56,189,248,0.15) !important; border-radius: 12px !important; box-shadow: 0 2px 8px rgba(14,165,233,0.06) !important; }
-.chart-title { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #0c4a6e; }
-.chart-title .el-icon { color: #38bdf8; }
-.btn-tech { background: linear-gradient(135deg, #60a5fa, #3b82f6) !important; border-color: transparent !important; box-shadow: 0 2px 8px rgba(59,130,246,0.25) !important; }
-.btn-tech:hover { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.35) !important; }
-.btn-tech-outline { background: transparent !important; border: 1px solid rgba(59,130,246,0.3) !important; color: #3b82f6 !important; }
-.btn-tech-outline:hover { background: rgba(59,130,246,0.08) !important; border-color: #3b82f6 !important; }
-.tech-table { background: #fff !important; border-radius: 12px !important; overflow: hidden !important; border: 1px solid rgba(56,189,248,0.15) !important; box-shadow: 0 2px 8px rgba(14,165,233,0.06) !important; }
-.tech-table :deep(.el-table__header) th { background: #f0f9ff !important; color: #475569 !important; font-weight: 600; border-bottom: 1px solid rgba(56,189,248,0.15) !important; }
-.tech-table :deep(.el-table__body) tr:hover > td { background: #f0f9ff !important; }
-.tech-table :deep(.el-table__body) td { border-bottom: 1px solid rgba(56,189,248,0.06) !important; color: #334155; }
-.tech-input :deep(.el-input__wrapper) { background: #f8fafc !important; border-color: rgba(56,189,248,0.2) !important; box-shadow: 0 0 0 1px rgba(56,189,248,0.1) inset !important; }
-.tech-input :deep(.el-input__wrapper.is-focus) { border-color: #38bdf8 !important; box-shadow: 0 0 0 2px rgba(56,189,248,0.2) !important; }
-.page-title { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid rgba(56,189,248,0.15); }
-.page-title h2 { margin: 0; font-size: 20px; font-weight: 700; color: #0c4a6e; }
-.page-title .el-icon { font-size: 24px; color: #38bdf8; }
+.stat-card:hover,
+.chart-card:hover {
+  border-color: var(--border-bright) !important;
+  box-shadow: 0 1px 4px rgba(0,31,63,0.08),
+              0 8px 28px rgba(0,31,63,0.12),
+              0 0 20px rgba(0,120,224,0.08) !important;
+  transform: translateY(-2px);
+}
+.toolbar-card, .filter-card { margin-bottom: 16px; }
+
+.stat-card .stat-value {
+  font-size: 28px; font-weight: 700; color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+.stat-card .stat-label { font-size: 12px; color: var(--text-sub); margin-top: 4px; letter-spacing: .5px; }
+
+.chart-title { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
+.chart-title .el-icon { color: var(--navy-500); }
+
+/* ── 按钮：NAURA 蓝渐变 + 光晕 ── */
+.btn-tech { background: linear-gradient(135deg, var(--navy-500), var(--navy-700)) !important; border-color: transparent !important; box-shadow: 0 2px 12px rgba(0,120,224,0.3) !important; color: #fff !important; }
+.btn-tech:hover { background: linear-gradient(135deg, var(--navy-600), var(--navy-800)) !important; transform: translateY(-1px); box-shadow: 0 4px 18px rgba(0,120,224,0.4) !important; }
+.btn-tech-outline { background: transparent !important; border: 1px solid var(--border-bright) !important; color: var(--navy-600) !important; }
+.btn-tech-outline:hover { background: var(--navy-50) !important; border-color: var(--navy-500) !important; }
+
+/* ── 表格：白底 + 浅蓝表头 + 悬浮高亮 ── */
+.tech-table {
+  background: var(--bg-card) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 4px rgba(0,31,63,0.06), 0 4px 16px rgba(0,31,63,0.08) !important;
+}
+.tech-table :deep(.el-table__header) th {
+  background: var(--navy-50) !important;
+  color: var(--navy-700) !important;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border) !important;
+}
+.tech-table :deep(.el-table__body) tr:hover > td { background: var(--navy-50) !important; }
+.tech-table :deep(.el-table__body) td { border-bottom: 1px solid rgba(0,120,224,0.06) !important; color: var(--text-main); }
+
+/* ── 输入框 ── */
+.tech-input :deep(.el-input__wrapper) {
+  background: var(--bg-surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 0 0 1px var(--border) inset !important;
+}
+.tech-input :deep(.el-input__wrapper.is-focus) {
+  border-color: var(--navy-400) !important;
+  box-shadow: 0 0 0 1px var(--navy-400) inset, 0 0 12px rgba(0,120,224,0.15) !important;
+}
+
+/* ── 页面标题 ── */
+.page-title {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.page-title h2 { margin: 0; font-size: 20px; font-weight: 700; color: var(--text-main); letter-spacing: .5px; }
+.page-title .el-icon { font-size: 24px; color: var(--navy-500); }
 
 /* ── 通用工具栏按钮（参照合同管理） ── */
 .btn-add, .btn-import, .btn-export, .btn-goods, .btn-filter {
@@ -35,16 +82,97 @@
   font-size: 12px !important;
   border-radius: 8px !important;
 }
-.btn-add { background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important; border-color: #2563eb !important; color: #fff !important; box-shadow: 0 2px 8px rgba(59,130,246,0.25) !important; }
-.btn-add:hover { background: linear-gradient(135deg, #60a5fa, #2563eb) !important; border-color: #3b82f6 !important; color: #fff !important; transform: translateY(-1px); }
-.btn-import { background: linear-gradient(135deg, #10b981, #059669) !important; border-color: #059669 !important; color: #fff !important; box-shadow: 0 2px 8px rgba(16,185,129,0.25) !important; }
-.btn-import:hover { background: linear-gradient(135deg, #34d399, #059669) !important; border-color: #10b981 !important; color: #fff !important; transform: translateY(-1px); }
-.btn-export { background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important; border-color: #7c3aed !important; color: #fff !important; box-shadow: 0 2px 8px rgba(139,92,246,0.25) !important; }
-.btn-export:hover { background: linear-gradient(135deg, #a78bfa, #7c3aed) !important; border-color: #8b5cf6 !important; color: #fff !important; transform: translateY(-1px); }
-.btn-goods { background: linear-gradient(135deg, #f59e0b, #d97706) !important; border-color: #d97706 !important; color: #fff !important; box-shadow: 0 2px 8px rgba(245,158,11,0.25) !important; }
-.btn-goods:hover { background: linear-gradient(135deg, #fbbf24, #d97706) !important; border-color: #f59e0b !important; color: #fff !important; transform: translateY(-1px); }
-.btn-filter { background: #f4f6f8 !important; border-color: #dcdfe6 !important; color: #606266 !important; }
-.btn-filter:hover { background: #eef2f7 !important; color: #303133 !important; }
+.btn-add { background: linear-gradient(135deg, var(--navy-500), var(--navy-700)) !important; border-color: transparent !important; color: #fff !important; box-shadow: 0 2px 12px rgba(0,120,224,0.3) !important; }
+.btn-add:hover { background: linear-gradient(135deg, var(--navy-600), var(--navy-800)) !important; color: #fff !important; transform: translateY(-1px); box-shadow: 0 4px 18px rgba(0,120,224,0.4) !important; }
+.btn-import { background: linear-gradient(135deg, #2e7d32, #1b5e20) !important; border-color: transparent !important; color: #fff !important; box-shadow: 0 2px 12px rgba(46,125,50,0.3) !important; }
+.btn-import:hover { background: linear-gradient(135deg, #388e3c, #2e7d32) !important; color: #fff !important; transform: translateY(-1px); }
+.btn-export { background: linear-gradient(135deg, #6a1b9a, #4a148c) !important; border-color: transparent !important; color: #fff !important; box-shadow: 0 2px 12px rgba(106,27,154,0.3) !important; }
+.btn-export:hover { background: linear-gradient(135deg, #7b1fa2, #6a1b9a) !important; color: #fff !important; transform: translateY(-1px); }
+.btn-goods { background: linear-gradient(135deg, #f5a623, #c77700) !important; border-color: transparent !important; color: #fff !important; box-shadow: 0 2px 12px rgba(245,166,35,0.3) !important; }
+.btn-goods:hover { background: linear-gradient(135deg, #f9ab3d, #f5a623) !important; color: #fff !important; transform: translateY(-1px); }
+.btn-filter { background: var(--bg-surface) !important; border-color: var(--border) !important; color: var(--text-sub) !important; }
+.btn-filter:hover { background: var(--navy-50) !important; color: var(--text-main) !important; border-color: var(--border-bright) !important; }
+
+/* ── 手机端（≤768px）全局适配 ── */
+@media (max-width: 768px) {
+  /* 页面标题：允许换行，间距收紧 */
+  .page-title { flex-wrap: wrap; gap: 8px; margin-bottom: 14px; padding-bottom: 12px; }
+  .page-title h2 { font-size: 17px; }
+  .page-title .el-icon { font-size: 20px; }
+
+  /* 卡片：全宽，间距收紧 */
+  .stat-card, .toolbar-card, .filter-card, .chart-card { border-radius: 10px !important; margin-bottom: 12px; }
+  .stat-card .stat-value { font-size: 22px; }
+
+  /* 表格：横向滚动，最小宽度保证可读 */
+  .tech-table, .el-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tech-table .el-table__header-wrapper, .tech-table .el-table__body-wrapper { overflow-x: auto; }
+  .tech-table :deep(.el-table__cell) { padding: 8px 10px !important; font-size: 12px !important; }
+
+  /* 表单：单列堆叠 */
+  .el-form .el-row { flex-wrap: wrap !important; }
+  .el-form .el-col { flex: 0 0 100% !important; max-width: 100% !important; }
+
+  /* 弹窗：全屏或接近全屏 */
+  .el-dialog { margin: 12px !important; }
+  .el-drawer { width: 280px !important; }
+
+  /* 按钮：触屏友好 */
+  .btn-add, .btn-import, .btn-export, .btn-goods, .btn-filter { width: 100% !important; justify-content: center; }
+  .op-btn { padding: 6px 10px !important; font-size: 12px !important; }
+
+  /* 工具栏：换行 */
+  .toolbar-card .el-row, .filter-card .el-row { flex-wrap: wrap !important; }
+
+  /* 图表：高度自适应 */
+  .chart-card { height: auto !important; }
+
+  /* 操作列按钮：手机端仅显示图标，隐藏文字，节省屏幕空间 */
+  .op-btn { padding: 6px 8px !important; }
+  .op-btn .el-icon { font-size: 14px !important; }
+  .op-btn span, .op-btn .el-button__text { display: none !important; }
+  .op-btn + .op-btn { margin-left: 2px !important; }
+
+  /* 操作列宽度收窄：手机端仅容纳 2-3 个图标按钮 */
+  .el-table__fixed-right,
+  .el-table__fixed-right-header,
+  .el-table__fixed-right-body,
+  .el-table__fixed-right-patch,
+  .el-table__header-wrapper tr th.el-table__fixed-right-patch,
+  .el-table__body-wrapper tr td.el-table__fixed-right-patch,
+  .el-table__body-wrapper tr th.el-table__fixed-right-patch,
+  .el-table__footer-wrapper tr td.el-table__fixed-right-patch,
+  .el-table__footer-wrapper tr th.el-table__fixed-right-patch {
+    width: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
+  }
+  .el-table-fixed-column--right { width: 64px !important; min-width: 64px !important; }
+
+  /* 左侧固定列（序号列）同样收窄 */
+  .el-table__fixed-left,
+  .el-table__fixed-left-header,
+  .el-table__fixed-left-body,
+  .el-table__fixed-left-patch {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+  }
+  .el-table-fixed-column--left { width: 40px !important; min-width: 40px !important; }
+
+  /* 手机端取消固定定位，随表格一起横向滚动 */
+  .el-table__fixed-right,
+  .el-table__fixed-right-header,
+  .el-table__fixed-right-body,
+  .el-table__fixed-left,
+  .el-table__fixed-left-header,
+  .el-table__fixed-left-body {
+    position: static !important;
+    right: auto !important;
+    left: auto !important;
+    z-index: auto !important;
+  }
+}
 
 /* ── 通用操作列按钮（参照合同管理） ── */
 .op-btn {
@@ -55,14 +183,15 @@
   font-size: 12px !important;
   line-height: 1;
   padding: 4px 8px !important;
+  background: transparent !important;
 }
 .op-btn .el-icon { font-size: 12px !important; }
 .op-btn + .op-btn { margin-left: 4px; }
-.op-detail { color: #3b82f6 !important; border-color: #93c5fd !important; background: #eff6ff !important; }
-.op-detail:hover { background: #3b82f6 !important; color: #fff !important; border-color: #3b82f6 !important; }
-.op-edit { color: #f59e0b !important; border-color: #fcd34d !important; background: #fffbeb !important; }
-.op-edit:hover { background: #f59e0b !important; color: #fff !important; border-color: #f59e0b !important; }
-.op-delete { color: #ef4444 !important; border-color: #fca5a5 !important; background: #fef2f2 !important; }
-.op-delete:hover { background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important; }
-.op-download { color: #10b981 !important; border-color: #6ee7b7 !important; background: #ecfdf5 !important; }
-.op-download:hover { background: #10b981 !important; color: #fff !important; border-color: #10b981 !important; }
+.op-detail { color: var(--navy-500) !important; border-color: rgba(0,120,224,0.3) !important; background: rgba(0,120,224,0.06) !important; }
+.op-detail:hover { background: var(--navy-500) !important; color: #fff !important; border-color: var(--navy-500) !important; }
+.op-edit { color: #f5a623 !important; border-color: rgba(245,166,35,0.3) !important; background: rgba(245,166,35,0.06) !important; }
+.op-edit:hover { background: #f5a623 !important; color: #001f3f !important; border-color: #f5a623 !important; }
+.op-delete { color: #d32f2f !important; border-color: rgba(211,47,47,0.3) !important; background: rgba(211,47,47,0.06) !important; }
+.op-delete:hover { background: #d32f2f !important; color: #fff !important; border-color: #d32f2f !important; }
+.op-download { color: #2e7d32 !important; border-color: rgba(46,125,50,0.3) !important; background: rgba(46,125,50,0.06) !important; }
+.op-download:hover { background: #1b5e20 !important; color: #fff !important; border-color: #1b5e20 !important; }

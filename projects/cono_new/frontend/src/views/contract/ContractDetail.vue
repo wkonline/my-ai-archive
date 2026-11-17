@@ -32,7 +32,7 @@
         </el-descriptions-item>
         <el-descriptions-item label="回款比例"><strong>{{ paymentRatio }}%</strong></el-descriptions-item>
         <el-descriptions-item label="附件">
-          <el-link v-if="contract.attachment" :href="`/media/${contract.attachment}`" target="_blank" type="success">
+          <el-link v-if="contract.attachment" @click="openAttachment(contract)" type="success">
             <el-icon><Document /></el-icon>{{ attachmentName }}
           </el-link>
           <span v-else>-</span>
@@ -45,7 +45,7 @@
     <el-row :gutter="12" class="summary-row">
       <el-col :span="6">
         <el-card shadow="hover" class="summary-card">
-          <div class="summary-title" style="color:#409eff"><el-icon><Money /></el-icon> 已回款</div>
+          <div class="summary-title" style="color:#0078e0"><el-icon><Money /></el-icon> 已回款</div>
           <div class="summary-value" style="color:#31708f">¥{{ Number(contract.total_collection || 0).toLocaleString() }}</div>
         </el-card>
       </el-col>
@@ -216,6 +216,12 @@ const loadData = async () => {
 const goBack = () => router.push('/contract')
 const goEdit = () => router.push(`/contract/edit/${route.params.id}`)
 
+const openAttachment = (row) => {
+  if (!row.attachment) return
+  // 通过老版站点（端口8000）直接打开附件，绕过新系统媒体卷挂载限制
+  window.open(`http://192.168.1.202:8000/media/${row.attachment}`, '_blank')
+}
+
 onMounted(loadData)
 </script>
 
@@ -235,7 +241,7 @@ onMounted(loadData)
 .table-summary {
   display: flex; justify-content: flex-end; gap: 24px;
   margin-top: 8px; padding: 8px 12px;
-  background: #f8fcfc; border-radius: 4px; font-size: 13px; color: #606266;
+  background: #f4f6f9; border-radius: 4px; font-size: 13px; color: #606266;
 }
 .empty-tip { text-align: center; color: #909399; padding: 20px 0; font-size: 13px; }
 .action-row { display: flex; gap: 8px; margin-top: 8px; }
