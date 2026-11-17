@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
-from core.models import User
+from api.core.models import User
 
 
 class LoginView(APIView):
@@ -30,7 +30,7 @@ class LoginView(APIView):
         if not user:
             return Response({'detail': '用户名或密码错误'}, status=401)
         refresh = RefreshToken.for_user(user)
-        from core.permissions import get_effective_permissions, get_role_permissions, get_effective_menus
+        from api.core.permissions import get_effective_permissions, get_role_permissions, get_effective_menus
         perms = get_effective_permissions(user)
         menus = get_effective_menus(user)
         return Response({

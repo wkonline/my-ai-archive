@@ -7,12 +7,12 @@ from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from core import models
-from core.serializers.common import (
+from api.core import models
+from api.core.serializers.common import (
     DepartmentSerializer, UserSerializer, CustomerSerializer,
     WarehouseSerializer, ProductCategorySerializer, ProductSerializer,
 )
-from core.views.base import BaseModelViewSet
+from api.core.views.base import BaseModelViewSet
 
 
 class DepartmentViewSet(BaseModelViewSet):

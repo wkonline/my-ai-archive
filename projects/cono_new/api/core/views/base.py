@@ -2,7 +2,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.pagination import PageNumberPagination
-from core.permissions import HasPermission
+from api.core.authentication import CoreUserJWTAuthentication
+from api.core.permissions import HasPermission
 
 
 class StandardPagination(PageNumberPagination):
@@ -19,6 +20,7 @@ class BaseModelViewSet(ModelViewSet):
     """
     pagination_class = StandardPagination
     search_fields = []
+    authentication_classes = [CoreUserJWTAuthentication]
     permission_classes = [HasPermission]
     permission_codes = None
     action_permission_codes = None

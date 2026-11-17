@@ -1,7 +1,7 @@
 """API 权限校验：基于用户角色对应的 AuthRole.permissions。"""
 from rest_framework.permissions import BasePermission
 from rest_framework.exceptions import PermissionDenied
-from core.models import AuthRole, AuthUserProfile
+from api.core.models import AuthRole, AuthUserProfile
 
 
 def _builtin_permissions(role_key):

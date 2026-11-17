@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core import models
+from api.core import models
 
 
 class DepartmentSerializer(serializers.ModelSerializer):

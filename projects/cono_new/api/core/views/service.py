@@ -7,11 +7,11 @@ from rest_framework import filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import status
-from core import models
-from core.serializers.common import (
+from api.core import models
+from api.core.serializers.common import (
     ServiceSerializer, ServiceDetailSerializer, ReturnProductSerializer,
 )
-from core.views.base import BaseModelViewSet
+from api.core.views.base import BaseModelViewSet
 
 
 class ServiceViewSet(BaseModelViewSet):

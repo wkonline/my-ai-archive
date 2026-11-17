@@ -1,23 +1,23 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from core.views.auth import LoginView
-from core.views.home import HomeView
-from core.views.basic import (
+from api.core.views.auth import LoginView
+from api.core.views.home import HomeView
+from api.core.views.basic import (
     DepartmentViewSet, UserViewSet, CustomerViewSet,
     WarehouseViewSet, ProductCategoryViewSet, ProductViewSet,
 )
-from core.views.business import (
+from api.core.views.business import (
     ContractViewSet, ContractProductViewSet,
     CollectionViewSet, InvoiceViewSet,
 )
-from core.views.service import (
+from api.core.views.service import (
     ServiceViewSet, ServiceDetailViewSet, ReturnProductViewSet,
 )
-from core.views.production import (
+from api.core.views.production import (
     PlanViewSet, ProductionTaskViewSet,
     ContractFileViewSet, ProductLabelViewSet, ProductDeliveryViewSet,
 )
-from core.views.system import (
+from api.core.views.system import (
     CompanyViewSet, UserLogViewSet, AuthRoleViewSet, AccountVaultViewSet,
 )
 

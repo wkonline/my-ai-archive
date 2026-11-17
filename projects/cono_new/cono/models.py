@@ -91,6 +91,14 @@ class User(models.Model):
     class Meta:
         # 定义数据库表名为'user'
         db_table = 'user'
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
     def __str__(self):
         # 返回员工姓名
         return self.username

@@ -6,12 +6,12 @@ from io import BytesIO
 from rest_framework import filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from core import models
-from core.serializers.common import (
+from api.core import models
+from api.core.serializers.common import (
     PlanSerializer, ProductionTaskSerializer,
     ContractFileSerializer, ProductLabelSerializer, ProductDeliverySerializer,
 )
-from core.views.base import BaseModelViewSet
+from api.core.views.base import BaseModelViewSet
 
 
 class PlanViewSet(BaseModelViewSet):
@@ -36,6 +36,13 @@ class PlanViewSet(BaseModelViewSet):
         completed = self.request.query_params.get('completed')
         if completed:
             qs = qs.filter(completed=(completed == 'True'))
+        # 生产状态筛选：待生产(1)、生产中(2)、已完成(3)
+        production_status = self.request.query_params.get('completed_status')
+        if production_status:
+            try:
+                qs = qs.filter(completed_status=int(production_status))
+            except (ValueError, TypeError):
+                pass
         keyword = self.request.query_params.get('keyword')
         if keyword:
             qs = qs.filter(

@@ -2,7 +2,7 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework.exceptions import AuthenticationFailed
-from core.models import User
+from api.core.models import User
 
 
 class CoreUserJWTAuthentication(JWTAuthentication):
@@ -17,7 +17,6 @@ class CoreUserJWTAuthentication(JWTAuthentication):
         except User.DoesNotExist:
             raise AuthenticationFailed("User not found", code="user_not_found")
 
-        if not user.is_active:
-            raise AuthenticationFailed("User is inactive", code="user_inactive")
+        # cono.User 无 is_active 字段，跳过检查
 
         return user

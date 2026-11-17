@@ -4,12 +4,12 @@ from pathlib import Path
 from rest_framework import filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from core import models
-from core.serializers.common import (
+from api.core import models
+from api.core.serializers.common import (
     CompanySerializer, UserLogSerializer,
     AuthRoleSerializer, AccountVaultSerializer,
 )
-from core.views.base import BaseModelViewSet
+from api.core.views.base import BaseModelViewSet
 
 
 class CompanyViewSet(BaseModelViewSet):
@@ -82,7 +82,7 @@ def _permission_labels():
 def _ensure_default_roles():
     """确保内置角色（admin/saler/servicer/upkeeper/finance）在 auth_role 表中存在。"""
     from django.conf import settings
-    from core.models import AuthRole
+    from api.core.models import AuthRole
     try:
         if AuthRole.objects.filter(key__in=['admin','saler','servicer','upkeeper','finance']).exists():
             return
@@ -120,7 +120,7 @@ class AuthRoleViewSet(BaseModelViewSet):
         """返回老版 CONO_PERMISSION / CONO_MENU / CONO_ROLE_NAMES 供前端勾选。"""
         _ensure_default_roles()
         from django.conf import settings
-        from core.models import User
+        from api.core.models import User
 
         role_names = {
             'admin': '管理员', 'saler': '业务员', 'servicer': '客户经理',

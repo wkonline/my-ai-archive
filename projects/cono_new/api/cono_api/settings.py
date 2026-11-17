@@ -1,12 +1,20 @@
 """
 新版前后端分离 - API 配置
-本地开发用 SQLite，测试库，不连线上 MySQL，不影响老版运营。
+本地开发直接连接真实 MySQL（老版 cono 库），不用 SQLite 测试库。
+如需切回 SQLite 测试库，设 USE_SQLITE=1。
 """
 import os
+import sys
 from pathlib import Path
 from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# 本项目 core 复用老版 cono 应用（from cono.models import *），
+# 而 gunicorn/manage.py 的工作目录是 api/，需要把仓库根目录加入模块搜索路径。
+PROJECT_ROOT = BASE_DIR.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-$_+6ouqgn0hxgt19h&!1yh@^=@@x4xnzxg!zb=vyeg513kv$(j')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
@@ -22,7 +30,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'core',
+    'cono.apps.ConoConfig',   # 老版模型（api.core.models 从这里导入）
+    'api.core.apps.CoreConfig',
 ]
 
 MIDDLEWARE = [
@@ -56,9 +65,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'cono_api.wsgi.application'
 
-# 本地开发：SQLite 测试库，不连老版 MySQL
-# 上线时通过环境变量切换到 MySQL（复用老版 cono 库）
-if os.environ.get('USE_MYSQL', '') == '1':
+# 本地开发：直接连接真实 MySQL（复用老版 cono 库）
+# 设 USE_SQLITE=1 可切回 SQLite 测试库
+if os.environ.get('USE_SQLITE', '') == '1':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
     import pymysql
     pymysql.install_as_MySQLdb()
     DATABASES = {
@@ -69,13 +85,6 @@ if os.environ.get('USE_MYSQL', '') == '1':
             'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', 'cono2024'),
             'HOST': os.environ.get('DJANGO_DB_HOST', '192.168.1.201'),
             'PORT': int(os.environ.get('DJANGO_DB_PORT', '3306')),
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 
@@ -116,7 +125,7 @@ except Exception as _e:
 # JWT 认证
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'core.authentication.CoreUserJWTAuthentication',
+        'api.core.authentication.CoreUserJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
