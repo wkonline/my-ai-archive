@@ -47,7 +47,7 @@
         <span class="card-title"><el-icon><List /></el-icon> 合同产品展示</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="contract_order_number" label="ID" width="55" align="center" fixed />
+        <el-table-column prop="contract_order_number" label="ID" width="80" align="center" fixed />
         <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
         <el-table-column prop="category_name" label="产品名称" min-width="120" show-overflow-tooltip />
         <el-table-column prop="product_model" label="产品型号" min-width="110" show-overflow-tooltip />
@@ -102,7 +102,8 @@ const keyword = ref('')
 
 const uploadAction = computed(() => '/api/contract-product/import/')
 const uploadHeaders = computed(() => {
-  const token = localStorage.getItem('access_token')
+  const storage = localStorage.getItem('access_token') ? localStorage : sessionStorage
+  const token = storage.getItem('access_token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 })
 

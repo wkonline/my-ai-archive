@@ -29,10 +29,18 @@ class UserLogViewSet(BaseModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['user__username', 'action']
     ordering = ['-timestamp']
+    # 只有“我的日志”对普通用户开放，不能看别人的日志
+    action_permission_codes = {'mine': []}
 
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.order_by('-timestamp')
+
+    @action(detail=False, methods=['get'], url_path='mine')
+    def mine(self, request):
+        """当前登录用户自己的最近操作（个人中心“我的资料”页用）"""
+        qs = self.get_queryset().filter(user=request.user)[:10]
+        return Response(self.get_serializer(qs, many=True).data)
 
     @action(detail=False, methods=['get'], url_path='export')
     def export(self, request):

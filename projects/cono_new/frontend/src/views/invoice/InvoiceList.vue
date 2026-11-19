@@ -79,7 +79,6 @@
     <el-card shadow="never" class="toolbar-card">
       <div class="toolbar-row">
         <el-button class="btn-add" @click="openAdd"><el-icon><Plus /></el-icon>&nbsp;新增发票</el-button>
-        <el-button class="btn-export" @click="exportData"><el-icon><Download /></el-icon>&nbsp;数据下载</el-button>
         <span class="spacer"></span>
         <span class="stat-text">共 {{ stats.count || 0 }} 条</span>
       </div>
@@ -175,7 +174,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Download, Search, Refresh, TrendCharts, PieChart, List, Edit, Delete, Upload, Check, Loading } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, TrendCharts, PieChart, List, Edit, Delete, Upload, Check, Loading } from '@element-plus/icons-vue'
 import request from '../../api/request'
 import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'

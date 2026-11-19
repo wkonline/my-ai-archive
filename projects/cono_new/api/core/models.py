@@ -7,5 +7,5 @@ from cono.models import (
     ProductCategory, Product, Contract, Contract_Product,
     Collection, Invoice, Service, ServiceDetail, ReturnProduct,
     Plan, ProductionTask, ContractFile, ProductLabel, ProductDelivery,
-    Admin as MyCompany, UserLog, AuthRole, AuthUserProfile, TEMP_CONTRACT_NUMBER,
+    MyCompany, Admin, UserLog, AuthRole, AuthUserProfile, TEMP_CONTRACT_NUMBER,
 )

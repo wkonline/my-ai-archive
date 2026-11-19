@@ -14,7 +14,7 @@
         <el-button type="primary" @click="router.push('/collection')" class="btn-cyber">
           <el-icon><Money /></el-icon>&nbsp;回款登记
         </el-button>
-        <el-button class="btn-outline" @click="router.push('/plan')">
+        <el-button type="primary" @click="router.push('/plan')" class="btn-cyber">
           <el-icon><Calendar /></el-icon>&nbsp;生产计划
         </el-button>
       </div>

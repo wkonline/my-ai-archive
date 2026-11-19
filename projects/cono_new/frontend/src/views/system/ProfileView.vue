@@ -152,13 +152,10 @@ const fetchProfile = async () => {
 
 const fetchLogs = async () => {
   try {
-    const data = await request.get('/log/', { params: { page_size: 10 } })
+    // 用“我的日志”接口：普通用户没有 get_log 权限，直接请求 /log/ 会 403 弹错
+    const data = await request.get('/log/mine/')
     const list = data?.results || data || []
-    const currentUser = user.value?.username || ''
-    logs.value = list
-      .filter(l => l.username === currentUser || l.user_name === currentUser)
-      .slice(0, 10)
-      .map((l, i) => ({ ...l, index: i }))
+    logs.value = list.slice(0, 10).map((l, i) => ({ ...l, index: i }))
   } catch {}
 }
 

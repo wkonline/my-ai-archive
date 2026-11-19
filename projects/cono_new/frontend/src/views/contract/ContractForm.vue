@@ -229,7 +229,8 @@ const loadProductsByCategory = async (categoryId) => {
 }
 
 const uploadHeaders = computed(() => {
-  const token = localStorage.getItem('access_token')
+  const storage = localStorage.getItem('access_token') ? localStorage : sessionStorage
+  const token = storage.getItem('access_token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 })
 const fileList = ref([])

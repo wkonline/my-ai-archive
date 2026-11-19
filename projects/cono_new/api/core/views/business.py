@@ -117,20 +117,27 @@ class ContractViewSet(BaseModelViewSet):
         ).order_by('-date', '-order_number')
 
         def _rows(qs):
-            return [
-                {
+            out = []
+            for c in qs:
+                inv_date = models.Invoice.objects.filter(contract=c, is_delete=False).order_by('-date').values_list('date', flat=True).first()
+                total = float(c.total_price or 0)
+                inv_amt = float(c.invoiced_amount or 0)
+                col_amt = float(c.collected_amount or 0)
+                out.append({
                     'id': c.id,
                     'contract_number': c.contract_number,
                     'date': c.date.strftime('%Y-%m-%d') if c.date else '',
                     'customer_name': c.customer.company_name,
                     'saler_name': c.customer.saler.username if c.customer.saler_id else '',
-                    'total_price': float(c.total_price or 0),
-                    'invoiced_amount': float(c.invoiced_amount or 0),
-                    'collected_amount': float(c.collected_amount or 0),
-                    'outstanding_balance': float((c.total_price or 0) - (c.collected_amount or 0)),
-                }
-                for c in qs
-            ]
+                    'total_price': total,
+                    'invoiced_amount': inv_amt,
+                    'collected_amount': col_amt,
+                    'outstanding_balance': total - col_amt,
+                    'last_invoice_date': inv_date.strftime('%Y-%m-%d') if inv_date else '',
+                    'invoice_ratio': round(inv_amt / total * 100, 2) if total else 0,
+                    'collection_ratio': round(col_amt / total * 100, 2) if total else 0,
+                })
+            return out
 
         invoiced_rows = _rows(invoiced_unpaid)
         uninvoiced_rows = _rows(uninvoiced_unpaid)

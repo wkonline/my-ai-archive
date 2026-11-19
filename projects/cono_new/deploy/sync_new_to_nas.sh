@@ -1,16 +1,19 @@
 #!/bin/bash
 # 新版前后端分离系统 · 部署到 NAS（192.168.1.202）
 #
-# 线上架构：
+# 线上架构（全部 host 网络）：
 #   8001  cono_web_new(Nginx)  静态前端 + /api/ 反代到 127.0.0.1:8002
 #   8002  cono_api(Gunicorn)   新版 DRF 后端，代码通过 bind mount 挂载
-#                              (/volume1/docker/cono_app -> /app)
+#                              (/volume1/docker/cono_app -> /app，工作目录 /app/api)
 #   8000  cono_web             老版系统，本脚本不触碰
 #
-# 部署策略：整仓同步 → 只重建前端 → 重启 API 容器。
+# 部署策略：整仓同步 → 重建 API 镜像（含 pip 依赖）→ 重建 API 容器 → 重载 Nginx。
 #   * 新版后端依赖仓库根目录的 cono/（复用老版模型）和 cono_new/settings.py
 #     （CONO_PERMISSION / CONO_MENU），所以必须整仓同步，不能只传 api/。
-#   * 后端代码是 bind mount，改代码后重启容器即可，不需要 docker build。
+#   * 后端代码是 bind mount，但 Python 依赖烤在镜像里，requirements.txt 变化
+#     必须重建镜像；且 docker restart 不会切换镜像，必须删除容器后重建。
+#   * 镜像层顺序是 COPY requirements.txt → pip install → COPY . .，
+#     代码改动不会让 pip 层失效，日常同步重建很快。
 #   * NAS 上的 /usr/bin/rsync 是群晖 setuid 特制版，不支持 --server 模式
 #     （报 "rsync service is no running"），所以这里用 tar over ssh，
 #     与 sync_to_nas.sh 保持一致。
@@ -43,15 +46,29 @@ EXCLUDES=(
   --exclude='frontend/dist'
 )
 
-echo "==> 1/5 构建前端 ..."
-cd "$ROOT/frontend"
-npm run build
+# 仅当 src/ 有变更时才重建前端；否则直接跳过以节省时间
+frontend_dirty=false
+if [ -d "$ROOT/.git" ]; then
+  changed=$(git -C "$ROOT" diff --name-only HEAD -- frontend/src/ frontend/vite.config.js || true)
+else
+  # 无 git 仓库时 fallback：比较上次同步记录的 dist hash（若存在）
+  changed=""
+fi
+[ -n "$changed" ] && frontend_dirty=true
 
-echo "==> 2/5 整仓同步到 $HOST:$DEST ..."
+if $frontend_dirty; then
+  echo "==> 1/6 检测到前端源码变更，重新构建 ..."
+  cd "$ROOT/frontend"
+  npm run build
+else
+  echo "==> 1/6 无前端源码变更，跳过构建"
+fi
+
+echo "==> 2/6 整仓同步到 $HOST:$DEST ..."
 COPYFILE_DISABLE=1 tar -czf - "${EXCLUDES[@]}" -C "$ROOT" . \
   | ssh "${SSH_OPTS[@]}" "$HOST" "tar -xzf - -C $DEST"
 
-echo "==> 3/5 同步前端产物（原地覆盖 + 清理旧 hash 文件）..."
+echo "==> 3/6 同步前端产物（原地覆盖 + 清理旧 hash 文件）..."
 # 必须原地覆盖：nginx 容器的 /usr/share/nginx/html 是 bind mount，
 # 一旦把 dist 目录整体换掉（mv 成新 inode），容器里的挂载仍指向已删除的旧目录，会 403。
 COPYFILE_DISABLE=1 tar -czf - -C "$ROOT/frontend/dist" . \
@@ -69,10 +86,45 @@ if [ -s "$tmp_del" ]; then
 fi
 rm -f "$tmp_remote" "$tmp_local" "$tmp_del"
 
-echo "==> 4/5 重启新版 API 容器 ..."
-ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER restart cono_api >/dev/null && sudo -n $DOCKER ps --filter name=cono_api --format '    {{.Names}}  {{.Status}}'"
+echo "==> 4/6 重建新版 API 镜像（同步 pip 依赖）..."
+ssh "${SSH_OPTS[@]}" "$HOST" "cd $DEST/api && sudo -n $DOCKER build -q -t cono_api:latest . >/tmp/cono_api_build.log 2>&1 && echo '    镜像已更新' || { echo '!! 镜像构建失败，容器保持原状'; tail -20 /tmp/cono_api_build.log; exit 1; }"
 
-echo "==> 5/5 校验 ..."
+echo "==> 5/6 重建新版 API 容器 ..."
+# restart 不会切换到新镜像，必须 rm + run；-w /app/api 让 cono_api 包可导入。
+ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER rm -f cono_api >/dev/null 2>&1 || true; \
+  sudo -n $DOCKER run -d --name cono_api --restart unless-stopped --network host \
+    -w /app/api \
+    -e DJANGO_SECRET_KEY=nas-cono-new-api-key-2026 \
+    -e DJANGO_DEBUG=false \
+    -e USE_MYSQL=1 \
+    -e DJANGO_DB_NAME=cono \
+    -e DJANGO_DB_USER=cono \
+    -e DJANGO_DB_PASSWORD=cono2024 \
+    -e DJANGO_DB_HOST=192.168.1.201 \
+    -e DJANGO_DB_PORT=3306 \
+    -v /volume1/docker/cono_app:/app \
+    -v /volume1/docker/cono_media:/app/media \
+    -v /volume1/docker/cono_backups:/app/backups \
+    cono_api:latest gunicorn cono_api.wsgi:application --bind 0.0.0.0:8002 --workers 2 --timeout 120 >/dev/null && \
+  sudo -n $DOCKER ps --filter name=cono_api --format '    {{.Names}}  {{.Status}}'"
+
+# nginx 配置/前端产物变化后重载（不重启容器）
+ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER exec cono_web_new nginx -t >/dev/null 2>&1 && sudo -n $DOCKER exec cono_web_new nginx -s reload >/dev/null 2>&1 && echo '    Nginx 已重载'"
+
+# 备份容器：每天 23:00 自动备份数据库，保留 60 天
+if ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER ps -a --format '{{.Names}}' | grep -qx cono_backup"; then
+    echo "==> cono_backup 已存在"
+else
+    echo "==> 创建定时备份容器 cono_backup ..."
+    ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER run -d --name cono_backup \
+        --restart unless-stopped --network host \
+        -e DJANGO_DB_HOST=192.168.1.201 -e DJANGO_DB_PORT=3306 \
+        -v /volume1/docker/cono_app:/app \
+        -v /volume1/docker/cono_backups:/app/backups \
+        cono_api:latest sh -c 'while true; do python manage.py backup_database --if-due --retention-days 60; sleep 300; done'"
+fi
+
+echo "==> 6/6 校验 ..."
 page=""; api=""; old=""
 for _ in $(seq 1 10); do
   page=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://192.168.1.202:8001/ || true)

@@ -59,9 +59,9 @@
         <span class="panel-title">开票未付款合同</span>
         <span class="panel-count">{{ ar.invoiced_unpaid_count }} 单</span>
       </div>
-      <el-table :data="ar.invoiced_unpaid" stripe border v-loading="loading">
+      <el-table :data="ar.invoiced_unpaid" row-key="id" stripe border v-loading="loading">
         <el-table-column label="序号" width="60" align="center">
-          <template #default="{ index }">{{ index }}</template>
+          <template #default="{ row }">{{ row.seq }}</template>
         </el-table-column>
         <el-table-column prop="contract_number" label="合同号" width="140">
           <template #default="{ row }">
@@ -82,6 +82,13 @@
         </el-table-column>
         <el-table-column label="应收余额" width="140" align="right">
           <template #default="{ row }">¥{{ Number(row.outstanding_balance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
+        </el-table-column>
+        <el-table-column prop="last_invoice_date" label="最后开票日期" width="115" />
+        <el-table-column label="开票比例" width="130" align="center">
+          <template #default="{ row }"><el-progress :percentage="Number(row.invoice_ratio) || 0" :stroke-width="8" /></template>
+        </el-table-column>
+        <el-table-column label="回款比例" width="130" align="center">
+          <template #default="{ row }"><el-progress :percentage="Number(row.collection_ratio) || 0" :stroke-width="8" /></template>
         </el-table-column>
       </el-table>
       <div v-if="ar.invoiced_unpaid.length === 0" class="empty-tip">暂无开票未付款合同</div>
@@ -93,9 +100,9 @@
         <span class="panel-title">未开票未付款合同</span>
         <span class="panel-count">{{ ar.uninvoiced_unpaid_count }} 单</span>
       </div>
-      <el-table :data="ar.uninvoiced_unpaid" stripe border v-loading="loading">
+      <el-table :data="ar.uninvoiced_unpaid" row-key="id" stripe border v-loading="loading">
         <el-table-column label="序号" width="60" align="center">
-          <template #default="{ index }">{{ index }}</template>
+          <template #default="{ row }">{{ row.seq }}</template>
         </el-table-column>
         <el-table-column prop="contract_number" label="合同号" width="140">
           <template #default="{ row }">
@@ -116,6 +123,13 @@
         </el-table-column>
         <el-table-column label="应收余额" width="140" align="right">
           <template #default="{ row }">¥{{ Number(row.outstanding_balance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
+        </el-table-column>
+        <el-table-column prop="last_invoice_date" label="最后开票日期" width="115" />
+        <el-table-column label="开票比例" width="130" align="center">
+          <template #default="{ row }"><el-progress :percentage="Number(row.invoice_ratio) || 0" :stroke-width="8" /></template>
+        </el-table-column>
+        <el-table-column label="回款比例" width="130" align="center">
+          <template #default="{ row }"><el-progress :percentage="Number(row.collection_ratio) || 0" :stroke-width="8" /></template>
         </el-table-column>
       </el-table>
       <div v-if="ar.uninvoiced_unpaid.length === 0" class="empty-tip">暂无未开票未付款合同</div>
@@ -148,8 +162,8 @@ const fetchAr = async () => {
   try {
     const res = await request.get('/contract/ar/', { params: filter })
     ar.value = {
-      invoiced_unpaid: res.invoiced_unpaid || [],
-      uninvoiced_unpaid: res.uninvoiced_unpaid || [],
+      invoiced_unpaid: (res.invoiced_unpaid || []).map((item, idx) => ({ ...item, seq: idx + 1 })),
+      uninvoiced_unpaid: (res.uninvoiced_unpaid || []).map((item, idx) => ({ ...item, seq: idx + 1 })),
       invoiced_unpaid_count: res.invoiced_unpaid_count || 0,
       uninvoiced_unpaid_count: res.uninvoiced_unpaid_count || 0,
       total_invoiced_outstanding: Number(res.total_invoiced_outstanding || 0),

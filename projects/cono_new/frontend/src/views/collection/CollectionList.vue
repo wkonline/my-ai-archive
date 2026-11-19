@@ -208,7 +208,14 @@ const resetFilter = () => {
   fetchList()
 }
 
-const exportData = () => window.open('/api/collection/export/', '_blank')
+const exportData = () => {
+  const params = new URLSearchParams()
+  if (dateFrom.value) params.set('date_from', dateFrom.value)
+  if (dateTo.value) params.set('date_to', dateTo.value)
+  if (keyword.value) params.set('keyword', keyword.value)
+  const qs = params.toString()
+  window.open('/api/collection/export/' + (qs ? '?' + qs : ''), '_blank')
+}
 const openAdd = () => router.push('/collection/new')
 const openEdit = (row) => router.push(`/collection/edit/${row.id}`)
 const openContract = (row) => router.push(`/contract/${row.contract}`)

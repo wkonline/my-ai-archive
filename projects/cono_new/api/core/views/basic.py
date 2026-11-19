@@ -29,6 +29,23 @@ class UserViewSet(BaseModelViewSet):
     permission_codes = 'user_list'
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'phone']
+    # 个人中心接口是“本人操作”，不应要求 user_list 权限
+    action_permission_codes = {'me': [], 'update_profile': []}
+
+    @action(detail=False, methods=['get'], url_path='me')
+    def me(self, request):
+        """当前登录用户资料（个人中心 / 修改资料页）"""
+        return Response(self.get_serializer(request.user).data)
+
+    @action(detail=False, methods=['post'], url_path='profile')
+    def update_profile(self, request):
+        """修改个人资料：只允许改本人可编辑的字段"""
+        allowed = {'phone', 'id_number', 'address', 'gender', 'department'}
+        data = {k: v for k, v in request.data.items() if k in allowed}
+        serializer = self.get_serializer(request.user, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(self.get_serializer(request.user).data)
 
 
 class CustomerViewSet(BaseModelViewSet):
@@ -82,7 +99,7 @@ class CustomerViewSet(BaseModelViewSet):
 
 
 class WarehouseViewSet(BaseModelViewSet):
-    queryset = models.Warehouse.objects.all()
+    queryset = models.Warehouse.objects.order_by('id')
     serializer_class = WarehouseSerializer
     permission_codes = 'warehouse_list'
     filter_backends = [filters.SearchFilter]

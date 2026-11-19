@@ -155,7 +155,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # 媒体文件的根目录
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # 数据库自动备份：每天几点执行、自动备份保留份数
-DB_BACKUP_HOUR = int(os.environ.get('DJANGO_DB_BACKUP_HOUR', '11'))
+DB_BACKUP_HOUR = int(os.environ.get('DJANGO_DB_BACKUP_HOUR', '23'))
 DB_BACKUP_KEEP = int(os.environ.get('DJANGO_DB_BACKUP_KEEP', '30'))
 
 CONO_MENU = {

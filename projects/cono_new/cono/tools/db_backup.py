@@ -138,3 +138,20 @@ def latest_auto_backup():
     """最近一次自动备份的文件路径，没有则返回 None。"""
     files = auto_backup_files()
     return files[-1] if files else None
+
+
+def cleanup_old_backups_by_days(keep_days):
+    """按天数清理 cono_*.sql 和 cono*.sql 备份，删除早于 keep_days 天的文件。"""
+    import datetime as _dt
+    cutoff = (_dt.datetime.now() - _dt.timedelta(days=keep_days)).timestamp()
+    removed = []
+    seen = set()
+    for pattern in ('cono_*.sql', 'cono*.sql'):
+        for f in glob.glob(os.path.join(backup_dir(), pattern)):
+            if f in seen:
+                continue
+            seen.add(f)
+            if os.path.getmtime(f) < cutoff:
+                os.remove(f)
+                removed.append(f)
+    return removed

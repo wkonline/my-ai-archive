@@ -31,8 +31,10 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Lock, InfoFilled } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { useUserStore } from '../../stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const formRef = ref()
 const saving = ref(false)
 const form = reactive({ old_password: '', new_password: '', confirm_password: '' })
@@ -72,11 +74,7 @@ const handleSave = async () => {
     })
     ElMessage.success('密码修改成功，请重新登录')
     setTimeout(() => {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
-      localStorage.removeItem('user_info')
-      localStorage.removeItem('user_permissions')
-      localStorage.removeItem('user_menus')
+      userStore.logout()
       window.location.href = '/login'
     }, 800)
   } catch (e) {

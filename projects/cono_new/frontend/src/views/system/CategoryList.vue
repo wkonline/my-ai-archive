@@ -1,20 +1,8 @@
 <template>
   <div>
-    <el-card shadow="never" class="upload-card">
-      <template #header><span class="card-title"><el-icon><Upload /></el-icon> 批量上传</span></template>
-      <div class="upload-body">
-        <el-upload :show-file-list="false" :http-request="handleUpload" accept=".xlsx,.xls">
-          <el-button class="btn-import"><el-icon><Upload /></el-icon>&nbsp;选择文件上传</el-button>
-        </el-upload>
-        <el-button class="btn-export" @click="downloadTemplate"><el-icon><Download /></el-icon>&nbsp;模板下载</el-button>
-        <span class="upload-tip">请使用模板格式批量上传产品分类（产品名称、产品描述）</span>
-      </div>
-    </el-card>
-
     <el-card shadow="never" class="toolbar-card">
       <div class="toolbar-row">
         <el-button class="btn-add" @click="openAdd"><el-icon><Plus /></el-icon>&nbsp;新建分类</el-button>
-        <el-button class="btn-export" @click="exportData"><el-icon><Download /></el-icon>&nbsp;数据下载</el-button>
         <span class="spacer"></span>
         <el-input v-model="search" placeholder="搜索分类名称..." clearable style="width:240px" @keyup.enter="onSearch">
           <template #append><el-button type="primary" @click="onSearch"><el-icon><Search /></el-icon></el-button></template>
@@ -46,7 +34,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Download, Search, Upload, List, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Search, List, Edit, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
 
 const router = useRouter()
@@ -68,17 +56,6 @@ const fetchList = async () => {
 }
 
 const onSearch = () => { page.value = 1; fetchList() }
-const exportData = () => window.open('/api/productcategory/export/', '_blank')
-const handleUpload = async ({ file }) => {
-  const fd = new FormData()
-  fd.append('file', file)
-  try {
-    await request.post('/productcategory/batch/', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-    ElMessage.success('文件上传成功，数据已保存到数据库！')
-    fetchList()
-  } catch {}
-}
-const downloadTemplate = () => window.open('/media/uploadtemplates/productcategory.xlsx', '_blank')
 const openAdd = () => router.push('/product-category/new')
 const openEdit = (row) => router.push(`/product-category/edit/${row.id}`)
 const handleDelete = async (row) => {
@@ -97,9 +74,6 @@ const handleDelete = async (row) => {
 onMounted(fetchList)
 </script>
 <style scoped>
-.upload-card { margin-bottom: 12px; }
-.upload-body { display: flex; align-items: center; gap: 8px; }
-.upload-tip { color: #909399; font-size: 13px; margin-left: 8px; }
 .toolbar-card { margin-bottom: 12px; }
 .toolbar-row { display: flex; align-items: center; gap: 8px; }
 .spacer { flex: 1; }

@@ -67,7 +67,8 @@ const fileFields = [
 ]
 const form = reactive({ id: null, contract: null, electrical_drawings: '', instruction: '', other_file: '', mechanical_drawings: '', packing_list: '' })
 
-const uploadHeaders = { Authorization: `Bearer ${localStorage.getItem('access_token') || ''}` }
+const authStorage = localStorage.getItem('access_token') ? localStorage : sessionStorage
+const uploadHeaders = { Authorization: `Bearer ${authStorage.getItem('access_token') || ''}` }
 const uploadUrl = '/api/contract-file/upload/'
 
 const fileUrl = (f) => (f && f.startsWith('/media/')) ? f : (f ? `/media/${f}` : '')

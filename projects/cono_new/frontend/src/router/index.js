@@ -87,6 +87,14 @@ const router = createRouter({
   routes,
 })
 
+function isTokenExpired() {
+  const prefix = 'token_expiry_'
+  const storage = localStorage.getItem('access_token') ? localStorage : sessionStorage
+  const expiry = storage.getItem(prefix + 'access_token')
+  if (!expiry) return false
+  return Date.now() >= Number(expiry)
+}
+
 const ROUTE_PERM = {
   '/contract': ['contract_list'],
   '/service': ['service_list'],
@@ -120,15 +128,31 @@ router.beforeEach((to, from, next) => {
     next()
     return
   }
-  const token = localStorage.getItem('access_token')
-  if (to.path !== '/login' && !token) {
+  const storage = localStorage.getItem('access_token') ? localStorage : sessionStorage
+  const token = storage.getItem('access_token')
+  if (to.path !== '/login' && (!token || isTokenExpired())) {
+    if (isTokenExpired()) {
+      for (const key of [
+        'access_token',
+        'refresh_token',
+        'user_info',
+        'user_permissions',
+        'user_menus',
+        'rememberDuration',
+        'token_expiry_access_token',
+        'token_expiry_refresh_token',
+      ]) {
+        localStorage.removeItem(key)
+        sessionStorage.removeItem(key)
+      }
+    }
     next('/login')
     return
   }
   const required = routePermRequired(to.path)
   if (required) {
-    const user = JSON.parse(localStorage.getItem('user_info') || 'null')
-    const perms = JSON.parse(localStorage.getItem('user_permissions') || '[]')
+    const user = JSON.parse(storage.getItem('user_info') || 'null')
+    const perms = JSON.parse(storage.getItem('user_permissions') || '[]')
     if ((user?.role || '') !== 'admin' && !required.some(c => perms.includes(c))) {
       next('/')
       return

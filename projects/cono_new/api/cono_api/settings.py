@@ -17,6 +17,12 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-$_+6ouqgn0hxgt19h&!1yh@^=@@x4xnzxg!zb=vyeg513kv$(j')
+# 老版系统（cono_web）的 SECRET_KEY：老密码哈希 = md5(这个值 + 明文密码)。
+# 新版 API 校验老账号必须用同一个盐值，否则线上所有账号都提示“用户名或密码错误”。
+LEGACY_SECRET_KEY = os.environ.get(
+    'LEGACY_SECRET_KEY',
+    'django-insecure-$_+6ouqgn0hxgt19h&!1yh@^=@@x4xnzxg!zb=vyeg513kv$(j',
+)
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
 
@@ -147,3 +153,14 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5173',
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+# 缓存：验证码等跨进程共享数据。
+# gunicorn 起多个 worker 时，进程内字典无法共享，会导致“验证码错误”随机出现；
+# 这里用文件缓存（同一容器内各 worker 共享 /tmp），无需额外 Redis。
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.environ.get('DJANGO_CACHE_DIR', '/tmp/cono_django_cache'),
+        'TIMEOUT': 300,
+    }
+}
