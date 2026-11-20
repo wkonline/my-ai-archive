@@ -97,7 +97,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="saler_name" label="业务经理" width="100" show-overflow-tooltip />
-        <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
+        <el-table-column label="操作" class-name="op-cell"fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>
