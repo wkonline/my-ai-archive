@@ -374,7 +374,7 @@ onMounted(loadData)
 
 <style scoped>
 .page-header { margin-bottom: 16px; }
-.page-title { font-size: 18px; font-weight: 700; color: #303133; }
+.page-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
 .form-card { width: 100%; }
 .form-card :deep(.el-form) { width: 100%; }
 .product-toolbar {
@@ -420,7 +420,7 @@ onMounted(loadData)
 }
 .file-icon { font-size: 24px; color: #0078e0; }
 .file-info { flex: 1; min-width: 0; }
-.file-name { font-size: 13px; color: #303133; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-name { font-size: 13px; color: var(--text-main); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-size { font-size: 12px; color: #909399; margin-top: 2px; }
 
 .footer-actions {

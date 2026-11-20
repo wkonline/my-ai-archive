@@ -96,7 +96,7 @@ onMounted(loadData)
 
 <style scoped>
 .page-header { margin-bottom: 16px; }
-.page-title { font-size: 18px; font-weight: 700; color: #303133; }
+.page-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
 .form-card { width: 100%; }
 .footer-actions { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e4e7ed; display: flex; justify-content: flex-end; gap: 8px; }
 </style>

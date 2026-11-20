@@ -70,6 +70,6 @@ onMounted(fetchList)
 .toolbar-card { margin-bottom: 12px; }
 .toolbar-row { display: flex; align-items: center; gap: 8px; }
 .spacer { flex: 1; }
-.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
 </style>

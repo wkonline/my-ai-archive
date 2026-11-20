@@ -229,13 +229,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
-.page-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; font-weight: 700; color: #1a2533; }
-.page-head h2::before { content: ""; width: 4px; height: 20px; border-radius: 2px; background: linear-gradient(180deg, #1a8ce8, #004a99); }
 .page-actions { display: flex; align-items: center; gap: 8px; }
 .filter-card { margin-bottom: 12px; }
 .filter-head { display: flex; align-items: center; justify-content: space-between; }
-.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .filter-body { padding-top: 4px; }
 .quick-filter { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px dashed #d6ecff; }
 .quick-label { color: #4a5a6a; font-size: 13px; }

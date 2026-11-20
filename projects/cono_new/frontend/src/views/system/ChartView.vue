@@ -195,7 +195,7 @@ onMounted(fetchAr)
 .ar-page { padding: 0 16px 24px; }
 .stats-row { margin-bottom: 16px; }
 .stat-card { text-align: center; }
-.stat-value { font-size: 20px; font-weight: 700; color: #303133; margin-bottom: 4px; }
+.stat-value { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
 .stat-label { font-size: 13px; color: #606266; }
 .stat-warn .stat-value { color: #e6a23c; }
 .stat-info .stat-value { color: #1989fa; }
@@ -205,7 +205,7 @@ onMounted(fetchAr)
 .toolbar-summary { font-size: 13px; color: #606266; display: flex; gap: 20px; align-items: center; }
 .panel-card { margin-bottom: 16px; }
 .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #ebeef5; background: #f4f6f8; margin: -1px -1px 0 -1px; }
-.panel-title { font-size: 15px; font-weight: 700; color: #303133; }
+.panel-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
 .panel-count { font-size: 13px; color: #606266; background: #eef2f7; padding: 3px 10px; border-radius: 10px; }
 .empty-tip { padding: 24px 0; color: #909399; text-align: center; }
 .link-cell { color: #409eff; text-decoration: none; }

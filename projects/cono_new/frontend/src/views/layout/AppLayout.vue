@@ -189,11 +189,11 @@ const handleCommand = (cmd) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px 0 14px;
-  height: 72px;
+  padding: 0 22px 0 16px;
+  height: 66px;
   flex-shrink: 0;
-  background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 45%, var(--navy-700) 100%);
-  box-shadow: 0 2px 20px rgba(0,31,63,0.35), 0 1px 0 rgba(0,120,224,0.08) inset;
+  background: linear-gradient(120deg, var(--navy-900) 0%, var(--navy-800) 55%, #0a3f78 100%);
+  box-shadow: 0 1px 3px rgba(15,40,70,0.16), 0 4px 20px rgba(0,31,63,0.10);
   position: relative;
   z-index: 100;
 }
@@ -322,12 +322,12 @@ const handleCommand = (cmd) => {
 
 /* ── 左侧边栏：纯白底 + 深蓝菜单 ── */
 .aside {
-  background: var(--bg-surface);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
   border-right: 1px solid var(--border);
   overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
-  box-shadow: 2px 0 20px rgba(0,31,63,0.06);
+  box-shadow: 1px 0 12px rgba(15,40,70,0.03);
 }
 .aside::-webkit-scrollbar { width: 4px; }
 .aside::-webkit-scrollbar-track { background: transparent; }
@@ -339,23 +339,25 @@ const handleCommand = (cmd) => {
 .menu .el-menu-item {
   height: 42px;
   line-height: 42px;
-  margin: 2px 8px;
-  border-radius: 8px;
+  margin: 3px 10px;
+  border-radius: var(--radius-md);
   color: var(--text-sub) !important;
-  font-size: 13px;
-  transition: all .2s;
+  font-size: 13.5px;
+  transition: all var(--dur) var(--ease);
 }
 .menu .el-menu-item:hover {
   background: var(--navy-50) !important;
   color: var(--navy-600) !important;
 }
 .menu .el-menu-item.is-active {
-  background: linear-gradient(90deg, var(--navy-100), transparent) !important;
+  background: linear-gradient(90deg, rgba(0,120,224,0.10), rgba(0,120,224,0.02)) !important;
   color: var(--navy-700) !important;
-  box-shadow: 0 0 16px rgba(0,120,224,0.12);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--navy-500);
 }
-.menu .el-menu-item .el-icon { color: var(--navy-500); font-size: 16px; }
-.menu .el-menu-item.is-active .el-icon { color: var(--navy-600); filter: drop-shadow(0 0 6px rgba(0,120,224,0.6)); }
+.menu .el-menu-item .el-icon { color: var(--text-dim); font-size: 16px; transition: color var(--dur) var(--ease); }
+.menu .el-menu-item:hover .el-icon { color: var(--navy-500); }
+.menu .el-menu-item.is-active .el-icon { color: var(--navy-600); }
 .menu-divider { margin: 8px 16px; border-color: var(--border) !important; }
 
 /* ── 右侧主内容区：可滚动 ── */
@@ -380,7 +382,7 @@ const handleCommand = (cmd) => {
 .main::-webkit-scrollbar-thumb:hover { background: rgba(0,120,224,0.45); }
 
 .main-inner {
-  padding: 20px 24px;
+  padding: 24px 28px 32px;
   min-height: 100%;
   font-size: inherit;
 }

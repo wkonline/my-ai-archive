@@ -254,10 +254,10 @@ onMounted(() => {
 .stat-text { color: #4a5a6a; font-size: 13px; }
 .chart-row { margin-bottom: 12px; }
 .chart-card :deep(.el-card__header) { padding: 10px 14px; }
-.chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .filter-card { margin-bottom: 12px; }
 .filter-head { display: flex; align-items: center; justify-content: space-between; }
-.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .filter-body { padding-top: 4px; }
 .record-card { margin-bottom: 12px; }
 .record-card :deep(.el-card__header) { padding: 10px 14px; }
@@ -266,7 +266,7 @@ onMounted(() => {
 .detail-row { display: flex; padding: 8px 14px; border-bottom: 1px solid #ebeef5; font-size: 13px; }
 .detail-row:last-child { border-bottom: none; }
 .detail-label { width: 100px; flex-shrink: 0; color: #909399; font-weight: 600; }
-.detail-value { flex: 1; color: #303133; line-height: 1.6; }
+.detail-value { flex: 1; color: var(--text-main); line-height: 1.6; }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
 .batch-hint { margin-top: 8px; color: #4a5a6a; font-size: 13px; }
 .kb-search { margin-bottom: 12px; }

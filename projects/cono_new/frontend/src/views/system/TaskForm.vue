@@ -174,7 +174,7 @@ onMounted(loadData)
 
 <style scoped>
 .page-header { margin-bottom: 16px; }
-.page-title { font-size: 18px; font-weight: 700; color: #303133; }
+.page-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
 .form-card { width: 100%; }
 .plan-tip { margin: 4px 0 0; color: #8a97a5; font-size: 13px; }
 .product-table { margin-top: 8px; }

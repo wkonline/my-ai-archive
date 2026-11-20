@@ -146,7 +146,7 @@ onMounted(loadData)
 
 <style scoped>
 .page-header { margin-bottom: 16px; }
-.page-title { font-size: 18px; font-weight: 700; color: #303133; }
+.page-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
 .form-card { width: 100%; }
 .file-upload-wrap { width: 100%; }
 .file-upload-wrap :deep(.el-upload) { width: 100%; }

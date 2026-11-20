@@ -95,6 +95,6 @@ onMounted(() => { fetchList(); fetchStats() })
 .stat-card { text-align: center; }
 .stat-value { font-size: 24px; font-weight: 700; color: #0078e0; }
 .stat-label { font-size: 12px; color: #909399; margin-top: 4px; }
-.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
 </style>

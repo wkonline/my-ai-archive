@@ -149,9 +149,9 @@ onMounted(fetchList)
 .stat-text { color: #4a5a6a; font-size: 13px; }
 .filter-card { margin-bottom: 12px; }
 .filter-head { display: flex; align-items: center; justify-content: space-between; }
-.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .filter-body { padding-top: 4px; }
-.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
 .batch-hint { margin-top: 8px; color: #4a5a6a; font-size: 13px; }
 </style>

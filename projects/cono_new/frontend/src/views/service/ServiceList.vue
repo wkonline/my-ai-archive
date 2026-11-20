@@ -253,17 +253,17 @@ onMounted(() => {
 .stat-text { color: #4a5a6a; font-size: 13px; }
 .chart-row { margin-bottom: 12px; }
 .chart-card :deep(.el-card__header) { padding: 10px 14px; }
-.chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .filter-card { margin-bottom: 12px; }
 .filter-head { display: flex; align-items: center; justify-content: space-between; }
-.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .filter-body { padding-top: 4px; }
-.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
 .op-copy { color: #6366f1 !important; border-color: #a5b4fc !important; background: #eaf5ff !important; }
 .op-copy:hover { background: #6366f1 !important; color: #fff !important; border-color: #6366f1 !important; }
 /* 表头与行样式 */
-.el-table thead th { background: #f5f7fa; font-weight: 600; color: #303133; font-size: 13px; }
+.el-table thead th { background: #f5f7fa; font-weight: 600; color: var(--text-main); font-size: 13px; }
 .el-table td { font-size: 13px; }
 .el-table tr:hover td { background: #f0f7ff !important; }
 /* 状态列颜色更醒目 */

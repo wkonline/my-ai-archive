@@ -181,19 +181,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.page-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; font-weight: 700; color: #1a2533; }
 .page-actions { display: flex; align-items: center; gap: 8px; }
 .filter-card { margin-bottom: 12px; }
 .filter-head { display: flex; align-items: center; justify-content: space-between; }
-.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .filter-body { padding-top: 4px; }
 .stats-row { margin-bottom: 12px; }
 .stat-card { text-align: center; }
 .stat-value { font-size: 24px; font-weight: 700; color: #0078e0; }
 .stat-label { font-size: 12px; color: #909399; margin-top: 4px; }
 .group-card { margin-bottom: 14px; }
-.config-bar { margin-top: 8px; padding: 8px 12px; border-radius: 4px; background: #f5f7fa; border-left: 3px solid #0078e0; font-size: 13px; color: #303133; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.config-bar { margin-top: 8px; padding: 8px 12px; border-radius: 4px; background: #f5f7fa; border-left: 3px solid #0078e0; font-size: 13px; color: var(--text-main); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
 .config-bar strong { color: #1a2533; }
 .group-head { display: flex; align-items: center; justify-content: space-between; }
 .group-number { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; color: #1a2533; }

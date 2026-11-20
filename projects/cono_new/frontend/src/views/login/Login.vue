@@ -299,10 +299,10 @@ const handleRegister = async () => {
 .brand-copy { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 2px; }
 
 .login-card {
-  width: 380px; background: #fff;
-  border-radius: 16px; padding: 40px 32px 32px;
-  box-shadow: 0 20px 60px rgba(0,31,63,0.35), 0 0 0 1px rgba(255,255,255,0.5);
-  transition: width .3s ease;
+  width: 392px; background: #fff;
+  border-radius: var(--radius-xl); padding: 42px 34px 34px;
+  box-shadow: 0 1px 3px rgba(15,40,70,0.10), 0 24px 64px rgba(0,31,63,0.22);
+  transition: width .3s var(--ease);
   max-height: 90vh; overflow-y: auto;
 }
 .login-card.register-mode { width: 460px; }
@@ -315,14 +315,17 @@ const handleRegister = async () => {
 .card-title { margin: 0; font-size: 20px; font-weight: 700; color: var(--text-main); }
 
 .tech-input :deep(.el-input__wrapper) {
-  background: var(--navy-50) !important;
+  background: var(--bg-subtle) !important;
   box-shadow: 0 0 0 1px var(--border) inset !important;
-  border-radius: 10px !important;
-  transition: all .25s;
+  border-radius: var(--radius-md) !important;
+  transition: all var(--dur) var(--ease);
 }
-.tech-input :deep(.el-input__wrapper:hover),
+.tech-input :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--border-bright) inset !important;
+  background: #fff !important;
+}
 .tech-input :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 2px rgba(0,120,224,0.4) inset !important;
+  box-shadow: 0 0 0 1px var(--navy-400) inset, 0 0 0 3px rgba(0,120,224,0.12) !important;
   background: #fff !important;
 }
 .tech-input :deep(.el-input__inner) { color: var(--text-main) !important; }

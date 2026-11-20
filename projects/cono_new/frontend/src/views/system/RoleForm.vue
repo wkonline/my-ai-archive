@@ -224,7 +224,7 @@ onMounted(loadData)
 
 <style scoped>
 .page-header { margin-bottom: 16px; }
-.page-title { font-size: 18px; font-weight: 700; color: #303133; }
+.page-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
 .form-card { width: 100%; }
 .role-tabs { margin-top: 8px; }
 .perm-groups { max-height: 500px; overflow-y: auto; padding-right: 4px; }

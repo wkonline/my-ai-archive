@@ -413,12 +413,12 @@ onMounted(() => {
 .stat-text { color: #4a5a6a; font-size: 13px; }
 .chart-row { margin-bottom: 12px; }
 .chart-card :deep(.el-card__header) { padding: 10px 14px; }
-.chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .filter-card { margin-bottom: 12px; }
 .filter-head { display: flex; align-items: center; justify-content: space-between; }
-.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.filter-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .filter-body { padding-top: 4px; }
-.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .amount { font-weight: 600; color: #f56c6c; }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
 </style>

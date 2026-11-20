@@ -329,7 +329,7 @@ onMounted(() => { fetchList(); fetchStats(); fetchCharts() })
 .stats-row { margin-bottom: 12px; }
 .chart-row { margin-bottom: 12px; }
 .chart-card :deep(.el-card__header) { padding: 10px 14px; }
-.chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.chart-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .stat-card { text-align: center; cursor: default; border-top: 3px solid transparent; transition: all .2s; }
 .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,120,224,0.12); }
 .stat-value { font-size: 24px; font-weight: 700; }
@@ -346,7 +346,7 @@ onMounted(() => { fetchList(); fetchStats(); fetchCharts() })
 .toolbar-row { display: flex; align-items: center; gap: 10px; }
 .spacer { flex: 1; }
 .search-form { margin-top: 12px; }
-.price { font-weight: 600; color: #303133; }
+.price { font-weight: 600; color: var(--text-main); }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
 
 /* 工具栏按钮 */
@@ -358,7 +358,7 @@ onMounted(() => { fetchList(); fetchStats(); fetchCharts() })
 .btn-goods { background: linear-gradient(135deg, #f59e0b, #d97706); border-color: #d97706; color: #fff; }
 .btn-goods:hover { background: linear-gradient(135deg, #fbbf24, #d97706); border-color: #f59e0b; color: #fff; }
 .btn-filter { background: #f4f6f8; border-color: #dcdfe6; color: #606266; }
-.btn-filter:hover { background: #eef2f7; color: #303133; }
+.btn-filter:hover { background: #eef2f7; color: var(--text-main); }
 
 /* 列表文字统一 12px */
 :deep(.el-table) {

@@ -226,10 +226,10 @@ onMounted(loadData)
 
 <style scoped>
 .page-header { margin-bottom: 16px; }
-.page-title { font-size: 18px; font-weight: 700; color: #303133; }
+.page-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
 .section-card { margin-bottom: 16px; }
 .section-card :deep(.el-card__header) { padding: 10px 14px; }
-.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #303133; }
+.card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .card-header-row { display: flex; align-items: center; justify-content: space-between; }
 .card-subtitle { font-size: 12px; color: #909399; font-weight: normal; }
 .amount { color: #f56c6c; }
