@@ -85,16 +85,12 @@ const page_size = ref(50)
 const loading = ref(false)
 const search = ref('')
 
-const fileUrl = (path) => {
-  if (!path) return ''
-  if (path.startsWith('/')) return path
-  return `/media/${path}`
+const toRelative = (v) => {
+  if (!v) return ''
+  return v.replace(/^https?:\/\/[^/]+/, '').replace(/^\/media\//, '').replace(/^\/+/, '')
 }
-
-const fileName = (path) => {
-  if (!path) return ''
-  return path.split('/').pop()
-}
+const fileUrl = (path) => (path ? `/media/${toRelative(path)}` : '')
+const fileName = (path) => (path ? toRelative(path).split('/').pop() : '')
 
 const fetchList = async () => {
   loading.value = true
