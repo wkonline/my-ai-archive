@@ -47,22 +47,9 @@ EXCLUDES=(
 )
 
 # 仅当 src/ 有变更时才重建前端；否则直接跳过以节省时间
-frontend_dirty=false
-if [ -d "$ROOT/.git" ]; then
-  changed=$(git -C "$ROOT" diff --name-only HEAD -- frontend/src/ frontend/vite.config.js || true)
-else
-  # 无 git 仓库时 fallback：比较上次同步记录的 dist hash（若存在）
-  changed=""
-fi
-[ -n "$changed" ] && frontend_dirty=true
-
-if $frontend_dirty; then
-  echo "==> 1/6 检测到前端源码变更，重新构建 ..."
-  cd "$ROOT/frontend"
-  npm run build
-else
-  echo "==> 1/6 无前端源码变更，跳过构建"
-fi
+echo "==> 1/6 重新构建前端 ..."
+cd "$ROOT/frontend"
+npm run build
 
 echo "==> 2/6 整仓同步到 $HOST:$DEST ..."
 COPYFILE_DISABLE=1 tar -czf - "${EXCLUDES[@]}" -C "$ROOT" . \
