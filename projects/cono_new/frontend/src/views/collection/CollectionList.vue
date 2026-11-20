@@ -63,8 +63,8 @@
       </template>
       <el-table :data="list" stripe border v-loading="loading">
         <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
-        <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
-        <el-table-column label="合同号码" min-width="130" show-overflow-tooltip>
+        <el-table-column prop="customer_name" label="客户名称" width="280" show-overflow-tooltip />
+        <el-table-column label="合同号码" width="135" show-overflow-tooltip>
           <template #default="{ row }">
             <router-link class="link-text" :to="`/contract/${row.contract}`">{{ row.contract_number }}</router-link>
           </template>
@@ -85,19 +85,19 @@
             <span class="amount">¥{{ Number(row.amount || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="回款比例" width="100" align="center">
+        <el-table-column label="回款比例" width="105" align="center">
           <template #default="{ row }">
             <el-progress :percentage="Math.round((Number(row.amount) / (Number(row.contract_total_price) || 1)) * 100)" :stroke-width="8" />
           </template>
         </el-table-column>
-        <el-table-column prop="collection_method_display" label="回款方式" width="95" align="center" />
+        <el-table-column prop="collection_method_display" label="回款方式" width="105" align="center" />
         <el-table-column label="总回款比例" width="110" align="center">
           <template #default="{ row }">
             <el-progress :percentage="row.collection_ratio || 0" :stroke-width="8" :status="row.collection_ratio >= 100 ? 'success' : ''" />
           </template>
         </el-table-column>
-        <el-table-column prop="saler_name" label="业务经理" min-width="100" show-overflow-tooltip />
-        <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
+        <el-table-column prop="saler_name" label="业务经理" width="100" show-overflow-tooltip />
+        <el-table-column label="操作" class-name="op-cell"  fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

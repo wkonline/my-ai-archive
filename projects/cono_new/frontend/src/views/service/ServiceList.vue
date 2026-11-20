@@ -64,16 +64,16 @@
         <span class="card-title"><el-icon><List /></el-icon> 售后列表</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
-        <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip fixed />
-        <el-table-column prop="productcategory_name" label="产品名称" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="product_model" label="型号" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="service_number" label="维修编号" min-width="130">
+        <el-table-column prop="order_number" label="序号" width="50" align="center" fixed />
+        <el-table-column prop="customer_name" label="客户名称" width="200" show-overflow-tooltip fixed />
+        <el-table-column prop="productcategory_name" label="产品名称" width="120" show-overflow-tooltip />
+        <el-table-column prop="product_model" label="型号" width="120" show-overflow-tooltip />
+        <el-table-column prop="service_number" label="维修编号" width="120">
           <template #default="{ row }">
             <el-link type="primary" @click="openDetail(row)">{{ row.service_number }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="product_number" label="电路板编号" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="product_number" label="电路板编号" width="100" show-overflow-tooltip />
         <el-table-column prop="warranty_display" label="质保情况" width="95" align="center" />
         <el-table-column prop="warranty_end_display" label="维修情况" width="95" align="center">
           <template #default="{ row }">
@@ -86,8 +86,8 @@
           </template>
         </el-table-column>
         <el-table-column prop="date" label="接收时间" width="105" align="center" />
-        <el-table-column prop="description" label="备注" min-width="150" show-overflow-tooltip />
-        <el-table-column label="操作" class-name="op-cell" width="200" fixed="right">
+        <el-table-column prop="description" label="备注"  show-overflow-tooltip />
+        <el-table-column label="操作" class-name="op-cell" width="250" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
             <el-button class="op-btn op-copy" size="small" @click="openCopy(row)"><el-icon><CopyDocument /></el-icon>&nbsp;复制</el-button>

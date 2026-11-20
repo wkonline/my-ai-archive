@@ -91,10 +91,10 @@
 <!-- 列表 -->
     <el-card shadow="never">
       <el-table :data="list" stripe border v-loading="loading" @sort-change="onSortChange">
-        <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
+        <el-table-column prop="order_number" label="序号" width="100" align="center" fixed />
         <el-table-column prop="customer_name" label="客户名称" min-width="180" fixed show-overflow-tooltip />
         <el-table-column prop="date" label="合同日期" width="105" sortable="custom" />
-        <el-table-column prop="contract_number" label="合同编号" min-width="155">
+        <el-table-column prop="contract_number" label="合同编号" min-width="115">
           <template #default="{ row }">
             <router-link :to="`/contract/${row.id}`" class="link-cell">{{ row.contract_number }}</router-link>
           </template>
