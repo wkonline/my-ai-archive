@@ -83,26 +83,26 @@ WSGI_APPLICATION = 'cono_new.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': os.environ.get('DJANGO_DB_NAME', 'cono'),
-#         'USER': os.environ.get('DJANGO_DB_USER', 'cono'),
-#         'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', 'cono2024'),
-#         'HOST': os.environ.get('DJANGO_DB_HOST', '192.168.1.201'),
-#         'PORT': int(os.environ.get('DJANGO_DB_PORT', '3306')),
-#     }
-# }
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'cono',
-        'USER': 'cono',
-        'PASSWORD': 'cono2024',
-        'HOST': '192.168.1.201',
-        'PORT': 3306,
+# 本地测试可设置 CONO_LOCAL_DB_PATH 指向 SQLite 副本，避免读写生产 MySQL。
+_local_db_path = os.environ.get('CONO_LOCAL_DB_PATH', '')
+if _local_db_path:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': _local_db_path,
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DJANGO_DB_NAME', 'cono'),
+            'USER': os.environ.get('DJANGO_DB_USER', 'cono'),
+            'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', 'cono2024'),
+            'HOST': os.environ.get('DJANGO_DB_HOST', '192.168.1.201'),
+            'PORT': int(os.environ.get('DJANGO_DB_PORT', '3306')),
+        }
+    }
 
 
 # Password validation
