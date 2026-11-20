@@ -85,13 +85,13 @@
             <span class="amount">¥{{ Number(row.amount || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="回款比例" width="105" align="center">
+        <el-table-column label="回款比例" width="105" align="center" :show-overflow-tooltip="false">
           <template #default="{ row }">
             <el-progress :percentage="Math.round((Number(row.amount) / (Number(row.contract_total_price) || 1)) * 100)" :stroke-width="8" />
           </template>
         </el-table-column>
         <el-table-column prop="collection_method_display" label="回款方式" width="105" align="center" />
-        <el-table-column label="总回款比例" width="110" align="center">
+        <el-table-column label="总回款比例" width="110" align="center" :show-overflow-tooltip="false">
           <template #default="{ row }">
             <el-progress :percentage="row.collection_ratio || 0" :stroke-width="8" :status="row.collection_ratio >= 100 ? 'success' : ''" />
           </template>

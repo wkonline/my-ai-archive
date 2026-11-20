@@ -84,10 +84,10 @@
           <template #default="{ row }">¥{{ Number(row.outstanding_balance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
         </el-table-column>
         <el-table-column prop="last_invoice_date" label="最后开票日期" width="120" />
-        <el-table-column label="开票比例" width="100" align="center">
+        <el-table-column label="开票比例" width="100" align="center" :show-overflow-tooltip="false">
           <template #default="{ row }"><el-progress :percentage="Number(row.invoice_ratio) || 0" :stroke-width="8" /></template>
         </el-table-column>
-        <el-table-column label="回款比例" width="100" align="center">
+        <el-table-column label="回款比例" width="100" align="center" :show-overflow-tooltip="false">
           <template #default="{ row }"><el-progress :percentage="Number(row.collection_ratio) || 0" :stroke-width="8" /></template>
         </el-table-column>
       </el-table>
@@ -125,10 +125,10 @@
           <template #default="{ row }">¥{{ Number(row.outstanding_balance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
         </el-table-column>
         <el-table-column prop="last_invoice_date" label="最后开票日期" width="120" />
-        <el-table-column label="开票比例" width="100" align="center">
+        <el-table-column label="开票比例" width="100" align="center" :show-overflow-tooltip="false">
           <template #default="{ row }"><el-progress :percentage="Number(row.invoice_ratio) || 0" :stroke-width="8" /></template>
         </el-table-column>
-        <el-table-column label="回款比例" width="100" align="center">
+        <el-table-column label="回款比例" width="100" align="center" :show-overflow-tooltip="false">
           <template #default="{ row }"><el-progress :percentage="Number(row.collection_ratio) || 0" :stroke-width="8" /></template>
         </el-table-column>
       </el-table>
