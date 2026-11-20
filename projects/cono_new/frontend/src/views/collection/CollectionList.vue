@@ -66,7 +66,7 @@
         <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
         <el-table-column label="合同号码" min-width="130" show-overflow-tooltip>
           <template #default="{ row }">
-            <a class="link-text" @click="openContract(row)">{{ row.contract_number }}</a>
+            <router-link class="link-text" :to="`/contract/${row.contract}`">{{ row.contract_number }}</router-link>
           </template>
         </el-table-column>
         <el-table-column label="合同金额" width="115" align="right">
@@ -218,7 +218,6 @@ const exportData = () => {
 }
 const openAdd = () => router.push('/collection/new')
 const openEdit = (row) => router.push(`/collection/edit/${row.id}`)
-const openContract = (row) => router.push(`/contract/${row.contract}`)
 
 const handleDelete = async (row) => {
   try {

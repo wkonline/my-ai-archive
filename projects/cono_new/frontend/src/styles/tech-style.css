@@ -256,7 +256,8 @@ html, body, #app {
   text-decoration: none;
   transition: color var(--dur) var(--ease);
 }
-.link-text:hover { color: var(--navy-700); text-decoration: underline; }
+.link-text:hover,
+.link-text.router-link-active { color: var(--navy-700); text-decoration: underline; }
 .op-detail { color: var(--navy-500) !important; border-color: rgba(0,120,224,0.28) !important; background: rgba(0,120,224,0.05) !important; }
 .op-detail:hover { background: var(--navy-500) !important; color: #fff !important; border-color: var(--navy-500) !important; }
 .op-edit { color: #d18a1d !important; border-color: rgba(224,155,45,0.28) !important; background: rgba(224,155,45,0.06) !important; }
