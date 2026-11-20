@@ -69,7 +69,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="date" label="合同日期" width="105" />
-        <el-table-column prop="customer_name" label="客户名称" show-overflow-tooltip />
+        <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
         <el-table-column prop="saler_name" label="业务员" width="100" />
         <el-table-column label="合同金额" width="115" align="right">
           <template #default="{ row }">¥{{ Number(row.total_price).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
