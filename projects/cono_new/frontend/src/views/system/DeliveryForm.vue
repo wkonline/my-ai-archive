@@ -12,7 +12,7 @@
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="客户名称" required>
-              <el-select v-model="form.customer" filterable style="width:100%">
+              <el-select v-model="form.customer" filterable remote :remote-method="searchCustomers" :loading="customerLoading" placeholder="输入客户名称搜索" style="width:100%">
                 <el-option v-for="c in customers" :key="c.id" :label="c.company_name" :value="c.id" />
               </el-select>
             </el-form-item>
@@ -69,13 +69,34 @@ const saving = ref(false)
 const formRef = ref()
 const form = reactive({ id: null, customer: null, contract: null, date: '', productcategory: '', product: '', quantity: 1 })
 const customers = ref([])
+const customerLoading = ref(false)
 const planOptions = ref([])
+
+const searchCustomers = async (q = '') => {
+  customerLoading.value = true
+  try {
+    const data = await request.get('/customer/', { params: { keyword: q, page_size: 50 } })
+    customers.value = data.results || data || []
+  } catch {
+    customers.value = []
+  } finally {
+    customerLoading.value = false
+  }
+}
+
+const ensureCustomerOption = async (cid) => {
+  if (!cid || customers.value.some(c => c.id === cid)) return
+  try {
+    const c = await request.get(`/customer/${cid}/`)
+    if (c?.id) customers.value = [c, ...customers.value]
+  } catch {}
+}
 
 const loadData = async () => {
   try {
-    customers.value = (await request.get('/customer/?page_size=200')).results || []
     planOptions.value = (await request.get('/plan/?page_size=200')).results || []
   } catch {}
+  await searchCustomers('')
   if (!isEdit.value) {
     Object.assign(form, { id: null, customer: null, contract: null, date: new Date().toISOString().slice(0, 10), productcategory: '', product: '', quantity: 1 })
     return
@@ -87,6 +108,7 @@ const loadData = async () => {
       date: data.date || '', productcategory: data.productcategory || '',
       product: data.product || '', quantity: data.quantity ?? 1,
     })
+    await ensureCustomerOption(data.customer)
   } catch {}
 }
 

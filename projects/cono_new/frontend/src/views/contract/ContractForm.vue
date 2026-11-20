@@ -17,7 +17,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="客户名称" prop="customer">
-              <el-select v-model="form.customer" filterable placeholder="输入客户名称搜索" style="width:100%" no-data-text="未找到匹配客户">
+              <el-select v-model="form.customer" filterable remote :remote-method="searchCustomers" :loading="customerLoading" placeholder="输入客户名称搜索" style="width:100%" no-data-text="未找到匹配客户">
                 <el-option v-for="c in customers" :key="c.id" :label="c.company_name" :value="c.id" />
               </el-select>
             </el-form-item>
@@ -176,6 +176,7 @@ const rules = {
 }
 
 const customers = ref([])
+const customerLoading = ref(false)
 const productCategories = ref([])
 const productRows = ref([])
 const contractNumberStatus = ref('')
@@ -263,15 +264,33 @@ const defaultContractNumber = () => {
   return `CN${d.getFullYear()}W${mm}${dd}`
 }
 
+const searchCustomers = async (q = '') => {
+  customerLoading.value = true
+  try {
+    const data = await request.get('/customer/', { params: { keyword: q, page_size: 50 } })
+    customers.value = data.results || data || []
+  } catch {
+    customers.value = []
+  } finally {
+    customerLoading.value = false
+  }
+}
+
+// 编辑模式/回显：确保当前选中客户在下拉里，否则只显示 id
+const ensureCustomerOption = async (cid) => {
+  if (!cid || customers.value.some(c => c.id === cid)) return
+  try {
+    const c = await request.get(`/customer/${cid}/`)
+    if (c?.id) customers.value = [c, ...customers.value]
+  } catch {}
+}
+
 const loadData = async () => {
   try {
-    const [custData, catData] = await Promise.all([
-      request.get('/customer/', { params: { page_size: 2000 } }),
-      request.get('/productcategory/', { params: { page_size: 200 } }),
-    ])
-    customers.value = custData.results || custData || []
+    const catData = await request.get('/productcategory/', { params: { page_size: 200 } })
     productCategories.value = catData.results || catData || []
   } catch {}
+  await searchCustomers('')
 
   if (isEdit.value) {
     try {
@@ -281,6 +300,7 @@ const loadData = async () => {
         contract_number: row.contract_number, remark: row.remark || '',
         attachment: row.attachment || '', quantity: row.quantity, total_price: row.total_price
       })
+      await ensureCustomerOption(row.customer)
       uploadedSize.value = 0
       try {
         const data = await request.get(`/contract-product/?contract=${row.id}&page_size=200`)
