@@ -142,7 +142,7 @@
         <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
         <el-table-column label="合同号码" min-width="130" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-button type="primary" link @click="openContract(row)">{{ row.contract_number }}</el-button>
+            <a class="link-text" @click="openContract(row)">{{ row.contract_number }}</a>
           </template>
         </el-table-column>
         <el-table-column label="开票金额" width="110" align="right">
@@ -151,7 +151,7 @@
         <el-table-column prop="date" label="开票日期" width="105" align="center" />
         <el-table-column prop="invoice_number" label="发票号" min-width="130" show-overflow-tooltip />
         <el-table-column prop="invoice_man_name" label="开票人" min-width="95" align="center" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

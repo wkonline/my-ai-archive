@@ -16,7 +16,7 @@
         </el-table-column>
         <el-table-column prop="size" label="大小" width="90" align="right" />
         <el-table-column prop="created" label="创建时间" width="120" />
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="100" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" :loading="restoring === row.name"
               @click="doRestore(row)">恢复</el-button>

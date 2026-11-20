@@ -239,6 +239,24 @@ html, body, #app {
 }
 .op-btn .el-icon { font-size: 12px !important; }
 .op-btn + .op-btn { margin-left: 5px; }
+
+/* 操作列：全局 showOverflowTooltip 会给单元格加 overflow:hidden，
+   按钮的边框/阴影会被裁掉，这里单独放开 */
+.el-table .op-cell .cell {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+.el-table .op-cell .cell .el-button { margin: 1px 0; }
+
+/* 表格内的文字链接（如合同编号）：纯文字，不带按钮外观 */
+.link-text {
+  color: var(--navy-500);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--dur) var(--ease);
+}
+.link-text:hover { color: var(--navy-700); text-decoration: underline; }
 .op-detail { color: var(--navy-500) !important; border-color: rgba(0,120,224,0.28) !important; background: rgba(0,120,224,0.05) !important; }
 .op-detail:hover { background: var(--navy-500) !important; color: #fff !important; border-color: var(--navy-500) !important; }
 .op-edit { color: #d18a1d !important; border-color: rgba(224,155,45,0.28) !important; background: rgba(224,155,45,0.06) !important; }

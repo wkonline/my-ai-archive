@@ -130,7 +130,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="saler_name" label="业务经理" min-width="100" show-overflow-tooltip />
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="250" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-detail" size="small" @click="openDetail(row)"><el-icon><View /></el-icon>&nbsp;详情</el-button>
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>

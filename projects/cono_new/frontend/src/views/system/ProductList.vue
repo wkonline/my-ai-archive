@@ -24,7 +24,7 @@
         <el-table-column prop="model" label="产品型号" min-width="130" show-overflow-tooltip />
         <el-table-column prop="warehouse_name" label="仓库" min-width="110" />
         <el-table-column prop="description" label="产品描述" min-width="180" show-overflow-tooltip />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

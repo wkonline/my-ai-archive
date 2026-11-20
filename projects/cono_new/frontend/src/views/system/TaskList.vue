@@ -62,7 +62,7 @@
           <el-table-column prop="quantity" label="下单数量" width="80" align="center" />
           <el-table-column prop="date" label="下发日期" width="105" align="center" />
           <el-table-column prop="production_man_name" label="负责人" min-width="100" />
-          <el-table-column label="操作" width="150" fixed="right">
+          <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
             <template #default="{ row }">
               <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
             </template>

@@ -87,7 +87,7 @@
         </el-table-column>
         <el-table-column prop="date" label="接收时间" width="105" align="center" />
         <el-table-column prop="description" label="备注" min-width="150" show-overflow-tooltip />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="200" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
             <el-button class="op-btn op-copy" size="small" @click="openCopy(row)"><el-icon><CopyDocument /></el-icon>&nbsp;复制</el-button>

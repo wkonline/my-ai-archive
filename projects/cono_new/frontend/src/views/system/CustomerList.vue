@@ -25,7 +25,7 @@
         <el-table-column prop="phone" label="电话" width="120" />
         <el-table-column prop="address" label="地址" min-width="180" show-overflow-tooltip />
         <el-table-column prop="saler_name" label="业务经理" min-width="100" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

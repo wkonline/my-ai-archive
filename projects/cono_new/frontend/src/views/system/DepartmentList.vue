@@ -18,7 +18,7 @@
         <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
         <el-table-column prop="title" label="部门名称" min-width="140" />
         <el-table-column prop="description" label="部门描述" min-width="180" show-overflow-tooltip />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

@@ -72,7 +72,7 @@
         <el-table-column prop="phone" label="收货人联系电话" width="130" show-overflow-tooltip />
         <el-table-column prop="address" label="收货地址" min-width="160" show-overflow-tooltip />
         <el-table-column prop="delivery_man_name" label="发货人" min-width="95" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

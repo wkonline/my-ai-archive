@@ -101,6 +101,23 @@
   transform: translateY(-1px);
   box-shadow: 0 6px 22px rgba(0,120,224,0.30) !important;
 }
+/* link / text 按钮不带实心背景，避免被上面的 primary 样式套成实心按钮 */
+.el-button.is-link,
+.el-button.is-text {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  padding: 0 !important;
+  height: auto !important;
+  font-weight: 500 !important;
+}
+.el-button.is-link:hover,
+.el-button.is-text:hover {
+  background: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+  text-decoration: underline;
+}
 .el-button--default {
   background: var(--bg-surface) !important;
   border-color: var(--border) !important;

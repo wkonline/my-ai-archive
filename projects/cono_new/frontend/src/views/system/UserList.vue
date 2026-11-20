@@ -23,7 +23,7 @@
         <el-table-column prop="department_name" label="所属部门" min-width="115" />
         <el-table-column prop="role" label="角色" width="100" />
         <el-table-column prop="create_date" label="入职时间" width="105" align="center" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

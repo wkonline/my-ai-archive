@@ -38,7 +38,7 @@
         <el-table-column label="维修方法" min-width="200">
           <template #default="{ row }"><el-input v-model="row.repair_method" placeholder="填写维修方法" /></template>
         </el-table-column>
-        <el-table-column label="操作" width="100" align="center" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="100" align="center" fixed="right">
           <template #default="{ $index }">
             <el-button type="danger" size="small" link @click="removeBatchRow($index)">
               <el-icon><Delete /></el-icon> 删除

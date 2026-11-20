@@ -43,7 +43,7 @@
             <el-input-number v-model="row.quantity" :min="1" style="width:100%" />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" align="center">
+        <el-table-column label="操作" class-name="op-cell" width="100" align="center">
           <template #default="{ row, $index }">
             <el-button class="op-btn op-delete" size="small" @click="removeRow($index)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

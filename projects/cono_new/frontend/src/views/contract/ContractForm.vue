@@ -89,7 +89,7 @@
               <span class="amount-cell">¥{{ (row.amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="100" align="center">
+          <el-table-column label="操作" class-name="op-cell" width="100" align="center">
             <template #default="{ $index }">
               <el-button type="danger" link size="small" @click="removeProductRow($index)">
                 <el-icon><Delete /></el-icon>
