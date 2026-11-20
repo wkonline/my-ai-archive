@@ -51,9 +51,12 @@
         <template #header>
           <div class="group-head">
             <span class="group-number"><el-icon><List /></el-icon> {{ group.is_temp ? '临时计划' : group.contract_number }}</span>
-            <el-tag size="small" type="info">{{ group.rows.length }} 项产品</el-tag>
+            <el-tag size="small" type="info">{{ group.count }} 项产品</el-tag>
           </div>
         </template>
+        <div v-if="group.configuration" class="config-bar">
+          <strong>配置信息：</strong>{{ group.configuration }}
+        </div>
         <el-table :data="group.rows" stripe border size="small">
           <el-table-column prop="order_number" label="序号" width="55" align="center" />
           <el-table-column prop="productcategory" label="产品名称" min-width="120" />
@@ -113,10 +116,13 @@ const groups = computed(() => {
         contract_number: row.plan_number || '',
         customer: row.customer_name || '',
         is_temp: row.is_temp_plan,
-        rows: []
+        configuration: row.configuration || '',
+        rows: [],
+        count: 0
       })
     }
     g.get(key).rows.push(row)
+    g.get(key).count++
   }
   return [...g.values()]
 })
@@ -187,6 +193,8 @@ onMounted(() => {
 .stat-value { font-size: 24px; font-weight: 700; color: #0078e0; }
 .stat-label { font-size: 12px; color: #909399; margin-top: 4px; }
 .group-card { margin-bottom: 14px; }
+.config-bar { margin-bottom: 8px; padding: 8px 12px; border-radius: 4px; background: #f5f7fa; border-left: 3px solid #0078e0; font-size: 13px; color: #303133; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.config-bar strong { color: #1a2533; }
 .group-head { display: flex; align-items: center; justify-content: space-between; }
 .group-number { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; color: #1a2533; }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }

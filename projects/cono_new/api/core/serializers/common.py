@@ -327,6 +327,7 @@ class ProductionTaskSerializer(serializers.ModelSerializer):
     customer_name = serializers.SerializerMethodField()
     plan_quantity = serializers.SerializerMethodField()
     is_temp_plan = serializers.SerializerMethodField()
+    configuration = serializers.SerializerMethodField()
 
     class Meta:
         model = models.ProductionTask
@@ -351,6 +352,9 @@ class ProductionTaskSerializer(serializers.ModelSerializer):
 
     def get_is_temp_plan(self, obj):
         return obj.contract.is_temp_plan if obj.contract else False
+
+    def get_configuration(self, obj):
+        return obj.contract.configuration if obj.contract else ''
 
 
 class ContractFileSerializer(serializers.ModelSerializer):
