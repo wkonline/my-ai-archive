@@ -52,13 +52,13 @@
         />
         <el-table :data="previewRows" border size="small" max-height="400" style="font-size:12px">
           <el-table-column prop="row_no" label="行号" width="60" align="center" />
-          <el-table-column prop="contract_number" label="订单单号" min-width="120" show-overflow-tooltip />
-          <el-table-column prop="invoice_number" label="发票号码" min-width="120" show-overflow-tooltip />
-          <el-table-column prop="customer_name" label="购货单位" min-width="160" show-overflow-tooltip />
-          <el-table-column prop="amount" label="开票金额" width="100" align="right">
+          <el-table-column prop="contract_number" label="订单单号" min-width="130" show-overflow-tooltip />
+          <el-table-column prop="invoice_number" label="发票号码" min-width="130" show-overflow-tooltip />
+          <el-table-column prop="customer_name" label="购货单位" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="amount" label="开票金额" width="110" align="right">
             <template #default="{ row }">¥{{ Number(row.amount || 0).toLocaleString() }}</template>
           </el-table-column>
-          <el-table-column prop="date" label="开票日期" width="110" align="center" />
+          <el-table-column prop="date" label="开票日期" width="105" align="center" />
           <el-table-column label="状态" width="90" align="center">
             <template #default="{ row }">
               <el-tag v-if="row.errors.length === 0" type="success" size="small">正常</el-tag>
@@ -138,20 +138,20 @@
         <span class="card-title"><el-icon><List /></el-icon> 发票记录</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
+        <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
         <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
         <el-table-column label="合同号码" min-width="130" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button type="primary" link @click="openContract(row)">{{ row.contract_number }}</el-button>
           </template>
         </el-table-column>
-        <el-table-column label="开票金额" width="105" align="right">
+        <el-table-column label="开票金额" width="110" align="right">
           <template #default="{ row }"><span class="amount">¥{{ Number(row.amount || 0).toLocaleString() }}</span></template>
         </el-table-column>
-        <el-table-column prop="date" label="开票日期" width="100" align="center" />
-        <el-table-column prop="invoice_number" label="发票号" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="invoice_man_name" label="开票人" width="85" align="center" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column prop="date" label="开票日期" width="105" align="center" />
+        <el-table-column prop="invoice_number" label="发票号" min-width="130" show-overflow-tooltip />
+        <el-table-column prop="invoice_man_name" label="开票人" min-width="95" align="center" />
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

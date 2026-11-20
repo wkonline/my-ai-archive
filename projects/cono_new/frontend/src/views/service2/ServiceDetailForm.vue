@@ -26,19 +26,19 @@
       </el-form>
       <el-table :data="batchServices" stripe border size="small" v-loading="batchLoading">
         <el-table-column type="index" label="序号" width="60" align="center" />
-        <el-table-column prop="service_number" label="维修编号" width="140" />
-        <el-table-column prop="productcategory__name" label="产品名称" min-width="120" />
-        <el-table-column prop="product__model" label="产品型号" min-width="120" />
-        <el-table-column label="故障现象" min-width="160">
+        <el-table-column prop="service_number" label="维修编号" min-width="130" />
+        <el-table-column prop="productcategory__name" label="产品名称" min-width="140" />
+        <el-table-column prop="product__model" label="产品型号" min-width="130" />
+        <el-table-column label="故障现象" min-width="200">
           <template #default="{ row }"><el-input v-model="row.fault_text" placeholder="填写故障现象" /></template>
         </el-table-column>
-        <el-table-column label="故障原因" min-width="160">
+        <el-table-column label="故障原因" min-width="200">
           <template #default="{ row }"><el-input v-model="row.fault_reason" placeholder="填写故障原因" /></template>
         </el-table-column>
-        <el-table-column label="维修方法" min-width="160">
+        <el-table-column label="维修方法" min-width="200">
           <template #default="{ row }"><el-input v-model="row.repair_method" placeholder="填写维修方法" /></template>
         </el-table-column>
-        <el-table-column label="操作" width="80" align="center" fixed="right">
+        <el-table-column label="操作" width="100" align="center" fixed="right">
           <template #default="{ $index }">
             <el-button type="danger" size="small" link @click="removeBatchRow($index)">
               <el-icon><Delete /></el-icon> 删除

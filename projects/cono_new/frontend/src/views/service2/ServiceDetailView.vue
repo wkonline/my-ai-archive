@@ -75,15 +75,15 @@
           </div>
         </template>
         <el-table :data="[row]" stripe border size="small" style="table-layout:fixed;width:100%">
-          <el-table-column prop="order_number" label="序号" width="90" align="center" />
-          <el-table-column prop="customer_name" label="客户名称" min-width="120" show-overflow-tooltip />
-          <el-table-column prop="productcategory_name" label="产品名称" min-width="120" show-overflow-tooltip />
-          <el-table-column prop="product_model" label="产品型号" min-width="120" show-overflow-tooltip />
-          <el-table-column prop="product_number" label="电路板编号" min-width="110" show-overflow-tooltip />
-          <el-table-column prop="warranty_display" label="质保状态" width="90" align="center" />
-          <el-table-column prop="repairman_name" label="维修工程师" width="110" />
-          <el-table-column prop="service_date" label="接收时间" width="110" align="center" />
-          <el-table-column prop="repair_date" label="维修完成时间" width="110" align="center" />
+          <el-table-column prop="order_number" label="序号" width="60" align="center" />
+          <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="productcategory_name" label="产品名称" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="product_model" label="产品型号" min-width="130" show-overflow-tooltip />
+          <el-table-column prop="product_number" label="电路板编号" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="warranty_display" label="质保状态" width="95" align="center" />
+          <el-table-column prop="repairman_name" label="维修工程师" min-width="115" />
+          <el-table-column prop="service_date" label="接收时间" width="105" align="center" />
+          <el-table-column prop="repair_date" label="维修完成时间" width="120" align="center" />
         </el-table>
         <div class="detail-row"><span class="detail-label">故障现象</span><span class="detail-value">{{ row.fault_text }}</span></div>
         <div class="detail-row"><span class="detail-label">故障原因</span><span class="detail-value">{{ row.fault_reason }}</span></div>

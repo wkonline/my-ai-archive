@@ -16,20 +16,20 @@
         <span class="card-title"><el-icon><List /></el-icon> 产品铭牌列表</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
+        <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
         <el-table-column prop="productcategory_name" label="产品名称" min-width="140" />
-        <el-table-column prop="product_model" label="产品型号" min-width="140" />
-        <el-table-column prop="power" label="电源功率(kW)" width="100" align="center" />
-        <el-table-column prop="frequency" label="电源频率(kHz)" width="100" align="center" />
-        <el-table-column prop="sup_capacity" label="供电容量(kVA)" width="100" align="center" />
+        <el-table-column prop="product_model" label="产品型号" min-width="130" />
+        <el-table-column prop="power" label="电源功率(kW)" width="105" align="center" />
+        <el-table-column prop="frequency" label="电源频率(kHz)" width="105" align="center" />
+        <el-table-column prop="sup_capacity" label="供电容量(kVA)" width="105" align="center" />
         <el-table-column prop="sup_voltage" label="供电电压(V)" width="100" align="center" />
         <el-table-column prop="sup_frequency" label="供电频率(Hz)" width="100" align="center" />
         <el-table-column prop="sup_current" label="供电电流(A)" width="100" align="center" />
-        <el-table-column prop="max_in_temp" label="最高进水温度(°C)" width="100" align="center" />
-        <el-table-column prop="max_pressure" label="最大压力(MPa)" width="100" align="center" />
-        <el-table-column prop="min_flow" label="最小流量(L/min)" width="100" align="center" />
-        <el-table-column prop="min_pressure" label="最小压力(MPa)" width="100" align="center" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column prop="max_in_temp" label="最高进水温度(°C)" width="120" align="center" />
+        <el-table-column prop="max_pressure" label="最大压力(MPa)" width="105" align="center" />
+        <el-table-column prop="min_flow" label="最小流量(L/min)" width="115" align="center" />
+        <el-table-column prop="min_pressure" label="最小压力(MPa)" width="105" align="center" />
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

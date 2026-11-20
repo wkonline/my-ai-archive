@@ -91,46 +91,46 @@
 <!-- 列表 -->
     <el-card shadow="never">
       <el-table :data="list" stripe border v-loading="loading" @sort-change="onSortChange">
-        <el-table-column prop="order_number" label="序号" width="80" align="center" fixed />
-        <el-table-column prop="customer_name" label="客户名称" width="220" fixed show-overflow-tooltip />
-        <el-table-column prop="date" label="合同日期" width="110" sortable="custom" />
-        <el-table-column prop="contract_number" label="合同编号" width="140">
+        <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
+        <el-table-column prop="customer_name" label="客户名称" min-width="180" fixed show-overflow-tooltip />
+        <el-table-column prop="date" label="合同日期" width="105" sortable="custom" />
+        <el-table-column prop="contract_number" label="合同编号" min-width="155">
           <template #default="{ row }">
             <router-link :to="`/contract/${row.id}`" class="link-cell">{{ row.contract_number }}</router-link>
           </template>
         </el-table-column>
-        <el-table-column prop="total_price" label="合同金额" width="120" align="right">
+        <el-table-column prop="total_price" label="合同金额" width="115" align="right">
           <template #default="{ row }">
             <span class="price">¥{{ Number(row.total_price || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="回款金额" width="120" align="right">
+        <el-table-column label="回款金额" width="110" align="right">
           <template #default="{ row }">
             <span>¥{{ Number(row.total_collection || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="开票金额" width="120" align="right">
+        <el-table-column label="开票金额" width="110" align="right">
           <template #default="{ row }">
             <span>¥{{ Number(row.total_invoice || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="回款比例" width="110">
+        <el-table-column label="回款比例" width="100">
           <template #default="{ row }">
             <el-progress :percentage="row.payment_ratio || 0" :stroke-width="8" :status="row.payment_completed ? 'success' : ''" />
           </template>
         </el-table-column>
-        <el-table-column label="开票比例" width="110">
+        <el-table-column label="开票比例" width="100">
           <template #default="{ row }">
             <el-progress :percentage="row.invoice_ratio || 0" :stroke-width="8" :status="row.invoice_completed ? 'success' : ''" />
           </template>
         </el-table-column>
-        <el-table-column label="尾款" width="120" align="right">
+        <el-table-column label="尾款" width="110" align="right">
           <template #default="{ row }">
             <span style="color:#f56c6c;font-weight:600">¥{{ Number(row.outstanding_balance || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="saler_name" label="业务经理" width="100" show-overflow-tooltip />
-        <el-table-column label="操作" width="300" fixed="right">
+        <el-table-column prop="saler_name" label="业务经理" min-width="100" show-overflow-tooltip />
+        <el-table-column label="操作" width="250" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-detail" size="small" @click="openDetail(row)"><el-icon><View /></el-icon>&nbsp;详情</el-button>
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>

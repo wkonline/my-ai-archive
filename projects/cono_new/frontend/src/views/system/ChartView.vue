@@ -63,31 +63,31 @@
         <el-table-column label="序号" width="60" align="center">
           <template #default="{ row }">{{ row.seq }}</template>
         </el-table-column>
-        <el-table-column prop="contract_number" label="合同号" width="140">
+        <el-table-column prop="contract_number" label="合同号" min-width="135">
           <template #default="{ row }">
             <router-link :to="`/contract/${row.id}`" class="link-cell">{{ row.contract_number }}</router-link>
           </template>
         </el-table-column>
-        <el-table-column prop="date" label="合同日期" width="110" />
-        <el-table-column prop="customer_name" label="客户名称" width="220" show-overflow-tooltip />
-        <el-table-column prop="saler_name" label="业务员" width="100" />
-        <el-table-column label="合同金额" width="130" align="right">
+        <el-table-column prop="date" label="合同日期" width="105" />
+        <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="saler_name" label="业务员" min-width="100" />
+        <el-table-column label="合同金额" width="115" align="right">
           <template #default="{ row }">¥{{ Number(row.total_price).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
         </el-table-column>
-        <el-table-column label="已开票" width="130" align="right">
+        <el-table-column label="已开票" width="115" align="right">
           <template #default="{ row }">¥{{ Number(row.invoiced_amount).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
         </el-table-column>
-        <el-table-column label="已回款" width="130" align="right">
+        <el-table-column label="已回款" width="115" align="right">
           <template #default="{ row }">¥{{ Number(row.collected_amount).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
         </el-table-column>
-        <el-table-column label="应收余额" width="140" align="right">
+        <el-table-column label="应收余额" width="115" align="right">
           <template #default="{ row }">¥{{ Number(row.outstanding_balance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
         </el-table-column>
-        <el-table-column prop="last_invoice_date" label="最后开票日期" width="115" />
-        <el-table-column label="开票比例" width="130" align="center">
+        <el-table-column prop="last_invoice_date" label="最后开票日期" width="120" />
+        <el-table-column label="开票比例" width="100" align="center">
           <template #default="{ row }"><el-progress :percentage="Number(row.invoice_ratio) || 0" :stroke-width="8" /></template>
         </el-table-column>
-        <el-table-column label="回款比例" width="130" align="center">
+        <el-table-column label="回款比例" width="100" align="center">
           <template #default="{ row }"><el-progress :percentage="Number(row.collection_ratio) || 0" :stroke-width="8" /></template>
         </el-table-column>
       </el-table>
@@ -104,31 +104,31 @@
         <el-table-column label="序号" width="60" align="center">
           <template #default="{ row }">{{ row.seq }}</template>
         </el-table-column>
-        <el-table-column prop="contract_number" label="合同号" width="140">
+        <el-table-column prop="contract_number" label="合同号" min-width="135">
           <template #default="{ row }">
             <router-link :to="`/contract/${row.id}`" class="link-cell">{{ row.contract_number }}</router-link>
           </template>
         </el-table-column>
-        <el-table-column prop="date" label="合同日期" width="110" />
-        <el-table-column prop="customer_name" label="客户名称" width="220" show-overflow-tooltip />
-        <el-table-column prop="saler_name" label="业务员" width="100" />
-        <el-table-column label="合同金额" width="130" align="right">
+        <el-table-column prop="date" label="合同日期" width="105" />
+        <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="saler_name" label="业务员" min-width="100" />
+        <el-table-column label="合同金额" width="115" align="right">
           <template #default="{ row }">¥{{ Number(row.total_price).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
         </el-table-column>
-        <el-table-column label="已开票" width="130" align="right">
+        <el-table-column label="已开票" width="115" align="right">
           <template #default="{ row }">¥{{ Number(row.invoiced_amount).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
         </el-table-column>
-        <el-table-column label="已回款" width="130" align="right">
+        <el-table-column label="已回款" width="115" align="right">
           <template #default="{ row }">¥{{ Number(row.collected_amount).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
         </el-table-column>
-        <el-table-column label="应收余额" width="140" align="right">
+        <el-table-column label="应收余额" width="115" align="right">
           <template #default="{ row }">¥{{ Number(row.outstanding_balance).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}</template>
         </el-table-column>
-        <el-table-column prop="last_invoice_date" label="最后开票日期" width="115" />
-        <el-table-column label="开票比例" width="130" align="center">
+        <el-table-column prop="last_invoice_date" label="最后开票日期" width="120" />
+        <el-table-column label="开票比例" width="100" align="center">
           <template #default="{ row }"><el-progress :percentage="Number(row.invoice_ratio) || 0" :stroke-width="8" /></template>
         </el-table-column>
-        <el-table-column label="回款比例" width="130" align="center">
+        <el-table-column label="回款比例" width="100" align="center">
           <template #default="{ row }"><el-progress :percentage="Number(row.collection_ratio) || 0" :stroke-width="8" /></template>
         </el-table-column>
       </el-table>

@@ -65,8 +65,8 @@
           <el-icon><UserFilled /></el-icon><span>详细信息</span>
         </div>
         <el-table :data="detailRows" border size="small" class="detail-table" row-key="label">
-          <el-table-column prop="label" label="字段" width="130" align="center" />
-          <el-table-column prop="value" label="内容" show-overflow-tooltip />
+          <el-table-column prop="label" label="字段" min-width="120" align="center" />
+          <el-table-column prop="value" label="内容" min-width="200" show-overflow-tooltip />
         </el-table>
       </el-card>
 
@@ -81,10 +81,10 @@
           <el-table-column label="#" width="60" align="center">
             <template #default="{ $index }">{{ $index + 1 }}</template>
           </el-table-column>
-          <el-table-column label="操作时间" width="200">
+          <el-table-column label="操作时间" width="120">
             <template #default="{ row }">{{ formatTime(row.timestamp) }}</template>
           </el-table-column>
-          <el-table-column label="操作内容" show-overflow-tooltip>
+          <el-table-column label="操作内容" min-width="200" show-overflow-tooltip>
             <template #default="{ row }">{{ row.action || '-' }}</template>
           </el-table-column>
         </el-table>

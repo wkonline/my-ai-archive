@@ -55,14 +55,14 @@
           </div>
         </template>
         <el-table :data="group.rows" stripe border size="small">
-          <el-table-column prop="order_number" label="序号" width="55" align="center" />
-          <el-table-column prop="productcategory" label="产品名称" min-width="120" />
-          <el-table-column prop="product" label="产品型号" min-width="120" />
+          <el-table-column prop="order_number" label="序号" width="60" align="center" />
+          <el-table-column prop="productcategory" label="产品名称" min-width="140" />
+          <el-table-column prop="product" label="产品型号" min-width="130" />
           <el-table-column prop="plan_quantity" label="计划数量" width="80" align="center" />
           <el-table-column prop="quantity" label="下单数量" width="80" align="center" />
-          <el-table-column prop="date" label="下发日期" width="100" align="center" />
-          <el-table-column prop="production_man_name" label="负责人" width="90" />
-          <el-table-column label="操作" width="160" fixed="right">
+          <el-table-column prop="date" label="下发日期" width="105" align="center" />
+          <el-table-column prop="production_man_name" label="负责人" min-width="100" />
+          <el-table-column label="操作" width="150" fixed="right">
             <template #default="{ row }">
               <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
             </template>

@@ -46,18 +46,18 @@
         <span class="card-title"><el-icon><List /></el-icon> 售后返件列表</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
-        <el-table-column prop="customer_name" label="客户名称" min-width="160" show-overflow-tooltip fixed />
-        <el-table-column prop="productcategory_name" label="产品名称" min-width="110" show-overflow-tooltip />
-        <el-table-column prop="product_model" label="型号" min-width="110" show-overflow-tooltip />
-        <el-table-column prop="service_number" label="维修编号" min-width="120">
+        <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
+        <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip fixed />
+        <el-table-column prop="productcategory_name" label="产品名称" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="product_model" label="型号" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="service_number" label="维修编号" min-width="130">
           <template #default="{ row }">
             <el-link type="primary" :underline="false">{{ row.service_number }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="user_name" label="发货人" min-width="90" />
-        <el-table-column prop="date" label="发货时间" width="100" align="center" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column prop="user_name" label="发货人" min-width="95" />
+        <el-table-column prop="date" label="发货时间" width="105" align="center" />
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

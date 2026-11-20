@@ -16,42 +16,42 @@
         <span class="card-title"><el-icon><List /></el-icon> 项目文件管理</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
-        <el-table-column prop="plan_number" label="项目编号" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="productcategory_name" label="产品名称" min-width="110" />
-        <el-table-column prop="product_model" label="型号" min-width="110" />
+        <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
+        <el-table-column prop="plan_number" label="项目编号" min-width="155" show-overflow-tooltip />
+        <el-table-column prop="productcategory_name" label="产品名称" min-width="140" />
+        <el-table-column prop="product_model" label="型号" min-width="120" />
         <el-table-column prop="quantity" label="数量" width="70" align="center" />
-        <el-table-column label="电气图" width="90" align="center">
+        <el-table-column label="电气图" width="85" align="center">
           <template #default="{ row }">
             <el-link v-if="row.electrical_drawings" :href="fileUrl(row.electrical_drawings)" target="_blank" type="primary">点击下载</el-link>
             <span v-else style="color:#c0c4cc">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="说明书" width="90" align="center">
+        <el-table-column label="说明书" width="85" align="center">
           <template #default="{ row }">
             <el-link v-if="row.instruction" :href="fileUrl(row.instruction)" target="_blank" type="primary">点击下载</el-link>
             <span v-else style="color:#c0c4cc">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="其他文件" width="90" align="center">
+        <el-table-column label="其他文件" width="85" align="center">
           <template #default="{ row }">
             <el-link v-if="row.other_file" :href="fileUrl(row.other_file)" target="_blank" type="primary">点击下载</el-link>
             <span v-else style="color:#c0c4cc">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="机械图纸" width="90" align="center">
+        <el-table-column label="机械图纸" width="85" align="center">
           <template #default="{ row }">
             <el-link v-if="row.mechanical_drawings" :href="fileUrl(row.mechanical_drawings)" target="_blank" type="primary">点击下载</el-link>
             <span v-else style="color:#c0c4cc">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="装箱清单" width="90" align="center">
+        <el-table-column label="装箱清单" width="85" align="center">
           <template #default="{ row }">
             <el-link v-if="row.packing_list" :href="fileUrl(row.packing_list)" target="_blank" type="primary">点击下载</el-link>
             <span v-else style="color:#c0c4cc">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

@@ -75,24 +75,24 @@
         <span class="card-title"><el-icon><List /></el-icon> 产品明细</span>
       </template>
       <el-table :data="contractProducts" stripe border size="small">
-        <el-table-column type="index" label="#" width="55" align="center" />
+        <el-table-column type="index" label="#" width="60" align="center" />
         <el-table-column prop="category_name" label="产品名称" min-width="140" />
-        <el-table-column prop="product_model" label="产品型号" min-width="140" />
-        <el-table-column prop="contract_type" label="服务类型" width="100">
+        <el-table-column prop="product_model" label="产品型号" min-width="130" />
+        <el-table-column prop="contract_type" label="服务类型" width="95">
           <template #default="{ row }">
             <el-tag :type="row.contract_type === 'sale' ? 'success' : 'warning'" size="small">
               {{ row.contract_type === 'sale' ? '销售' : '维修' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="quantity" label="数量" width="80" align="center" />
-        <el-table-column label="单价" width="110" align="right">
+        <el-table-column prop="quantity" label="数量" width="70" align="center" />
+        <el-table-column label="单价" width="100" align="right">
           <template #default="{ row }">¥{{ Number(row.price).toLocaleString() }}</template>
         </el-table-column>
-        <el-table-column label="金额" width="120" align="right">
+        <el-table-column label="金额" width="110" align="right">
           <template #default="{ row }">¥{{ Number(row.total_price).toLocaleString() }}</template>
         </el-table-column>
-        <el-table-column prop="description" label="备注" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="description" label="备注" min-width="150" show-overflow-tooltip />
       </el-table>
       <div class="table-summary" v-if="contractProducts.length">
         <span>合计：{{ contractProducts.length }} 行</span>
@@ -109,14 +109,14 @@
         </div>
       </template>
       <el-table :data="invoices" stripe border size="small">
-        <el-table-column type="index" label="#" width="55" align="center" />
-        <el-table-column prop="date" label="日期" width="110" />
-        <el-table-column prop="customer_name" label="客户名称" min-width="140" />
+        <el-table-column type="index" label="#" width="60" align="center" />
+        <el-table-column prop="date" label="日期" width="100" />
+        <el-table-column prop="customer_name" label="客户名称" min-width="180" />
         <el-table-column prop="invoice_number" label="发票号码" min-width="130" />
-        <el-table-column label="开票金额" width="120" align="right">
+        <el-table-column label="开票金额" width="110" align="right">
           <template #default="{ row }"><strong>¥{{ Number(row.amount).toLocaleString() }}</strong></template>
         </el-table-column>
-        <el-table-column prop="invoice_man_name" label="开票人" width="110" />
+        <el-table-column prop="invoice_man_name" label="开票人" min-width="95" />
       </el-table>
       <div v-if="!invoices.length" class="empty-tip">暂无开票记录</div>
     </el-card>
@@ -130,13 +130,13 @@
         </div>
       </template>
       <el-table :data="collections" stripe border size="small">
-        <el-table-column type="index" label="#" width="55" align="center" />
-        <el-table-column prop="date" label="日期" width="110" />
-        <el-table-column prop="customer_name" label="客户名称" min-width="140" />
-        <el-table-column label="回款金额" width="120" align="right">
+        <el-table-column type="index" label="#" width="60" align="center" />
+        <el-table-column prop="date" label="日期" width="100" />
+        <el-table-column prop="customer_name" label="客户名称" min-width="180" />
+        <el-table-column label="回款金额" width="110" align="right">
           <template #default="{ row }"><strong>¥{{ Number(row.amount).toLocaleString() }}</strong></template>
         </el-table-column>
-        <el-table-column prop="collection_method_display" label="回款方式" width="110" />
+        <el-table-column prop="collection_method_display" label="回款方式" width="95" />
       </el-table>
       <div v-if="!collections.length" class="empty-tip">暂无回款记录</div>
     </el-card>
@@ -150,13 +150,13 @@
         </div>
       </template>
       <el-table :data="deliveries" stripe border size="small">
-        <el-table-column type="index" label="#" width="55" align="center" />
-        <el-table-column prop="contract_number" label="合同号" min-width="130" />
-        <el-table-column prop="date" label="发货日期" width="110" />
-        <el-table-column prop="productcategory" label="产品名称" min-width="130" />
+        <el-table-column type="index" label="#" width="60" align="center" />
+        <el-table-column prop="contract_number" label="合同号" min-width="135" />
+        <el-table-column prop="date" label="发货日期" width="105" />
+        <el-table-column prop="productcategory" label="产品名称" min-width="140" />
         <el-table-column prop="product" label="产品型号" min-width="130" />
-        <el-table-column prop="quantity" label="数量" width="80" align="center" />
-        <el-table-column prop="delivery_man_name" label="发货人" width="110" />
+        <el-table-column prop="quantity" label="数量" width="70" align="center" />
+        <el-table-column prop="delivery_man_name" label="发货人" min-width="95" />
       </el-table>
       <div v-if="!deliveries.length" class="empty-tip">暂无发货记录</div>
     </el-card>

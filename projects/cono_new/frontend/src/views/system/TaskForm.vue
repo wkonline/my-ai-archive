@@ -29,21 +29,21 @@
       <!-- 产品下单明细 -->
       <el-divider content-position="left"><el-icon><Goods /></el-icon> 产品下单明细</el-divider>
       <el-table :data="form.rows" border size="small" class="product-table">
-        <el-table-column label="产品名称" min-width="160">
+        <el-table-column label="产品名称" min-width="140">
           <template #default="{ row }"><el-input v-model="row.productcategory" readonly /></template>
         </el-table-column>
-        <el-table-column label="产品型号" min-width="160">
+        <el-table-column label="产品型号" min-width="130">
           <template #default="{ row }"><el-input v-model="row.product" readonly /></template>
         </el-table-column>
-        <el-table-column label="计划数量" width="120" align="center">
+        <el-table-column label="计划数量" width="80" align="center">
           <template #default="{ row }">{{ row.plan_quantity ?? '-' }}</template>
         </el-table-column>
-        <el-table-column label="下单数量" width="140">
+        <el-table-column label="下单数量" width="80">
           <template #default="{ row }">
             <el-input-number v-model="row.quantity" :min="1" style="width:100%" />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="80" align="center">
+        <el-table-column label="操作" width="100" align="center">
           <template #default="{ row, $index }">
             <el-button class="op-btn op-delete" size="small" @click="removeRow($index)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

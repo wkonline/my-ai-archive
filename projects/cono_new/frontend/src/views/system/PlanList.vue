@@ -58,8 +58,8 @@
           </div>
         </template>
         <el-table :data="group.rows" stripe border size="small" :span-method="spanMethod" :row-class-name="rowClassName">
-          <el-table-column prop="order_number" label="序号" width="55" align="center" />
-          <el-table-column prop="productcategory_name" label="产品名称" min-width="120">
+          <el-table-column prop="order_number" label="序号" width="60" align="center" />
+          <el-table-column prop="productcategory_name" label="产品名称" min-width="140">
             <template #default="{ row }">
               <template v-if="row._rowType === 'config'">
                 <strong>配置信息：</strong>{{ row.configuration || '无' }}
@@ -77,10 +77,10 @@
               <span v-else style="color:#67c23a">已完成</span>
             </template>
           </el-table-column>
-          <el-table-column prop="effective_date" label="生效日期" width="100" align="center" />
-          <el-table-column prop="delivery_date" label="交货日期" width="100" align="center" />
-          <el-table-column prop="production_man_name" label="制单人" width="90" />
-          <el-table-column label="操作" width="160" fixed="right">
+          <el-table-column prop="effective_date" label="生效日期" width="105" align="center" />
+          <el-table-column prop="delivery_date" label="交货日期" width="105" align="center" />
+          <el-table-column prop="production_man_name" label="制单人" min-width="100" />
+          <el-table-column label="操作" width="150" fixed="right">
             <template #default="{ row }">
               <template v-if="row._rowType === 'main'">
                 <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>

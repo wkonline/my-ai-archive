@@ -62,25 +62,25 @@
         <span class="card-title"><el-icon><List /></el-icon> 回款记录</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
-        <el-table-column prop="customer_name" label="客户名称" width="280" show-overflow-tooltip />
-        <el-table-column label="合同号码" width="120" show-overflow-tooltip>
+        <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
+        <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
+        <el-table-column label="合同号码" min-width="130" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button type="primary" link @click="openContract(row)">{{ row.contract_number }}</el-button>
           </template>
         </el-table-column>
-        <el-table-column label="合同金额" width="105" align="right">
+        <el-table-column label="合同金额" width="115" align="right">
           <template #default="{ row }">¥{{ Number(row.contract_total_price || 0).toLocaleString() }}</template>
         </el-table-column>
-        <el-table-column label="欠款余额" width="105" align="right">
+        <el-table-column label="欠款余额" width="110" align="right">
           <template #default="{ row }">
             <span :style="{ color: Number(row.contract_balance || 0) > 0 ? '#f56c6c' : '#67c23a' }">
               ¥{{ Number(row.contract_balance || 0).toLocaleString() }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="date" label="回款日期" width="100" align="center" />
-        <el-table-column label="回款金额" width="105" align="right">
+        <el-table-column prop="date" label="回款日期" width="105" align="center" />
+        <el-table-column label="回款金额" width="110" align="right">
           <template #default="{ row }">
             <span class="amount">¥{{ Number(row.amount || 0).toLocaleString() }}</span>
           </template>
@@ -90,14 +90,14 @@
             <el-progress :percentage="Math.round((Number(row.amount) / (Number(row.contract_total_price) || 1)) * 100)" :stroke-width="8" />
           </template>
         </el-table-column>
-        <el-table-column prop="collection_method_display" label="回款方式" width="85" align="center" />
-        <el-table-column label="总回款比例" width="100" align="center">
+        <el-table-column prop="collection_method_display" label="回款方式" width="95" align="center" />
+        <el-table-column label="总回款比例" width="110" align="center">
           <template #default="{ row }">
             <el-progress :percentage="row.collection_ratio || 0" :stroke-width="8" :status="row.collection_ratio >= 100 ? 'success' : ''" />
           </template>
         </el-table-column>
-        <el-table-column prop="saler_name" label="业务经理" width="85" show-overflow-tooltip />
-        <el-table-column label="操作" width="350" fixed="right">
+        <el-table-column prop="saler_name" label="业务经理" min-width="100" show-overflow-tooltip />
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

@@ -15,10 +15,10 @@
         <span class="card-title"><el-icon><List /></el-icon> 产品类别列表</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
+        <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
         <el-table-column prop="name" label="分类名称" min-width="140" />
         <el-table-column prop="description" label="描述" min-width="180" show-overflow-tooltip />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

@@ -15,13 +15,13 @@
         <span class="card-title"><el-icon><List /></el-icon> 账号密码</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="order_number" label="序号" width="55" align="center" fixed />
-        <el-table-column prop="category" label="分类" width="100" />
-        <el-table-column prop="name" label="平台名称" min-width="120" />
-        <el-table-column prop="url" label="网址" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="account" label="登录账号" min-width="120" />
-        <el-table-column prop="remark" label="备注" min-width="140" show-overflow-tooltip />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
+        <el-table-column prop="category" label="分类" min-width="110" />
+        <el-table-column prop="name" label="平台名称" min-width="130" />
+        <el-table-column prop="url" label="网址" min-width="170" show-overflow-tooltip />
+        <el-table-column prop="account" label="登录账号" min-width="130" />
+        <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>

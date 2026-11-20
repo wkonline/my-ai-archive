@@ -25,10 +25,10 @@
         </el-row>
       </el-form>
       <el-table :data="batchServices" stripe border size="small" v-loading="batchLoading">
-        <el-table-column prop="service_number" label="维修编号" width="160" />
+        <el-table-column prop="service_number" label="维修编号" min-width="130" />
         <el-table-column prop="productcategory__name" label="产品名称" min-width="140" />
-        <el-table-column prop="product__model" label="产品型号" min-width="140" />
-        <el-table-column label="操作" width="70" align="center">
+        <el-table-column prop="product__model" label="产品型号" min-width="130" />
+        <el-table-column label="操作" width="100" align="center">
           <template #default="{ $index }"><el-button type="danger" link size="small" @click="batchServices.splice($index,1)">删除</el-button></template>
         </el-table-column>
       </el-table>

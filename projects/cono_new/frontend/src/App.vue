@@ -1,5 +1,8 @@
 <template>
-  <router-view />
+  <!-- 全局表格配置：所有列默认不换行、超长省略并悬浮显示完整内容 -->
+  <el-config-provider :table="{ showOverflowTooltip: true }">
+    <router-view />
+  </el-config-provider>
 </template>
 
 <script setup>

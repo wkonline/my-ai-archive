@@ -49,24 +49,24 @@
         </div>
 
         <el-table :data="productRows" border size="small" class="product-table" empty-text="请点击「添加明细行」增加产品明细">
-          <el-table-column label="序号" width="55" align="center">
+          <el-table-column label="序号" width="60" align="center">
             <template #default="{ $index }">{{ $index + 1 }}</template>
           </el-table-column>
-          <el-table-column label="产品名称" min-width="160">
+          <el-table-column label="产品名称" min-width="140">
             <template #default="{ row }">
               <el-select v-model="row.category" placeholder="请选择产品名称" filterable @change="onCategoryChange(row)">
                 <el-option v-for="c in productCategories" :key="c.id" :label="c.name" :value="c.id" />
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="产品型号" min-width="180">
+          <el-table-column label="产品型号" min-width="130">
             <template #default="{ row }">
               <el-select v-model="row.product" placeholder="请选择产品型号" filterable :disabled="!row.category">
                 <el-option v-for="p in productsByCategory(row.category)" :key="p.id" :label="p.model" :value="p.id" />
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="服务类型" width="120">
+          <el-table-column label="服务类型" width="95">
             <template #default="{ row }">
               <el-select v-model="row.contract_type">
                 <el-option label="销售服务" value="sale" />
@@ -74,22 +74,22 @@
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="数量" width="90">
+          <el-table-column label="数量" width="70">
             <template #default="{ row }">
               <el-input-number v-model="row.quantity" :min="1" :controls="false" style="width:100%" @change="recalcRow(row)" />
             </template>
           </el-table-column>
-          <el-table-column label="单价" width="120">
+          <el-table-column label="单价" width="100">
             <template #default="{ row }">
               <el-input-number v-model="row.price" :min="0" :precision="2" :controls="false" style="width:100%" @change="recalcRow(row)" />
             </template>
           </el-table-column>
-          <el-table-column label="金额" width="130">
+          <el-table-column label="金额" width="110">
             <template #default="{ row }">
               <span class="amount-cell">¥{{ (row.amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="70" align="center">
+          <el-table-column label="操作" width="100" align="center">
             <template #default="{ $index }">
               <el-button type="danger" link size="small" @click="removeProductRow($index)">
                 <el-icon><Delete /></el-icon>
