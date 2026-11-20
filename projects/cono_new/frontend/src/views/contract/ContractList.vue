@@ -114,12 +114,12 @@
             <span>¥{{ Number(row.total_invoice || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="回款比例" width="100">
+        <el-table-column label="回款比例" width="100" :show-overflow-tooltip="false">
           <template #default="{ row }">
             <el-progress :percentage="row.payment_ratio || 0" :stroke-width="8" :status="row.payment_completed ? 'success' : ''" />
           </template>
         </el-table-column>
-        <el-table-column label="开票比例" width="100">
+        <el-table-column label="开票比例" width="100" :show-overflow-tooltip="false">
           <template #default="{ row }">
             <el-progress :percentage="row.invoice_ratio || 0" :stroke-width="8" :status="row.invoice_completed ? 'success' : ''" />
           </template>
@@ -130,7 +130,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="saler_name" label="业务经理" width="90" show-overflow-tooltip />
-        <el-table-column label="操作" class-name="op-cell" width="260" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="260" fixed="right" :show-overflow-tooltip="false">
           <template #default="{ row }">
             <el-button class="op-btn op-detail" size="small" @click="openDetail(row)"><el-icon><View /></el-icon>&nbsp;详情</el-button>
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
