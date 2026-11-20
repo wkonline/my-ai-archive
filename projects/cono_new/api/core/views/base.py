@@ -1,3 +1,4 @@
+from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -32,10 +33,22 @@ class BaseModelViewSet(ModelViewSet):
         return qs
 
     def destroy(self, request, *args, **kwargs):
-        """软删除：如果模型有 is_delete 字段则置 True，否则硬删除"""
+        """软删除：如果模型有 is_delete 字段则置 True，否则硬删除。
+
+        硬删除遇到外键保护（ProtectedError）时必须返回 400，不能让 Django 抛 500：
+        例如删除还有合同的客户、被产品引用的分类等。
+        """
         instance = self.get_object()
         if hasattr(instance, 'is_delete'):
             instance.is_delete = True
             instance.save(update_fields=['is_delete'])
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return super().destroy(request, *args, **kwargs)
+        try:
+            instance.delete()
+        except ProtectedError as e:
+            names = sorted({
+                str(obj._meta.verbose_name) for obj in e.protected_objects})
+            return Response(
+                {'detail': '该记录已被{}引用，无法删除。'.format('、'.join(names))},
+                status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -10,7 +10,11 @@ AUTO_PREFIX = 'auto'
 
 
 def backup_dir():
-    return os.path.join(settings.BASE_DIR, 'backups')
+    # 新版 API 的 BASE_DIR 是 api/，备份会落到仓库内；优先用 settings.BACKUP_DIR，
+    # 让网页备份、定时备份命令和 Nginx/卷挂载指向同一目录。老版无此配置，行为不变。
+    return (os.environ.get('DJANGO_BACKUP_DIR')
+            or getattr(settings, 'BACKUP_DIR', None)
+            or os.path.join(settings.BASE_DIR, 'backups'))
 
 
 def db_config():

@@ -64,7 +64,7 @@
           <div class="login-footer">
             <span class="footer-text">还没有账号？</span>
             <a class="footer-link" @click="switchToRegister">立即注册</a>
-            <a href="http://192.168.1.202:8000/" target="_blank" class="footer-link footer-back">← 返回老版系统</a>
+            <a :href="legacyAppUrl" target="_blank" class="footer-link footer-back">← 返回老版系统</a>
           </div>
         </template>
 
@@ -142,6 +142,7 @@ import { useUserStore } from '../../stores/user'
 import { User, Lock } from '@element-plus/icons-vue'
 import request from '../../api/request'
 import { hasValidToken } from '../../utils/token'
+import { legacyAppUrl } from '../../utils/legacyApp'
 
 const route = useRoute()
 const router = useRouter()

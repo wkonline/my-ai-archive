@@ -1,35 +1,27 @@
+# 老版系统（前后端不分离）· NAS 部署参考
+#
+# 数据库不在 NAS 上：老版与新版共用 192.168.1.201:3306 的 cono 库。
+# 早期版本曾在此文件里定义 cono_db 容器，误执行会起一个空库、看起来像"数据全没了"，
+# 已移除；MySQL 由 192.168.1.201 那台机器自行管理。
+#
+# 新版前后端分离系统见 deploy/docker-compose.new.yml，两边共用同一个数据库和 media 卷。
 services:
-  db:
-    image: docker.1ms.run/mysql:latest
-    container_name: cono_db
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ConoRoot2024
-      MYSQL_DATABASE: cono
-      MYSQL_USER: cono
-      MYSQL_PASSWORD: cono2024
-    volumes:
-      - /volume1/docker/cono_mysql:/var/lib/mysql
-    ports:
-      - "3306:3306"
-
   web:
     build: .
+    image: cono_web:latest
     container_name: cono_web
     restart: unless-stopped
     environment:
       DJANGO_SECRET_KEY: nas-cono-deploy-key-2026
       DJANGO_DEBUG: "false"
       DJANGO_ALLOWED_HOSTS: "192.168.1.202,localhost,127.0.0.1"
-      DJANGO_DB_HOST: db
+      DJANGO_DB_HOST: 192.168.1.201
       DJANGO_DB_PORT: "3306"
       DJANGO_DB_NAME: cono
       DJANGO_DB_USER: cono
       DJANGO_DB_PASSWORD: cono2024
     volumes:
       - /volume1/docker/cono_media:/app/media
+      - /volume1/docker/cono_backups:/app/backups
     ports:
       - "8000:8000"
-    depends_on:
-      - db
-

@@ -24,6 +24,24 @@ class UserSerializer(serializers.ModelSerializer):
             'phone': {'required': False, 'allow_blank': True},
         }
 
+    # 角色与密码属于提权敏感字段：只有管理员能通过 user_edit 修改。
+    # 老版 UserModelForm 根本不含 role/password 字段，这里保持一致，
+    # 否则任何拥有 user_edit 的账号都能把自己改成 admin 或重置管理员密码。
+    ADMIN_ONLY_FIELDS = ('role', 'password')
+
+    def _is_admin(self):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        return bool(user and getattr(user, 'role', '') == 'admin')
+
+    def validate(self, attrs):
+        if not self._is_admin():
+            illegal = [f for f in self.ADMIN_ONLY_FIELDS if f in attrs]
+            if illegal:
+                raise serializers.ValidationError(
+                    {f: '只有管理员可以修改该字段。' for f in illegal})
+        return attrs
+
     def create(self, validated_data):
         from django.conf import settings
         import hashlib
@@ -147,6 +165,35 @@ class CollectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Collection
         fields = '__all__'
+        # customer 一律由 contract 推导，前端不必传；也避免两者不一致。
+        extra_kwargs = {'customer': {'required': False}}
+
+    def validate_amount(self, value):
+        if value is None or value <= 0:
+            raise serializers.ValidationError('回款金额必须大于 0')
+        return value
+
+    def validate(self, attrs):
+        contract = attrs.get('contract') or getattr(self.instance, 'contract', None)
+        amount = attrs.get('amount')
+        if contract is None:
+            return attrs
+        # 客户必须与合同所属客户一致：业务员业绩、客户回款统计都按 collection.customer 汇总，
+        # 允许两者不同会让同一笔回款记到别的客户名下。
+        attrs['customer'] = contract.customer
+        if amount is None:
+            return attrs
+        # 编辑时先把本条原有金额从已收里扣掉，再判断是否超出合同总额
+        paid = models.Collection.objects.filter(
+            contract=contract, is_delete=False).aggregate(
+            total=models.Sum('amount'))['total'] or 0
+        if self.instance is not None:
+            paid -= self.instance.amount
+        if paid + amount > contract.total_price:
+            raise serializers.ValidationError(
+                '回款金额超出合同未收余额（可回款 %.2f 元）' % (
+                    contract.total_price - paid))
+        return attrs
 
     def get_contract_total_price(self, obj):
         return float(obj.contract.total_price or 0)
@@ -169,6 +216,41 @@ class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Invoice
         fields = '__all__'
+        # customer 由 contract 推导；invoice_man 由登录用户补全，
+        # 前端编辑表单不传这两个字段，否则每次修改都会因必填校验失败。
+        extra_kwargs = {
+            'customer': {'required': False},
+            'invoice_man': {'required': False},
+        }
+
+    def validate_amount(self, value):
+        if value is None or value <= 0:
+            raise serializers.ValidationError('开票金额必须大于 0')
+        return value
+
+    def validate(self, attrs):
+        contract = attrs.get('contract') or getattr(self.instance, 'contract', None)
+        amount = attrs.get('amount')
+        if contract is None:
+            return attrs
+        attrs['customer'] = contract.customer
+        if not attrs.get('invoice_man') and self.instance is None:
+            request = self.context.get('request')
+            user = getattr(request, 'user', None)
+            if user is not None and getattr(user, 'pk', None):
+                attrs['invoice_man'] = user
+        if amount is None:
+            return attrs
+        invoiced = models.Invoice.objects.filter(
+            contract=contract, is_delete=False).aggregate(
+            total=models.Sum('amount'))['total'] or 0
+        if self.instance is not None:
+            invoiced -= self.instance.amount
+        if invoiced + amount > contract.total_price:
+            raise serializers.ValidationError(
+                '开票金额超出合同总额（可开票 %.2f 元）' % (
+                    contract.total_price - invoiced))
+        return attrs
 
     def get_contract_total_price(self, obj):
         return float(obj.contract.total_price or 0)

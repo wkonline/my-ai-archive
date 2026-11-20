@@ -46,21 +46,21 @@ class ContractViewSet(BaseModelViewSet):
         status_filter = self.request.query_params.get('status')
         if status_filter in ('invoiced_debt', 'uninvoiced'):
             money_field = DecimalField(max_digits=10, decimal_places=2)
-            inv_sum = models.Invoice.objects.filter(contract=OuterRef('pk')).values('contract').annotate(
+            inv_sum = models.Invoice.objects.filter(contract=OuterRef('pk'), is_delete=False).values('contract').annotate(
                 total=Sum('amount')).values('total')
             qs = qs.annotate(
                 _inv_total=Coalesce(Subquery(inv_sum, output_field=money_field), Value(Decimal('0')), output_field=money_field),
             )
             if status_filter == 'invoiced_debt':
                 # 已开票（开票金额>0）但款未付清（回款金额<合同金额）
-                col_sum = models.Collection.objects.filter(contract=OuterRef('pk')).values('contract').annotate(
+                col_sum = models.Collection.objects.filter(contract=OuterRef('pk'), is_delete=False).values('contract').annotate(
                     total=Sum('amount')).values('total')
                 qs = qs.annotate(
                     _col_total=Coalesce(Subquery(col_sum, output_field=money_field), Value(Decimal('0')), output_field=money_field),
                 ).filter(_inv_total__gt=0, _col_total__lt=F('total_price'))
             else:
                 # 未开票且未付清：开票金额为0且回款金额<合同金额
-                col_sum = models.Collection.objects.filter(contract=OuterRef('pk')).values('contract').annotate(
+                col_sum = models.Collection.objects.filter(contract=OuterRef('pk'), is_delete=False).values('contract').annotate(
                     total=Sum('amount')).values('total')
                 qs = qs.annotate(
                     _col_total=Coalesce(Subquery(col_sum, output_field=money_field), Value(Decimal('0'), output_field=money_field), output_field=money_field),
@@ -83,9 +83,9 @@ class ContractViewSet(BaseModelViewSet):
     def ar(self, request):
         """应收应付：开票未付款 / 未开票未付款合同（参考老程序 chart_list，改用 Subquery 避免笛卡尔积）"""
         money = DecimalField(max_digits=10, decimal_places=2)
-        inv_sub = models.Invoice.objects.filter(contract=OuterRef('pk')).values('contract').annotate(
+        inv_sub = models.Invoice.objects.filter(contract=OuterRef('pk'), is_delete=False).values('contract').annotate(
             total=Sum('amount')).values('total')
-        col_sub = models.Collection.objects.filter(contract=OuterRef('pk')).values('contract').annotate(
+        col_sub = models.Collection.objects.filter(contract=OuterRef('pk'), is_delete=False).values('contract').annotate(
             total=Sum('amount')).values('total')
         base = (
             models.Contract.objects.filter(is_delete=False)
@@ -218,6 +218,8 @@ class ContractViewSet(BaseModelViewSet):
         exclude_id = request.query_params.get('exclude_id')
         if not contract_number:
             return Response({'exists': False, 'message': ''})
+        # 不排除 is_delete：contract_number 在库里是 unique，软删除的合同仍占号，
+        # 排除会让前端以为可用，保存时才撞 UNIQUE 冲突。
         qs = models.Contract.objects.filter(contract_number=contract_number)
         if exclude_id:
             qs = qs.exclude(id=exclude_id)
@@ -245,6 +247,46 @@ class ContractViewSet(BaseModelViewSet):
         saved = default_storage.save(path, f)
         return Response({'attachment': saved, 'name': f.name})
 
+    def _collect_product_rows(self, products, customer):
+        """校验并整理产品明细，返回 (rows, quantity, total_price)。
+
+        数量必须 >=1、单价必须 >=0：老版模型 quantity 带 MinValueValidator(1)，
+        这里绕过 ModelForm 直接建对象，必须自己校验，否则能存出 0/负数金额的合同。
+        """
+        valid_products = [p for p in products if p.get('category') and p.get('product')]
+        if not valid_products:
+            raise ValueError('请至少添加一条有效的产品明细')
+
+        rows = []
+        quantity = 0
+        total_price = Decimal('0.00')
+        for p in valid_products:
+            try:
+                qty = int(p.get('quantity') or 0)
+            except (TypeError, ValueError):
+                raise ValueError('产品数量必须是整数')
+            if qty < 1:
+                raise ValueError('产品数量必须大于 0')
+            try:
+                price = Decimal(str(p.get('price') or 0))
+            except (InvalidOperation, TypeError, ValueError):
+                raise ValueError('产品单价格式不正确')
+            if price < 0:
+                raise ValueError('产品单价不能为负数')
+            amount = (Decimal(qty) * price).quantize(Decimal('0.01'))
+            rows.append({
+                'category_id': int(p['category']),
+                'product_id': int(p['product']),
+                'contract_type': p.get('contract_type', 'sale'),
+                'quantity': qty,
+                'price': price,
+                'total_price': amount,
+                'description': p.get('description') or '',
+            })
+            quantity += qty
+            total_price += amount
+        return rows, quantity, total_price
+
     def create(self, request, *args, **kwargs):
         """新增合同：支持基础信息 + 产品明细，事务保存，自动计算数量/金额（与原版一致）"""
         data = request.data
@@ -253,16 +295,17 @@ class ContractViewSet(BaseModelViewSet):
         if not customer:
             return Response({'detail': '请先选择客户名称'}, status=status.HTTP_400_BAD_REQUEST)
 
-        products = data.get('products') or []
-        valid_products = [p for p in products if p.get('category') and p.get('product')]
-        if not valid_products:
-            return Response({'detail': '请至少添加一条有效的产品明细'}, status=status.HTTP_400_BAD_REQUEST)
-
         contract_number = (data.get('contract_number') or '').strip()
         if not contract_number:
             return Response({'detail': '请输入合同编号'}, status=status.HTTP_400_BAD_REQUEST)
         if models.Contract.objects.filter(contract_number=contract_number).exists():
             return Response({'detail': '合同编号已存在，请更换后重试。'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            rows, quantity, total_price = self._collect_product_rows(
+                data.get('products') or [], customer)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             with transaction.atomic():
@@ -281,41 +324,12 @@ class ContractViewSet(BaseModelViewSet):
                 elif data.get('attachment'):
                     contract.attachment = data.get('attachment')
 
-                contract.save()
-
-                quantity = 0
-                total_price = Decimal('0.00')
-                for p in valid_products:
-                    try:
-                        qty = int(p.get('quantity') or 0)
-                    except (TypeError, ValueError):
-                        qty = 0
-                    try:
-                        price = Decimal(str(p.get('price') or 0))
-                    except (InvalidOperation, TypeError, ValueError):
-                        price = Decimal('0.00')
-                    try:
-                        amount = (Decimal(qty) * price).quantize(Decimal('0.01'))
-                    except (InvalidOperation, TypeError, ValueError):
-                        amount = Decimal('0.00')
-                    cp = models.Contract_Product(
-                        contract=contract,
-                        customer=customer,
-                        category_id=int(p['category']),
-                        product_id=int(p['product']),
-                        contract_type=p.get('contract_type', 'sale'),
-                        quantity=qty,
-                        price=price,
-                        total_price=amount,
-                        description=p.get('description') or '',
-                    )
-                    cp.save()
-                    quantity += qty
-                    total_price += amount
-
                 contract.quantity = quantity
                 contract.total_price = total_price
                 contract.save()
+
+                for row in rows:
+                    models.Contract_Product(contract=contract, customer=customer, **row).save()
 
             serializer = self.get_serializer(contract)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -334,13 +348,32 @@ class ContractViewSet(BaseModelViewSet):
         contract_number = (data.get('contract_number') or '').strip()
         if not contract_number:
             return Response({'detail': '请输入合同编号'}, status=status.HTTP_400_BAD_REQUEST)
-        if models.Contract.objects.filter(contract_number=contract_number).exclude(id=instance.id).exists():
+        if models.Contract.objects.filter(
+                contract_number=contract_number).exclude(id=instance.id).exists():
             return Response({'detail': '合同编号已存在，请更换后重试。'}, status=status.HTTP_400_BAD_REQUEST)
 
-        products = data.get('products') or []
-        valid_products = [p for p in products if p.get('category') and p.get('product')]
-        if not valid_products:
-            return Response({'detail': '请至少添加一条有效的产品明细'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            rows, quantity, total_price = self._collect_product_rows(
+                data.get('products') or [], customer)
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 合同金额不能降到已回款/已开票金额之下，否则未收金额变负数、
+        # 百分比超过 100%，报表和对账都会错乱。
+        paid = models.Collection.objects.filter(
+            contract=instance, is_delete=False).aggregate(
+            total=Sum('amount'))['total'] or 0
+        if total_price < paid:
+            return Response(
+                {'detail': '合同金额不能低于已回款金额（已回款 %.2f 元）' % paid},
+                status=status.HTTP_400_BAD_REQUEST)
+        invoiced = models.Invoice.objects.filter(
+            contract=instance, is_delete=False).aggregate(
+            total=Sum('amount'))['total'] or 0
+        if total_price < invoiced:
+            return Response(
+                {'detail': '合同金额不能低于已开票金额（已开票 %.2f 元）' % invoiced},
+                status=status.HTTP_400_BAD_REQUEST)
 
         try:
             with transaction.atomic():
@@ -353,44 +386,19 @@ class ContractViewSet(BaseModelViewSet):
                     instance.attachment = attach_file
                 else:
                     instance.attachment = data.get('attachment') or ''
+                instance.quantity = quantity
+                instance.total_price = total_price
                 instance.save()
 
                 # 删除旧产品，重建
                 models.Contract_Product.objects.filter(contract=instance).delete()
+                for row in rows:
+                    models.Contract_Product(contract=instance, customer=customer, **row).save()
 
-                quantity = 0
-                total_price = Decimal('0.00')
-                for p in valid_products:
-                    try:
-                        qty = int(p.get('quantity') or 0)
-                    except (TypeError, ValueError):
-                        qty = 0
-                    try:
-                        price = Decimal(str(p.get('price') or 0))
-                    except (InvalidOperation, TypeError, ValueError):
-                        price = Decimal('0.00')
-                    try:
-                        amount = (Decimal(qty) * price).quantize(Decimal('0.01'))
-                    except (InvalidOperation, TypeError, ValueError):
-                        amount = Decimal('0.00')
-                    cp = models.Contract_Product(
-                        contract=instance,
-                        customer=customer,
-                        category_id=int(p['category']),
-                        product_id=int(p['product']),
-                        contract_type=p.get('contract_type', 'sale'),
-                        quantity=qty,
-                        price=price,
-                        total_price=amount,
-                        description=p.get('description') or '',
-                    )
-                    cp.save()
-                    quantity += qty
-                    total_price += amount
-
-                instance.quantity = quantity
-                instance.total_price = total_price
-                instance.save()
+                # 合同金额变化后，回款/开票完结状态必须重算，否则 1000 改成 5000
+                # 仍会显示"已付清"，应收报表也随之错误。
+                instance.update_payment_completed_status()
+                instance.update_invoice_completed_status()
 
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
@@ -1121,18 +1129,12 @@ class InvoiceViewSet(BaseModelViewSet):
             return Response({'detail': '请输入发票号码'}, status=status.HTTP_400_BAD_REQUEST)
         if not data.get('date'):
             return Response({'detail': '请选择开票日期'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user = request.user
-            instance = models.Invoice(
-                date=data.get('date'),
-                customer=contract.customer,
-                contract=contract,
-                invoice_number=invoice_number,
-                amount=Decimal(str(data.get('amount') or 0)),
-                invoice_man=user,
-            )
-            instance.save()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({'detail': '保存失败：{}'.format(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 走 serializer 才能复用金额校验（>0 且不超过合同总额），不能直接 instance.save()
+        payload = dict(data)
+        payload['customer'] = contract.customer_id
+        payload['invoice_man'] = request.user.pk
+        serializer = self.get_serializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

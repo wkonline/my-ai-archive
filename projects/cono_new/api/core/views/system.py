@@ -88,28 +88,33 @@ def _permission_labels():
 
 
 def _ensure_default_roles():
-    """确保内置角色（admin/saler/servicer/upkeeper/finance）在 auth_role 表中存在。"""
+    """确保内置角色（admin/saler/servicer/upkeeper/finance）在 auth_role 表中存在。
+
+    必须逐个 key 检查：早期版本用 `exists()` 做整体判断，只要表里还剩一个角色
+    就整体跳过，导致被删掉的其他内置角色再也不会补回来。
+    """
     from django.conf import settings
     from api.core.models import AuthRole
-    try:
-        if AuthRole.objects.filter(key__in=['admin','saler','servicer','upkeeper','finance']).exists():
-            return
-    except Exception:
-        return
     role_names = {
         'admin': '管理员', 'saler': '业务员', 'servicer': '客户经理',
         'upkeeper': '售后服务', 'finance': '财务经理',
     }
+    try:
+        existing = set(AuthRole.objects.values_list('key', flat=True))
+    except Exception:
+        return
+    missing = [k for k in role_names if k not in existing]
+    if not missing:
+        return
     cono_perm = getattr(settings, 'CONO_PERMISSION', {}) or {}
     cono_menu = getattr(settings, 'CONO_MENU', {}) or {}
-    for key in ['admin','saler','servicer','upkeeper','finance']:
-        if not AuthRole.objects.filter(key=key).exists():
-            AuthRole.objects.create(
-                key=key,
-                name=role_names.get(key, key),
-                permissions=sorted(set(cono_perm.get(key, []) or [])),
-                menus=cono_menu.get(key, []) or [],
-            )
+    for key in missing:
+        AuthRole.objects.create(
+            key=key,
+            name=role_names[key],
+            permissions=sorted(set(cono_perm.get(key, []) or [])),
+            menus=cono_menu.get(key, []) or [],
+        )
 
 
 class AuthRoleViewSet(BaseModelViewSet):

@@ -78,6 +78,11 @@ class LoginView(APIView):
         if not verify_captcha(captcha_key, captcha_code):
             return Response({'detail': '验证码错误'}, status=400)
 
+        # 空密码必须直接拒绝：Q(password='') 会匹配到密码为空的账号，
+        # 老版 LoginForm.clean_password 同样禁止空密码。
+        if not str(password).strip():
+            return Response({'detail': '用户名或密码错误'}, status=401)
+
         hashed = _hash_password(password)
         from django.db.models import Q
         user = User.objects.filter(username=username).filter(
