@@ -47,11 +47,11 @@
         <span class="card-title"><el-icon><List /></el-icon> 合同产品展示</span>
       </template>
       <el-table :data="list" stripe border v-loading="loading">
-        <el-table-column prop="contract_order_number" label="ID" width="70" align="center" fixed />
-        <el-table-column prop="customer_name" label="客户名称" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="category_name" label="产品名称" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="product_model" label="产品型号" min-width="130" show-overflow-tooltip />
-        <el-table-column label="服务类型" width="95" align="center">
+        <el-table-column prop="contract_order_number" label="ID" width="100" align="center" fixed />
+        <el-table-column prop="customer_name" label="客户名称" width="280" show-overflow-tooltip />
+        <el-table-column prop="category_name" label="产品名称" width="140" show-overflow-tooltip />
+        <el-table-column prop="product_model" label="产品型号" width="130" show-overflow-tooltip />
+        <el-table-column label="服务类型" width="110" align="center">
           <template #default="{ row }">
             <el-tag :type="row.contract_type === 'repair' ? 'warning' : 'success'" size="small">
               {{ row.contract_type_display }}
@@ -59,7 +59,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="quantity" label="数量" width="70" align="right" />
-        <el-table-column prop="price" label="单价" width="100" align="right">
+        <el-table-column prop="price" label="单价" width="110" align="right">
           <template #default="{ row }">¥{{ Number(row.price || 0).toLocaleString() }}</template>
         </el-table-column>
         <el-table-column prop="total_price" label="金额" width="110" align="right">
@@ -68,8 +68,8 @@
           </template>
         </el-table-column>
         <el-table-column prop="contract_date" label="合同日期" width="105" align="center" />
-        <el-table-column prop="contract_number" label="合同号" min-width="135" show-overflow-tooltip />
-        <el-table-column prop="description" label="备注" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="contract_number" label="合同号" width="150" show-overflow-tooltip />
+        <el-table-column prop="description" label="备注" show-overflow-tooltip />
       </el-table>
       <div class="pagination-row">
         <el-pagination
