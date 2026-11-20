@@ -112,7 +112,17 @@ ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER rm -f cono_api >/dev/null 2>&1 || 
 ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER exec cono_web_new nginx -t >/dev/null 2>&1 && sudo -n $DOCKER exec cono_web_new nginx -s reload >/dev/null 2>&1 && echo '    Nginx 已重载'"
 
 # 备份容器：每天 23:00 自动备份数据库，保留 60 天
-if ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER ps -a --format '{{.Names}}' | grep -qx cono_backup"; then
+# 必须走 api/manage.py（cono_api.settings 用 PyMySQL 充当 MySQLdb）；cono_api 镜像里
+# 没有 mysqlclient，跑根目录 manage.py（cono_new.settings）会直接 ImproperlyConfigured。
+# 早期部署创建的 cono_backup 用的是旧命令，会静默失败，这里检测到不一致就重建。
+BACKUP_CMD='python api/manage.py backup_database --if-due --retention-days 60'
+backup_cmd=$(ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER inspect -f '{{join .Config.Cmd \" \"}}' cono_backup 2>/dev/null" || true)
+if [ -n "$backup_cmd" ] && [[ "$backup_cmd" != *"api/manage.py"* ]]; then
+    echo "==> cono_backup 命令已过期，重建 ..."
+    ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER rm -f cono_backup >/dev/null 2>&1 || true"
+    backup_cmd=""
+fi
+if [ -n "$backup_cmd" ]; then
     echo "==> cono_backup 已存在"
 else
     echo "==> 创建定时备份容器 cono_backup ..."
@@ -121,7 +131,7 @@ else
         -e DJANGO_DB_HOST=192.168.1.201 -e DJANGO_DB_PORT=3306 \
         -v /volume1/docker/cono_app:/app \
         -v /volume1/docker/cono_backups:/app/backups \
-        cono_api:latest sh -c 'while true; do python manage.py backup_database --if-due --retention-days 60; sleep 300; done'"
+        cono_api:latest sh -c 'while true; do $BACKUP_CMD; sleep 300; done'"
 fi
 
 echo "==> 6/6 校验 ..."

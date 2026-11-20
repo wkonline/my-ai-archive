@@ -219,12 +219,14 @@ class Contract(ModelBase):
     # 返回合同编号
     def __str__(self):
         return str(self.contract_number)
-    # 计算合同已收金额
+    # 计算合同已收金额（软删除的回款不计入）
     def total_collection(self):
-        return self.collection_set.all().aggregate(models.Sum('amount'))['amount__sum'] or 0
-    # 合同已开发票金额
+        return self.collection_set.filter(is_delete=False).aggregate(
+            models.Sum('amount'))['amount__sum'] or 0
+    # 合同已开发票金额（软删除的发票不计入）
     def total_invoice(self):
-        return self.invoice_set.all().aggregate(models.Sum('amount'))['amount__sum'] or 0
+        return self.invoice_set.filter(is_delete=False).aggregate(
+            models.Sum('amount'))['amount__sum'] or 0
 
     # 合同回款百分比
     def collection_ratio(self):
@@ -243,18 +245,24 @@ class Contract(ModelBase):
         return self.total_price - self.total_collection()
     # 更新回款完结状态
     def update_payment_completed_status(self):
-        # 计算已付款金额
-        total_paid = Collection.objects.filter(contract=self).aggregate(models.Sum('amount'))['amount__sum'] or 0
-        # 更新完结状态
+        # 计算已付款金额（必须排除软删除的回款，否则删掉的回款仍然算已收）
+        total_paid = Collection.objects.filter(
+            contract=self, is_delete=False
+        ).aggregate(models.Sum('amount'))['amount__sum'] or 0
+        # 更新完结状态：用 update 避免再次触发 save 造成递归
         self.payment_completed = total_paid >= self.total_price
-        self.save()
+        Contract.objects.filter(pk=self.pk).update(
+            payment_completed=self.payment_completed)
     # 更新发票完结状态
     def update_invoice_completed_status(self):
-        # 计算已付款金额
-        total_paid = Invoice.objects.filter(contract=self).aggregate(models.Sum('amount'))['amount__sum'] or 0
+        # 计算已开票金额（排除软删除的发票）
+        total_paid = Invoice.objects.filter(
+            contract=self, is_delete=False
+        ).aggregate(models.Sum('amount'))['amount__sum'] or 0
         # 更新完结状态
         self.invoice_completed = total_paid >= self.total_price
-        self.save()
+        Contract.objects.filter(pk=self.pk).update(
+            invoice_completed=self.invoice_completed)
 
 #合同产品表
 class Contract_Product(models.Model):

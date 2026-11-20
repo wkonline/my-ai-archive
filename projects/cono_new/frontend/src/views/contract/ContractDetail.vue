@@ -218,8 +218,7 @@ const goEdit = () => router.push(`/contract/edit/${route.params.id}`)
 
 const openAttachment = (row) => {
   if (!row.attachment) return
-  // 通过老版站点（端口8000）直接打开附件，绕过新系统媒体卷挂载限制
-  window.open(`http://192.168.1.202:8000/media/${row.attachment}`, '_blank')
+  window.open(`/media/${row.attachment}`, '_blank')
 }
 
 onMounted(loadData)

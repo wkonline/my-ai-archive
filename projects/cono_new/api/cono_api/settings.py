@@ -109,7 +109,12 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# 必须与老版共用同一个 media 目录：老版 BASE_DIR 是仓库根，即 /app/media（NAS 上挂载
+# cono_media）。新版 BASE_DIR 是 api/，若用 BASE_DIR/media 会落到 /app/api/media，
+# Nginx 的 /media/ alias 指向 cono_media，上传的附件会 404。
+MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT') or os.path.join(PROJECT_ROOT, 'media')
+# 备份目录同样以仓库根为基准，与老版 cono/tools/db_backup.py 落在同一处。
+BACKUP_DIR = os.environ.get('DJANGO_BACKUP_DIR') or os.path.join(PROJECT_ROOT, 'backups')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -138,13 +143,19 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
+    'EXCEPTION_HANDLER': 'api.core.exceptions.cono_exception_handler',
 }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
+    # 不轮换 refresh token：轮换只有在能拉黑旧 token 时才有安全收益，
+    # 而 token_blacklist 应用的 OutstandingToken.user 指向 AUTH_USER_MODEL（auth.User），
+    # 本项目认证的是老库 cono.User，装了会直接让登录报 ValueError。
+    # 只轮换不拉黑反而有害：每次刷新都会 set_exp() 重置成 7 天，
+    # 让"记住登录一天"的用户无限续期。保持关闭，refresh token 到期即失效。
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
 }
 
 # CORS（本地 Vite dev 跨域）

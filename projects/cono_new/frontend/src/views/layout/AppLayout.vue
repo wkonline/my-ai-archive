@@ -64,6 +64,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
+import { legacyAppUrl } from '../../utils/legacyApp'
 import {
   HomeFilled, Document, Tools, Money, List, Calendar, Van, User, Files, Goods,
   Box, RefreshLeft, Postcard, Upload, OfficeBuilding, UserFilled, TrendCharts,
@@ -164,7 +165,7 @@ const initials = computed(() => {
   return name.charAt(0).toUpperCase()
 })
 
-const goLegacy = () => { window.location.href = 'http://192.168.1.202:8000/' }
+const goLegacy = () => { window.location.href = legacyAppUrl }
 const handleCommand = (cmd) => {
   if (cmd === 'logout') { userStore.logout(); router.push('/login') }
   else if (cmd === 'profile') { router.push('/user/me') }

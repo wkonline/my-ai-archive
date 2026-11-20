@@ -50,6 +50,7 @@ class HomeView(APIView):
             date__gte=quarter_start, date__lt=quarter_end,
         )
         month_invoices = models.Invoice.objects.filter(
+            is_delete=False,
             date__gte=month_start, date__lt=next_month,
         )
         month_deliveries = models.ProductDelivery.objects.filter(
@@ -68,7 +69,9 @@ class HomeView(APIView):
         recent_collections = models.Collection.objects.filter(
             is_delete=False,
         ).select_related('customer', 'contract').order_by('-date', '-id')[:6]
-        recent_invoices = models.Invoice.objects.select_related(
+        recent_invoices = models.Invoice.objects.filter(
+            is_delete=False,
+        ).select_related(
             'customer', 'contract',
         ).order_by('-date', '-id')[:6]
         upcoming_plans = models.Plan.objects.filter(
