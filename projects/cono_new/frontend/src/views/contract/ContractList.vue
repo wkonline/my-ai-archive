@@ -160,6 +160,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, PieChart, List, View, Edit, ArrowDown, ArrowUp, Goods, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'
 
@@ -310,16 +311,16 @@ const downloadAttachment = (row) => {
 
 const goContractProduct = () => router.push('/contract-product')
 
-const exportContracts = () => {
-  const params = new URLSearchParams()
+const exportContracts = async () => {
+  const params = {}
   if (searchRange.value?.length === 2) {
-    params.set('start_date', searchRange.value[0])
-    params.set('end_date', searchRange.value[1])
+    params.start_date = searchRange.value[0]
+    params.end_date = searchRange.value[1]
   }
-  if (searchStatus.value) params.set('status', searchStatus.value)
-  if (searchKeyword.value) params.set('keyword', searchKeyword.value)
-  const qs = params.toString()
-  window.open(`/api/contract/export/${qs ? '?' + qs : ''}`, '_blank')
+  if (searchStatus.value) params.status = searchStatus.value
+  if (searchKeyword.value) params.keyword = searchKeyword.value
+  if (sortField.value) params.order_by = sortField.value + (sortOrder.value === 'descending' ? '-' : '')
+  await download('/contract/export/', params, 'contract_data.xlsx')
 }
 
 onMounted(() => { fetchList(); fetchStats(); fetchCharts() })

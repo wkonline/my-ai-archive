@@ -72,7 +72,11 @@ request.interceptors.request.use(config => {
 })
 
 request.interceptors.response.use(
-  response => response.data,
+  response => {
+    // 下载类请求需要读取 content-disposition 头，返回完整响应
+    if (response.config?.rawResponse) return response
+    return response.data
+  },
   async error => {
     const status = error.response?.status
     const detail = error.response?.data?.detail || '请求失败'

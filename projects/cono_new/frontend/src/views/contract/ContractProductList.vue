@@ -90,6 +90,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Upload, Download, Back, Search, List } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 
 const router = useRouter()
 
@@ -130,8 +131,12 @@ const onSearch = () => {
 }
 
 const goContractList = () => router.push('/contract')
-const exportData = () => window.open('/api/contract-product/export/', '_blank')
-const downloadTemplate = () => window.open('/api/contract-product/template/', '_blank')
+const exportData = () => {
+  const params = {}
+  if (keyword.value) params.keyword = keyword.value
+  return download('/contract-product/export/', params, 'contract_product_data.xlsx')
+}
+const downloadTemplate = () => download('/contract-product/template/', {}, 'contract_product_list.xlsx')
 
 const onUploadSuccess = (res) => {
   ElMessage.success(res?.detail || '上传成功')

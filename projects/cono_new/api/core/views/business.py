@@ -70,6 +70,54 @@ class ContractViewSet(BaseModelViewSet):
                 ).filter(_inv_total=0, _col_total__lt=F('total_price'))
         return qs.order_by('-id')
 
+    @action(detail=False, methods=['get'], url_path='export')
+    def export(self, request):
+        """合同列表数据导出 Excel，筛选条件与列表一致。
+
+        列顺序对齐前端表格，金额类字段取模型方法（已排除软删除的
+        回款/发票），保证导出与界面显示一致。
+        """
+        import pandas as pd
+        from io import BytesIO
+        from django.http import HttpResponse
+        qs = self.get_queryset()
+        order_by = request.query_params.get('order_by')
+        # 只接受列表页可排序的字段，避免非法字段让 order_by 抛 500
+        allowed_sort = {'date', '-date', 'id', '-id'}
+        if order_by in allowed_sort:
+            qs = qs.order_by(order_by)
+        data = []
+        for c in qs:
+            total_price = c.total_price or 0
+            collected = c.total_collection()
+            invoiced = c.total_invoice()
+            data.append({
+                '序号': c.order_number,
+                '客户名称': c.customer.company_name if c.customer else '',
+                '合同日期': c.date,
+                '合同编号': c.contract_number,
+                '合同金额': total_price,
+                '回款金额': collected,
+                '开票金额': invoiced,
+                '回款比例': '{:.2f}%'.format(collected / total_price * 100 if total_price else 0),
+                '开票比例': '{:.2f}%'.format(invoiced / total_price * 100 if total_price else 0),
+                '尾款': total_price - collected,
+                '业务经理': (c.customer.saler.username if c.customer and c.customer.saler else ''),
+            })
+        columns = ['序号', '客户名称', '合同日期', '合同编号', '合同金额', '回款金额',
+                   '开票金额', '回款比例', '开票比例', '尾款', '业务经理']
+        # 无数据时 pandas 推断不出列名，显式给 columns 才能导出只有表头的表
+        df = pd.DataFrame(data, columns=columns)
+        output = BytesIO()
+        df.to_excel(output, index=False, engine='openpyxl')
+        output.seek(0)
+        response = HttpResponse(
+            output.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = "contract_data_{}.xlsx".format(datetime.datetime.now().strftime("%Y%m%d%H%M"))
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+        return response
+
     @action(detail=False, methods=['get'])
     def stats(self, request):
         qs = self.get_queryset()
@@ -499,28 +547,31 @@ class ContractProductViewSet(BaseModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='export')
     def export(self, request):
-        """合同产品数据导出 Excel（与原版 contract_product_download_excel 一致）"""
+        """合同产品数据导出 Excel，列与「合同产品展示」列表一致。"""
         import pandas as pd
         from io import BytesIO
         from django.http import HttpResponse
         qs = self.get_queryset()
         data = []
         for cp in qs:
+            contract = cp.contract
             data.append({
-                '合同序号': cp.contract.order_number,
-                '客户名称': cp.contract.customer.company_name,
-                '产品名称': cp.category.name,
-                '产品型号': cp.product.model,
+                '合同序号': contract.order_number,
+                '客户名称': contract.customer.company_name if contract.customer else '',
+                '产品名称': cp.category.name if cp.category else '',
+                '产品型号': cp.product.model if cp.product else '',
                 '服务类型': cp.get_contract_type_display(),
                 '数量': cp.quantity,
                 '单价': cp.price,
                 '金额': cp.total_price,
-                '已开发票': cp.contract.total_invoice(),
-                '已收款': cp.contract.total_collection(),
-                '日期': cp.contract.date,
-                '合同号': cp.contract.contract_number,
+                '合同日期': contract.date,
+                '合同号': contract.contract_number,
+                '备注': cp.description or '',
             })
-        df = pd.DataFrame(data)
+        columns = ['合同序号', '客户名称', '产品名称', '产品型号', '服务类型',
+                   '数量', '单价', '金额', '合同日期', '合同号', '备注']
+        # 无数据时 pandas 推断不出列名，显式给 columns 才能导出只有表头的表
+        df = pd.DataFrame(data, columns=columns)
         output = BytesIO()
         df.to_excel(output, index=False, engine='openpyxl')
         output.seek(0)
