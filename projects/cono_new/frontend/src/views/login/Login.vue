@@ -334,7 +334,7 @@ const handleRegister = async () => {
 .tech-select :deep(.el-select__wrapper) {
   background: var(--navy-50) !important;
   box-shadow: 0 0 0 1px var(--border) inset !important;
-  border-radius: 10px !important;
+  border-radius: var(--radius-md) !important;
   min-height: 44px !important;
 }
 .tech-select :deep(.el-select__wrapper.is-focused) {
@@ -345,7 +345,7 @@ const handleRegister = async () => {
 .login-btn {
   width: 100%; margin-top: 8px; height: 46px;
   background: linear-gradient(135deg, var(--navy-500), var(--navy-700)) !important;
-  border: none !important; border-radius: 10px !important;
+  border: none !important; border-radius: var(--radius-md) !important;
   font-size: 15px; font-weight: 600; letter-spacing: 6px;
   box-shadow: 0 4px 20px rgba(0,120,224,0.3) !important;
   transition: all .25s;

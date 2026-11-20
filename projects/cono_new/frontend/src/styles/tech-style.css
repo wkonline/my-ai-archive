@@ -45,10 +45,10 @@
   --info:    #0078e0;
 
   /* ── 圆角 ── */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
 
   /* ── 阴影：浅而通透，避免脏灰 ── */
   --shadow-xs: 0 1px 2px rgba(15,40,70,0.04);
@@ -82,7 +82,7 @@ html, body, #app {
   --el-font-size-large: 15px;
   --el-font-size-medium: 13px;
   --el-color-primary: #0078e0;
-  --el-border-radius-base: 8px;
+  --el-border-radius-base: 6px;
 }
 
 /* ── 页面标题 ── */
@@ -238,7 +238,6 @@ html, body, #app {
   transition: all var(--dur) var(--ease);
 }
 .op-btn .el-icon { font-size: 12px !important; }
-.op-btn + .op-btn { margin-left: 5px; }
 
 /* 操作列：全局 showOverflowTooltip 会给单元格加 overflow:hidden，
    按钮的边框/阴影会被裁掉，这里单独放开 */
@@ -246,8 +245,12 @@ html, body, #app {
   overflow: visible;
   text-overflow: clip;
   white-space: nowrap;
+  /* 用 gap 控制按钮间距：.el-button 的 margin 会被上面的规则重置 */
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.el-table .op-cell .cell .el-button { margin: 1px 0; }
+.el-table .op-cell .cell .el-button { margin: 0; }
 
 /* 表格内的文字链接（如合同编号）：纯文字，不带按钮外观 */
 .link-text {
@@ -321,7 +324,7 @@ html, body, #app {
   .op-btn { padding: 6px 8px !important; }
   .op-btn .el-icon { font-size: 14px !important; }
   .op-btn span, .op-btn .el-button__text { display: none !important; }
-  .op-btn + .op-btn { margin-left: 2px !important; }
+  .el-table .op-cell .cell { gap: 6px; }
 
   .el-table-fixed-column--right { width: 64px !important; min-width: 64px !important; }
   .el-table-fixed-column--left { width: 40px !important; min-width: 40px !important; }

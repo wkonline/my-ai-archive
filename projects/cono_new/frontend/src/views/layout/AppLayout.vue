@@ -219,7 +219,7 @@ const handleCommand = (cmd) => {
   height: 36px;
   border: none;
   background: rgba(255,255,255,0.08);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: #ffffff;
   cursor: pointer;
   margin-right: 6px;
@@ -281,7 +281,7 @@ const handleCommand = (cmd) => {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 2px;
-  border-radius: 999px !important;
+  border-radius: var(--radius-md) !important;
   padding: 6px 16px !important;
   height: auto !important;
   box-shadow: 0 0 18px rgba(0,120,224,0.45) !important;
@@ -301,7 +301,7 @@ const handleCommand = (cmd) => {
   cursor: pointer;
   color: #ffffff;
   padding: 4px 8px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: background .2s;
 }
 .user-info:hover { background: rgba(255,255,255,0.08); }
@@ -414,7 +414,7 @@ const handleCommand = (cmd) => {
     height: 36px;
     border: none;
     background: rgba(255,255,255,0.08);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: #ffffff;
     cursor: pointer;
     margin-right: 6px;
