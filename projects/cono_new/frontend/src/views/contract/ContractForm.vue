@@ -107,13 +107,14 @@
         <el-form-item label="附件" style="margin-top:14px">
           <div class="attachment-area">
             <el-upload
+              v-loading="uploading"
               class="upload-dragger"
-              :action="`/api/contract/upload/${form.id || ''}/`"
-              :headers="uploadHeaders"
+              :action="uploadAction"
+              :http-request="uploadFile"
               :on-success="onUploadSuccess"
-              :on-remove="onUploadRemove"
-              :file-list="fileList"
-              :limit="1"
+              :on-error="onUploadError"
+              :before-upload="beforeUpload"
+              :show-file-list="false"
               drag
             >
               <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
@@ -228,21 +229,32 @@ const loadProductsByCategory = async (categoryId) => {
   } catch { categoryProducts.value[categoryId] = [] }
 }
 
-const uploadHeaders = computed(() => {
-  const storage = localStorage.getItem('access_token') ? localStorage : sessionStorage
-  const token = storage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-})
-const fileList = ref([])
+// action 走 el-upload 的默认 ajax，需要完整路径；http-request 走 axios，baseURL 已是 /api
+const uploadAction = '/api/contract/upload/'
+const uploadEndpoint = '/contract/upload/'
+const uploading = ref(false)
+const uploadedSize = ref(0)
 
 const attachmentName = computed(() => {
   if (!form.attachment) return ''
-  return form.attachment.split('/').pop()
+  return form.attachment.split(/[\\/]/).pop()
 })
-const attachmentSize = computed(() => {
-  const f = fileList.value.find(i => i.name === attachmentName.value)
-  return f?.size ? (f.size / 1024).toFixed(1) + ' KB' : ''
-})
+const attachmentSize = computed(() =>
+  uploadedSize.value ? (uploadedSize.value / 1024).toFixed(1) + ' KB' : ''
+)
+
+const beforeUpload = (file) => {
+  uploadedSize.value = file.size
+  uploading.value = true
+  return true
+}
+
+// 走 axios 而不是 el-upload 自带的 action：复用统一拦截器，access token 过期时能静默刷新后重放
+const uploadFile = ({ file }) => {
+  const fd = new FormData()
+  fd.append('file', file)
+  return request.post(uploadEndpoint, fd)
+}
 
 const defaultContractNumber = () => {
   const d = new Date()
@@ -269,7 +281,7 @@ const loadData = async () => {
         contract_number: row.contract_number, remark: row.remark || '',
         attachment: row.attachment || '', quantity: row.quantity, total_price: row.total_price
       })
-      fileList.value = row.attachment ? [{ name: row.attachment.split('/').pop(), url: `/media/${row.attachment}` }] : []
+      uploadedSize.value = 0
       try {
         const data = await request.get(`/contract-product/?contract=${row.id}&page_size=200`)
         const items = (data.results || data || []).map(p => ({
@@ -341,15 +353,18 @@ const handleSave = async () => {
   })
 }
 
-const onUploadSuccess = (response, file) => {
-  form.attachment = response?.attachment || file.name
-  fileList.value = [{ name: file.name, url: `/media/${form.attachment}`, size: file.size }]
-  ElMessage.success('上传成功')
+const onUploadSuccess = (response) => {
+  uploading.value = false
+  form.attachment = response?.attachment || ''
+  if (form.attachment) ElMessage.success('附件上传成功')
 }
-const onUploadRemove = () => { form.attachment = '' }
+// 错误提示由 request.js 响应拦截器统一弹出，这里只重置状态
+const onUploadError = () => {
+  uploading.value = false
+}
 const removeAttachment = () => {
   form.attachment = ''
-  fileList.value = []
+  uploadedSize.value = 0
 }
 
 const goBack = () => router.push('/contract')

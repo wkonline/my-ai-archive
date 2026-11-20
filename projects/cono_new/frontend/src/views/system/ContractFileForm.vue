@@ -18,9 +18,8 @@
           <div class="file-upload-wrap">
             <el-upload
               :action="uploadUrl"
-              :headers="uploadHeaders"
+              :http-request="(opts) => uploadFile(opts, f.field)"
               :show-file-list="false"
-              :data="{ contract: form.contract, field: f.field }"
               :on-success="(resp) => onUpload(resp, f.field)"
               :on-error="onUploadError"
               drag
@@ -67,17 +66,42 @@ const fileFields = [
 ]
 const form = reactive({ id: null, contract: null, electrical_drawings: '', instruction: '', other_file: '', mechanical_drawings: '', packing_list: '' })
 
-const authStorage = localStorage.getItem('access_token') ? localStorage : sessionStorage
-const uploadHeaders = { Authorization: `Bearer ${authStorage.getItem('access_token') || ''}` }
+// action 走 el-upload 默认 ajax 需要完整路径；http-request 走 axios，baseURL 已是 /api
 const uploadUrl = '/api/contract-file/upload/'
+const uploadEndpoint = '/contract-file/upload/'
 
-const fileUrl = (f) => (f && f.startsWith('/media/')) ? f : (f ? `/media/${f}` : '')
-const fileName = (f) => f ? f.split('/').pop().split('\\').pop() : ''
-
-const onUpload = (resp, field) => {
-  if (resp && resp.url) form[field] = resp.url.replace(/^\/media\//, '')
+// 走 axios 而非 el-upload 自带 ajax：复用统一拦截器，access token 过期时可静默刷新后重放
+const uploadFile = ({ file }, field) => {
+  if (!form.contract) { ElMessage.warning('请先选择项目编号'); return Promise.reject(new Error('no contract')) }
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('contract', String(form.contract))
+  fd.append('field', field)
+  return request.post(uploadEndpoint, fd)
 }
-const onUploadError = () => ElMessage.error('文件上传失败')
+
+// 后端 FileField 序列化后是绝对 URL（http://host/media/xxx），统一取 path 部分
+const toRelative = (v) => {
+  if (!v) return ''
+  return v.replace(/^https?:\/\/[^/]+/, '').replace(/^\/media\//, '').replace(/^\/+/, '')
+}
+const fileUrl = (f) => (f ? `/media/${toRelative(f)}` : '')
+const fileName = (f) => (f ? toRelative(f).split('/').pop() : '')
+
+// 后端 upload 返回的是 ContractFile 序列化结果，没有 url 字段，要按 field 取对应字段。
+// upload 会按 contract 自动建记录，记下 id 让保存走 PATCH，避免再 POST 出一条空记录。
+const onUpload = (resp, field) => {
+  const value = resp && resp[field]
+  if (value) {
+    if (resp.id) form.id = resp.id
+    form[field] = toRelative(value)
+    ElMessage.success('上传成功')
+  } else {
+    ElMessage.error('上传失败：返回数据异常')
+  }
+}
+// 错误提示由 request.js 响应拦截器统一弹出
+const onUploadError = () => {}
 const removeFile = (field) => { form[field] = '' }
 
 const loadData = async () => {
@@ -89,11 +113,11 @@ const loadData = async () => {
     const data = await request.get(`/contract-file/${route.params.id}/`)
     Object.assign(form, {
       id: data.id, contract: data.contract || null,
-      electrical_drawings: data.electrical_drawings || '',
-      instruction: data.instruction || '',
-      other_file: data.other_file || '',
-      mechanical_drawings: data.mechanical_drawings || '',
-      packing_list: data.packing_list || '',
+      electrical_drawings: toRelative(data.electrical_drawings),
+      instruction: toRelative(data.instruction),
+      other_file: toRelative(data.other_file),
+      mechanical_drawings: toRelative(data.mechanical_drawings),
+      packing_list: toRelative(data.packing_list),
     })
   } catch {}
 }
@@ -102,8 +126,13 @@ const handleSave = async () => {
   if (!form.contract) { ElMessage.warning('请选择项目编号'); return }
   saving.value = true
   try {
-    const payload = { ...form }
-    if (form.id) await request.put(`/contract-file/${form.id}/`, payload)
+    // 文件本身由 upload 接口直接落库，这里只同步项目编号和"删除"操作。
+    // FileField 不接受字符串，清空必须传 null，保留则省略该字段。
+    const payload = { contract: form.contract }
+    for (const f of fileFields) {
+      if (!form[f.field]) payload[f.field] = null
+    }
+    if (form.id) await request.patch(`/contract-file/${form.id}/`, payload)
     else await request.post('/contract-file/', payload)
     ElMessage.success('保存成功')
     router.push('/contract-file')

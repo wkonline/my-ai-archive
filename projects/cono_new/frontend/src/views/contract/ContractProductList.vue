@@ -8,7 +8,7 @@
       <div class="upload-row">
         <el-upload
           :action="uploadAction"
-          :headers="uploadHeaders"
+          :http-request="uploadFile"
           :show-file-list="false"
           :on-success="onUploadSuccess"
           :on-error="onUploadError"
@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Upload, Download, Back, Search, List } from '@element-plus/icons-vue'
@@ -100,12 +100,16 @@ const page_size = ref(50)
 const loading = ref(false)
 const keyword = ref('')
 
-const uploadAction = computed(() => '/api/contract-product/import/')
-const uploadHeaders = computed(() => {
-  const storage = localStorage.getItem('access_token') ? localStorage : sessionStorage
-  const token = storage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-})
+// action 走 el-upload 默认 ajax 需要完整路径；http-request 走 axios，baseURL 已是 /api
+const uploadAction = '/api/contract-product/import/'
+const uploadEndpoint = '/contract-product/import/'
+
+// 走 axios 而非 el-upload 自带 ajax：复用统一拦截器，access token 过期时可静默刷新后重放
+const uploadFile = ({ file }) => {
+  const fd = new FormData()
+  fd.append('file', file)
+  return request.post(uploadEndpoint, fd)
+}
 
 const fetchList = async () => {
   loading.value = true
@@ -133,9 +137,8 @@ const onUploadSuccess = (res) => {
   ElMessage.success(res?.detail || '上传成功')
   fetchList()
 }
-const onUploadError = () => {
-  ElMessage.error('上传失败，请检查文件格式')
-}
+// 错误提示由 request.js 响应拦截器统一弹出
+const onUploadError = () => {}
 
 onMounted(fetchList)
 </script>
