@@ -1,6 +1,9 @@
 """核心业务模块：合同/回款/发票"""
 import datetime
+import json
+import os
 from decimal import Decimal, InvalidOperation
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, Sum, Max, OuterRef, Subquery, Value, F
 from django.db.models import DecimalField
@@ -230,10 +233,13 @@ class ContractViewSet(BaseModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='upload')
     def upload(self, request):
-        """合同附件上传（与原版一致：保存到 media/contract/<年份>/）"""
+        """合同附件上传（与原版一致：保存到 media/contract/<年份>/）
+
+        这里只能按原文件名先落盘：新增合同时序号还没分配，无法生成
+        正式文件名。保存合同时由 _rename_attachment 改成
+        <序号>-<合同号>-<客户名称>.<扩展名>。
+        """
         from django.core.files.storage import default_storage
-        from django.conf import settings
-        import os
         f = request.FILES.get('file')
         if not f:
             return Response({'detail': '请选择文件'}, status=status.HTTP_400_BAD_REQUEST)
@@ -247,12 +253,65 @@ class ContractViewSet(BaseModelViewSet):
         saved = default_storage.save(path, f)
         return Response({'attachment': saved, 'name': f.name})
 
+    @staticmethod
+    def _parse_date(value, default):
+        """把请求里的日期字符串转成 date。
+
+        FileField 的 upload_to 会读 instance.date.year，字符串会在 save()
+        时直接抛 AttributeError，所以必须在建对象前转换。
+        """
+        if isinstance(value, datetime.date):
+            return value
+        if value:
+            try:
+                return datetime.datetime.strptime(str(value)[:10], '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        return default
+
+    @staticmethod
+    def _rename_attachment(contract):
+        """把附件改成 <序号>-<合同号>-<客户名称>.<扩展名>。
+
+        走上传接口的附件是按原文件名存的，只有序号确定后才能定名，
+        所以放在保存之后执行。重名时追加序号，避免覆盖已有附件。
+        """
+        if not contract.attachment:
+            return
+        storage = contract.attachment.storage
+        current = contract.attachment.name
+        # 文件不在磁盘上（老数据换了存储、或已被手工移走）时不能改名，
+        # 否则数据库指向一个不存在的路径，下载直接 404。
+        if not storage.exists(current):
+            return
+        ext = os.path.splitext(current)[1]
+        target = models.contract_attachment_path(contract, 'f' + ext)
+        if target == current:
+            return
+        base, suffix = os.path.splitext(target)
+        index = 1
+        while storage.exists(target):
+            target = '{}_{}{}'.format(base, index, suffix)
+            index += 1
+        with storage.open(current, 'rb') as src:
+            saved = storage.save(target, src)
+        storage.delete(current)
+        contract.attachment.name = saved
+
     def _collect_product_rows(self, products, customer):
         """校验并整理产品明细，返回 (rows, quantity, total_price)。
 
         数量必须 >=1、单价必须 >=0：老版模型 quantity 带 MinValueValidator(1)，
         这里绕过 ModelForm 直接建对象，必须自己校验，否则能存出 0/负数金额的合同。
         """
+        if isinstance(products, str):
+            # multipart 表单把 products 传成了 JSON 字符串，解析后再校验。
+            try:
+                products = json.loads(products)
+            except ValueError:
+                raise ValueError('产品明细格式错误')
+        if not isinstance(products, list):
+            raise ValueError('产品明细格式错误')
         valid_products = [p for p in products if p.get('category') and p.get('product')]
         if not valid_products:
             raise ValueError('请至少添加一条有效的产品明细')
@@ -312,21 +371,26 @@ class ContractViewSet(BaseModelViewSet):
                 order_number = (models.Contract.objects.aggregate(
                     last_number=Max('order_number'))['last_number'] or 0) + 1
                 attach_file = request.FILES.get('attachment')
+                attach_path = data.get('attachment') or ''
                 contract = models.Contract(
                     order_number=order_number,
-                    date=data.get('date') or datetime.date.today(),
+                    date=self._parse_date(data.get('date'), datetime.date.today()),
                     customer=customer,
                     contract_number=contract_number,
                     remark=data.get('remark') or '',
                 )
                 if attach_file:
                     contract.attachment = attach_file
-                elif data.get('attachment'):
-                    contract.attachment = data.get('attachment')
+                elif attach_path:
+                    contract.attachment = attach_path
 
                 contract.quantity = quantity
                 contract.total_price = total_price
                 contract.save()
+
+                if attach_path and not attach_file:
+                    self._rename_attachment(contract)
+                    contract.save(update_fields=['attachment'])
 
                 for row in rows:
                     models.Contract_Product(contract=contract, customer=customer, **row).save()
@@ -377,7 +441,7 @@ class ContractViewSet(BaseModelViewSet):
 
         try:
             with transaction.atomic():
-                instance.date = data.get('date') or instance.date
+                instance.date = self._parse_date(data.get('date'), instance.date)
                 instance.customer = customer
                 instance.contract_number = contract_number
                 instance.remark = data.get('remark') or ''
@@ -389,6 +453,10 @@ class ContractViewSet(BaseModelViewSet):
                 instance.quantity = quantity
                 instance.total_price = total_price
                 instance.save()
+
+                if not attach_file and instance.attachment:
+                    self._rename_attachment(instance)
+                    instance.save(update_fields=['attachment'])
 
                 # 删除旧产品，重建
                 models.Contract_Product.objects.filter(contract=instance).delete()
