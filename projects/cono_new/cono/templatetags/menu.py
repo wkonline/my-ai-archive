@@ -38,6 +38,11 @@ def menu_icon(title):
     return MENU_ICONS.get(title, 'glyphicon-th-large')
 
 
+# 售后流转只在新版前端提供，老系统没有对应路由；
+# CONO_MENU 两版共用，这里过滤掉，避免老系统渲染出 404 死链接。
+LEGACY_HIDDEN_MENUS = {'售后流转'}
+
+
 @register.inclusion_tag("menu.html")
 def cono_menu(request):
     # 获取当前用户角色
@@ -48,6 +53,10 @@ def cono_menu(request):
         user_menu_list = copy.deepcopy(get_effective_menus(user))
     else:
         user_menu_list = copy.deepcopy(settings.CONO_MENU.get(role, []))
+    user_menu_list = [
+        row for row in user_menu_list
+        if row.get('title') not in LEGACY_HIDDEN_MENUS
+    ]
     for row in user_menu_list:
         if request.path_info.startswith(row['url']):
             row['class'] = 'active'

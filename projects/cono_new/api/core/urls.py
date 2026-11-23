@@ -16,6 +16,9 @@ from api.core.views.business import (
 from api.core.views.service import (
     ServiceViewSet, ServiceDetailViewSet, ReturnProductViewSet,
 )
+from api.core.views.flow import (
+    ProductArchiveViewSet, FlowOutViewSet, FlowReturnViewSet,
+)
 from api.core.views.production import (
     PlanViewSet, ProductionTaskViewSet,
     ContractFileViewSet, ProductLabelViewSet, ProductDeliveryViewSet,
@@ -39,6 +42,9 @@ router.register('invoice', InvoiceViewSet)
 router.register('service', ServiceViewSet)
 router.register('servicedetail', ServiceDetailViewSet)
 router.register('return-product', ReturnProductViewSet)
+router.register('flow-archive', ProductArchiveViewSet)
+router.register('flow-out', FlowOutViewSet)
+router.register('flow-return', FlowReturnViewSet)
 router.register('plan', PlanViewSet)
 router.register('task', ProductionTaskViewSet)
 router.register('contract-file', ContractFileViewSet)

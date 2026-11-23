@@ -106,7 +106,7 @@ function buildMenuGroups() {
   const map = {
     '合同管理':'销售合同','回款登记':'销售合同','发票登记':'销售合同','应收应付':'销售合同',
     '生产计划':'生产交付','派任务单':'生产交付','资料上传':'生产交付','产品铭牌':'生产交付','发货信息':'生产交付',
-    '售后服务':'售后服务','维修服务':'售后服务','售后返件':'售后服务',
+    '售后服务':'售后服务','维修服务':'售后服务','售后返件':'售后服务','售后流转':'售后服务',
     '仓库管理':'基础资料','部门管理':'基础资料','用户管理':'基础资料','客户管理':'基础资料','产品分类':'基础资料','产品管理':'基础资料',
     '数据备份':'系统管理','操作日志':'系统管理','公司信息':'系统管理','账号密码':'系统管理','权限管理':'系统管理',
   }
@@ -140,6 +140,7 @@ function buildPermGroups() {
     ['发货信息', c => c.startsWith('delivery')],
     ['任务单', c => c.startsWith('task_')],
     ['售后返件', c => c.startsWith('return_product') || c.startsWith('get_return_product')],
+    ['售后流转', c => c.startsWith('flow_archive_') || c.startsWith('flow_out_') || c.startsWith('flow_return_')],
     ['账号密码', c => c.startsWith('account_vault')],
     ['图表', c => c.startsWith('chart') || c === 'highcharts' || c === 'chart_list'],
     ['管理员', c => c.startsWith('admin_')],

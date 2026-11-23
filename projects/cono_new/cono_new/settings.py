@@ -177,6 +177,7 @@ CONO_MENU = {
         {"title":"售后服务","url":"/service/" },
         {"title":"维修服务","url":"/servicedetail/" },
         {"title":"售后返件","url":"/return_product/" },
+        {"title":"售后流转","url":"/flow/archive/" },
         {"title":"应收应付","url":"/chart/" },
         {"title":"数据备份","url":"/database/backup/" },
         {"title":"操作日志","url":"/log/" },
@@ -234,6 +235,7 @@ CONO_MENU = {
         {"title":"售后服务","url":"/service/" },
         {"title":"维修服务","url":"/servicedetail/" },
         {"title":"售后返件","url":"/return_product/" },
+        {"title":"售后流转","url":"/flow/archive/" },
         {"title": "公司信息", "url": "/company/"},
     ],
     "finance":[
@@ -302,6 +304,10 @@ CONO_PERMISSION = {
         #售后维修返件
         'return_product_list','return_product_add','return_product_batch_add','return_product_edit','return_product_delete','return_product_download_excel',
         'get_return_product_services','get_return_product_model','get_productcategory_product',
+        #售后流转
+        'flow_archive_list','flow_archive_add','flow_archive_edit','flow_archive_stock','flow_archive_download_excel',
+        'flow_out_list','flow_out_add','flow_out_edit','flow_out_delete','flow_out_download_excel',
+        'flow_return_list','flow_return_add','flow_return_edit','flow_return_delete','flow_return_download_excel',
         #任务单
         'task_list','task_add','task_edit','task_delete',
         #数据库备份以及还原
@@ -381,6 +387,10 @@ CONO_PERMISSION = {
         #售后维修返件
         'return_product_list','return_product_download_excel',
         'get_return_product_services','get_return_product_model','get_productcategory_product',
+        #售后流转
+        'flow_archive_list','flow_archive_add','flow_archive_edit','flow_archive_stock','flow_archive_download_excel',
+        'flow_out_list','flow_out_add','flow_out_edit','flow_out_delete','flow_out_download_excel',
+        'flow_return_list','flow_return_add','flow_return_edit','flow_return_delete','flow_return_download_excel',
         #任务单
         'task_list',
         # #数据库备份以及还原

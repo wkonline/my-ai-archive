@@ -402,8 +402,8 @@ class Service(ModelBase):
     product = models.ForeignKey(verbose_name="产品型号", to="Product", on_delete=models.PROTECT)
     #维修编号
     service_number = models.CharField(verbose_name="维修编号", max_length=20)
-    #产品编号
-    product_number = models.CharField(verbose_name="产品编号", max_length=20, blank=True, null=True)
+    #产品编号（与售后流转的产品档案序列号是同一个号，长度对齐 ProductArchive.serial_number）
+    product_number = models.CharField(verbose_name="产品编号", max_length=64, blank=True, null=True)
     WARRANTY_CHOICES = (
         (1, "质保外"),
         (2, "质保内"),
@@ -726,3 +726,143 @@ class AccountVault(ModelBase):
 
     def __str__(self):
         return self.name
+
+
+# ===== 售后流转（实物台账） ====#
+class ProductArchive(ModelBase):
+    """ 售后流转 - 产品档案
+
+    与售后服务（Service）的区别：Service 是工单视角（修了什么），
+    产品档案是实物视角（这块板现在在哪、经谁手）。两者用序列号关联。
+    档案不提供删除，只能停用：删了会断掉流转历史。
+    """
+    # 产品名称
+    productcategory = models.ForeignKey(verbose_name="产品名称", to="ProductCategory", on_delete=models.PROTECT)
+    # 产品型号
+    product = models.ForeignKey(verbose_name="产品型号", to="Product", on_delete=models.PROTECT)
+    # 产品序列号，手动输入，全局唯一
+    serial_number = models.CharField(verbose_name="产品序列号", max_length=64, unique=True)
+    # 经手人
+    handler = models.ForeignKey(verbose_name="经手人", to="User", on_delete=models.PROTECT)
+    # 入库日期
+    stock_date = models.DateField(verbose_name="入库日期")
+    STATUS_CHOICES = (
+        (1, "公司库存"),
+        (2, "客户试用中"),
+        (3, "维修中"),
+    )
+    status = models.IntegerField(verbose_name="当前状态", choices=STATUS_CHOICES, default=1)
+    LOCATION_CHOICES = (
+        (1, "公司"),
+        (2, "客户"),
+    )
+    location_type = models.IntegerField(verbose_name="所在位置类型", choices=LOCATION_CHOICES, default=1)
+    # 在客户处时的客户
+    customer = models.ForeignKey(verbose_name="客户", to="Customer", on_delete=models.PROTECT,
+                                 blank=True, null=True)
+    # 换板后旧档案置 True（前端置灰），并指向新档案
+    is_superseded = models.BooleanField(verbose_name="已被换板接替", default=False)
+    superseded_by = models.ForeignKey(verbose_name="接替档案", to="self", on_delete=models.SET_NULL,
+                                      blank=True, null=True, related_name="superseded_from")
+    # 停用标记（代替删除）
+    is_active = models.BooleanField(verbose_name="启用", default=True)
+
+    class Meta:
+        db_table = 'product_archive'
+        ordering = ['-id']
+
+    def __str__(self):
+        return self.serial_number
+
+
+class FlowOut(ModelBase):
+    """ 售后流转 - 寄给客户登记 """
+    # 流转编号 CN2026LZ112301，应用层校验唯一
+    flow_number = models.CharField(verbose_name="流转编号", max_length=32, db_index=True)
+    archive = models.ForeignKey(verbose_name="产品档案", to="ProductArchive", on_delete=models.PROTECT)
+    customer = models.ForeignKey(verbose_name="客户名称", to="Customer", on_delete=models.PROTECT)
+    # 地址、联系人、电话均为快照：客户档案后续改动不影响历史单据
+    customer_address = models.CharField(verbose_name="客户地址", max_length=128, blank=True, null=True)
+    contact_name = models.CharField(verbose_name="联系人", max_length=32, blank=True, null=True)
+    contact_phone = models.CharField(verbose_name="联系电话", max_length=32, blank=True, null=True)
+    ship_date = models.DateField(verbose_name="寄出日期")
+    express_company = models.CharField(verbose_name="快递公司", max_length=64, blank=True, null=True)
+    express_number = models.CharField(verbose_name="快递单号", max_length=64, blank=True, null=True)
+    expected_return_date = models.DateField(verbose_name="预计返回日期", blank=True, null=True)
+    STATUS_CHOICES = (
+        (1, "在客户处"),
+        (2, "已返回"),
+    )
+    status = models.IntegerField(verbose_name="流转状态", choices=STATUS_CHOICES, default=1)
+
+    class Meta:
+        db_table = 'flow_out'
+        ordering = ['-id']
+
+    def __str__(self):
+        return self.flow_number
+
+
+class FlowReturn(ModelBase):
+    """ 售后流转 - 客户返回登记 """
+    flow_out = models.OneToOneField(verbose_name="流转编号", to="FlowOut", on_delete=models.PROTECT)
+    # 返回那一刻的快照
+    snapshot_serial = models.CharField(verbose_name="序列号快照", max_length=64)
+    snapshot_model = models.CharField(verbose_name="型号快照", max_length=64, blank=True, null=True)
+    actual_return_date = models.DateField(verbose_name="实际返回日期")
+    is_board_swapped = models.BooleanField(verbose_name="是否换板", default=False)
+    new_archive = models.ForeignKey(verbose_name="换板后新档案", to="ProductArchive", on_delete=models.PROTECT,
+                                    blank=True, null=True, related_name="swapped_from_returns")
+    # 与「是否送修」对应：返回后这块板去哪
+    RESULT_CHOICES = (
+        (1, "公司库存"),
+        (2, "维修中"),
+    )
+    result_status = models.IntegerField(verbose_name="返回后状态", choices=RESULT_CHOICES, default=1)
+
+    class Meta:
+        db_table = 'flow_return'
+        ordering = ['-id']
+
+    def __str__(self):
+        return str(self.flow_out.flow_number if self.flow_out else '')
+
+
+class SerialTransition(ModelBase):
+    """ 售后流转 - 序列号转换记录 """
+    old_archive = models.ForeignKey(verbose_name="旧档案", to="ProductArchive", on_delete=models.PROTECT,
+                                    related_name="transitions_out")
+    new_archive = models.ForeignKey(verbose_name="新档案", to="ProductArchive", on_delete=models.PROTECT,
+                                    related_name="transitions_in")
+    old_serial = models.CharField(verbose_name="旧序列号", max_length=64)
+    new_serial = models.CharField(verbose_name="新序列号", max_length=64)
+    flow_return = models.ForeignKey(verbose_name="返回登记", to="FlowReturn", on_delete=models.PROTECT,
+                                    blank=True, null=True)
+    operator = models.ForeignKey(verbose_name="操作人", to="User", on_delete=models.PROTECT)
+    date = models.DateField(verbose_name="转换日期")
+
+    class Meta:
+        db_table = 'serial_transition'
+        ordering = ['-id']
+
+    def __str__(self):
+        return '{} -> {}'.format(self.old_serial, self.new_serial)
+
+
+class FlowStatusLog(ModelBase):
+    """ 售后流转 - 状态变更日志
+
+    现有售后体系的状态变更没有审计，出争议查不到人；所有流转状态变更都写一条。
+    """
+    archive = models.ForeignKey(verbose_name="产品档案", to="ProductArchive", on_delete=models.PROTECT,
+                                related_name="status_logs")
+    from_status = models.IntegerField(verbose_name="原状态", blank=True, null=True)
+    to_status = models.IntegerField(verbose_name="新状态")
+    operator = models.ForeignKey(verbose_name="操作人", to="User", on_delete=models.PROTECT)
+    date = models.DateField(verbose_name="变更日期")
+    remark = models.CharField(verbose_name="备注", max_length=128, blank=True, null=True)
+
+    class Meta:
+        db_table = 'flow_status_log'
+        ordering = ['-id']
+

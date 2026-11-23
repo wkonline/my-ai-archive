@@ -8,4 +8,5 @@ from cono.models import (
     Collection, Invoice, Service, ServiceDetail, ReturnProduct,
     Plan, ProductionTask, ContractFile, ProductLabel, ProductDelivery,
     MyCompany, Admin, UserLog, AuthRole, AuthUserProfile, TEMP_CONTRACT_NUMBER,
+    ProductArchive, FlowOut, FlowReturn, SerialTransition, FlowStatusLog,
 )
