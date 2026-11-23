@@ -92,9 +92,33 @@
         </el-radio-group>
 
         <el-alert
+          v-if="form.result_status === 2"
+          class="foot-note"
+          type="success" :closable="false" show-icon
+          :title="'保存后会自动生成一条售后服务单：客户「' + (currentFlow?.customer_name || '') +
+                  '」，产品「' + (currentFlow?.productcategory_name || '') +
+                  '」，型号「' + (currentFlow?.product_model || '') +
+                  '」，电路板编号「' + serviceBoardSerial + '」，备注注明从售后流转过来。'"
+        >
+          <template #default>
+            <div class="svc-preview">
+              <span>客户：{{ currentFlow?.customer_name || '—' }}</span>
+              <span>产品名称：{{ currentFlow?.productcategory_name || '—' }}</span>
+              <span>产品型号：{{ currentFlow?.product_model || '—' }}</span>
+              <span>电路板编号：{{ serviceBoardSerial || '—' }}</span>
+              <span>备注：从售后流转过来</span>
+            </div>
+            <div class="svc-tip">
+              维修完成后在「售后返件」登记返件，产品档案会自动标记为维修完成并回到公司库存。
+            </div>
+          </template>
+        </el-alert>
+
+        <el-alert
+          v-else
           class="foot-note"
           type="info" :closable="false" show-icon
-          title="维修完成后，在「产品档案」列表点「维修完成」即可回到公司库存。"
+          title="选择「直接回公司库存」则不会生成售后服务单，档案保存后即可再次寄出。"
         />
       </el-form>
 
@@ -139,6 +163,10 @@ const newProducts = computed(() => {
   if (!form.new_productcategory) return allProducts.value
   return allProducts.value.filter(p => p.productcategory === form.new_productcategory)
 })
+
+// 送修时售后服务单上的电路板编号：换板取新板，不换板取原板
+const serviceBoardSerial = computed(() =>
+  form.is_board_swapped ? (form.new_serial_number || '').trim() : (currentFlow.value?.serial_number || ''))
 
 const searchPending = async (q) => {
   try {
@@ -236,5 +264,7 @@ onMounted(loadData)
 .swap-block { margin-top: 12px; }
 .swap-row { margin-top: 12px; }
 .foot-note { margin-top: 12px; }
+.svc-preview { display: flex; flex-wrap: wrap; gap: 4px 20px; color: var(--text-main); }
+.svc-tip { margin-top: 6px; color: #8a96a3; font-size: 12px; }
 .option-sub { float: right; color: #8a96a3; font-size: 12px; margin-left: 12px; }
 </style>

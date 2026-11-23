@@ -87,12 +87,13 @@ class FlowReturnSerializer(serializers.ModelSerializer):
     archive_serial = serializers.CharField(source='flow_out.archive.serial_number', read_only=True)
     new_archive_serial = serializers.CharField(source='new_archive.serial_number', read_only=True)
     result_status_display = serializers.CharField(source='get_result_status_display', read_only=True)
+    service_number = serializers.CharField(source='service.service_number', read_only=True)
 
     class Meta:
         model = models.FlowReturn
         fields = '__all__'
-        # 快照与换板新档案由后端写入，不接受前端直传，避免伪造历史
-        read_only_fields = ('snapshot_serial', 'snapshot_model', 'new_archive')
+        # 快照、换板新档案、售后服务单均由后端写入，不接受前端直传，避免伪造历史
+        read_only_fields = ('snapshot_serial', 'snapshot_model', 'new_archive', 'service')
 
     def validate_flow_out(self, value):
         if self.instance is not None and value.pk != self.instance.flow_out_id:

@@ -819,6 +819,9 @@ class FlowReturn(ModelBase):
         (2, "维修中"),
     )
     result_status = models.IntegerField(verbose_name="返回后状态", choices=RESULT_CHOICES, default=1)
+    # 送修时自动生成的售后服务单，撤销返回登记时一并回收
+    service = models.ForeignKey(verbose_name="售后服务单", to="Service", on_delete=models.PROTECT,
+                                blank=True, null=True, related_name="flow_returns")
 
     class Meta:
         db_table = 'flow_return'

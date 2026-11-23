@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import status
 from api.core import models
+from api.core.flow_bridge import complete_archive_repair, reopen_archive_repair
 from api.core.serializers.common import (
     ServiceSerializer, ServiceDetailSerializer, ReturnProductSerializer,
 )
@@ -539,6 +540,8 @@ class ReturnProductViewSet(BaseModelViewSet):
             )
             service.return_status = 2
             service.save(update_fields=['return_status'])
+            # 从售后流转转来的板子，返件即代表维修结束
+            complete_archive_repair(service, getattr(request, 'user', None))
             created += 1
         if not created:
             return Response({'detail': '未成功创建返件记录'}, status=400)
@@ -555,6 +558,9 @@ class ReturnProductViewSet(BaseModelViewSet):
         service_id = request.data.get('service')
         if service_id:
             models.Service.objects.filter(pk=service_id).update(return_status=2)
+            service = models.Service.objects.filter(pk=service_id).first()
+            if service is not None:
+                complete_archive_repair(service, getattr(request, 'user', None))
         return instance
 
     def destroy(self, request, *args, **kwargs):
@@ -563,6 +569,9 @@ class ReturnProductViewSet(BaseModelViewSet):
         result = super().destroy(request, *args, **kwargs)
         if not models.ReturnProduct.objects.filter(service_id=service_id, is_delete=False).exists():
             models.Service.objects.filter(pk=service_id).update(return_status=1)
+            service = models.Service.objects.filter(pk=service_id).first()
+            if service is not None:
+                reopen_archive_repair(service, getattr(request, 'user', None))
         return result
 
     filter_backends = [filters.SearchFilter]

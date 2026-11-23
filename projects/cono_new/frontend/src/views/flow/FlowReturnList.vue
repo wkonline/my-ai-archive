@@ -69,6 +69,9 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="service_number" label="售后服务单" min-width="150" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.service_number || '—' }}</template>
+        </el-table-column>
         <el-table-column label="操作" class-name="op-cell" width="110" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)">

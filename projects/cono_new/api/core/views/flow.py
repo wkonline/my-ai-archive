@@ -17,6 +17,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from api.core import models
+from api.core.flow_bridge import (
+    create_service_for_return, write_status_log,
+)
 from api.core.serializers.flow import (
     ProductArchiveSerializer, FlowOutSerializer, FlowReturnSerializer,
     SerialTransitionSerializer, FlowStatusLogSerializer,
@@ -31,15 +34,7 @@ def _current_operator(request):
     return user if user and getattr(user, 'pk', None) else None
 
 
-def _write_status_log(archive, from_status, to_status, operator, remark=''):
-    models.FlowStatusLog.objects.create(
-        archive=archive,
-        from_status=from_status,
-        to_status=to_status,
-        operator=operator,
-        date=datetime.date.today(),
-        remark=remark,
-    )
+_write_status_log = write_status_log
 
 
 def _build_flow_number(day):
@@ -441,6 +436,11 @@ class FlowReturnViewSet(BaseModelViewSet):
         _write_status_log(target, from_status, target.status, operator,
                           '{}：{}'.format(remark, flow.flow_number))
 
+        # 转维修的板子直接进售后服务，省掉在售后模块里手工重录一遍
+        if result_status == 2:
+            ret.service = create_service_for_return(ret, target, operator, remark)
+            ret.save(update_fields=['service'])
+
         flow.status = 2
         flow.save(update_fields=['status'])
 
@@ -488,6 +488,19 @@ class FlowReturnViewSet(BaseModelViewSet):
             archive.save(update_fields=['status', 'location_type', 'customer'])
             _write_status_log(archive, from_status, 2, operator,
                               '撤销返回登记：{}'.format(flow.flow_number))
+
+        # 自动建的服务单是这条返回的产物，返回撤销后它就没有来处了。
+        # 一旦已经登记过维修明细或返件，说明有人用过，只能留给售后去处理。
+        if instance.service_id:
+            service = instance.service
+            used = (models.ServiceDetail.objects.filter(service=service, is_delete=False).exists()
+                    or models.ReturnProduct.objects.filter(service=service, is_delete=False).exists())
+            if used:
+                raise ValidationError(
+                    {'detail': '该返回登记生成的维修单 {} 已登记维修记录或返件，'
+                               '无法撤销返回登记'.format(service.service_number)})
+            service.is_delete = True
+            service.save(update_fields=['is_delete'])
 
         flow.status = 1
         flow.save(update_fields=['status'])
