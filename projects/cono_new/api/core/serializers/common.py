@@ -460,6 +460,8 @@ class ProductDeliverySerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer.company_name', read_only=True)
     delivery_man_name = serializers.CharField(source='delivery_man.username', read_only=True)
     contract_number = serializers.SerializerMethodField()
+    contract_id = serializers.SerializerMethodField()
+    plan_quantity = serializers.SerializerMethodField()
     contact_person = serializers.SerializerMethodField()
     phone = serializers.SerializerMethodField()
     address = serializers.SerializerMethodField()
@@ -467,6 +469,8 @@ class ProductDeliverySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ProductDelivery
         fields = '__all__'
+        # 发货人由后端按当前登录用户写入，前端不传
+        extra_kwargs = {'delivery_man': {'required': False}}
 
     def get_contract_number(self, obj):
         plan = obj.contract
@@ -476,6 +480,12 @@ class ProductDeliverySerializer(serializers.ModelSerializer):
             if plan.contract:
                 return plan.contract.contract_number
         return ''
+
+    def get_contract_id(self, obj):
+        return obj.contract.contract_id if obj.contract else None
+
+    def get_plan_quantity(self, obj):
+        return obj.contract.quantity if obj.contract else None
 
     def get_contact_person(self, obj):
         return obj.customer.contact_person if obj.customer else ''

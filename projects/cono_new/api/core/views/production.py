@@ -1,10 +1,12 @@
 """生产模块：生产计划/派任务单/资料上传/产品铭牌/发货信息"""
 import datetime
+from django.db import transaction
 from django.db.models import Sum, Count, Q
 from django.http import HttpResponse
 from io import BytesIO
 from rest_framework import filters
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from api.core import models
 from api.core.serializers.common import (
@@ -12,6 +14,25 @@ from api.core.serializers.common import (
     ContractFileSerializer, ProductLabelSerializer, ProductDeliverySerializer,
 )
 from api.core.views.base import BaseModelViewSet
+from cono.tools.helper import sync_primary_contact
+
+
+def _refresh_plan_delivery_status(plan):
+    """按累计发货数量刷新生产计划的完结状态。
+
+    与老系统发货逻辑保持一致：发满计划量标记已完成，否则置为生产中。
+    """
+    delivered = models.ProductDelivery.objects.filter(
+        contract=plan, is_delete=False,
+    ).aggregate(total=Sum('quantity'))['total'] or 0
+    if delivered >= plan.quantity:
+        plan.completed_status = 3
+        plan.completed = True
+    else:
+        plan.completed_status = 2
+        plan.completed = False
+    plan.save(update_fields=['completed_status', 'completed', 'update_time'])
+
 
 
 class PlanViewSet(BaseModelViewSet):
@@ -266,6 +287,45 @@ class ProductDeliveryViewSet(BaseModelViewSet):
         'contract__product', 'delivery_man').all()
     serializer_class = ProductDeliverySerializer
     permission_codes = 'delivery_list'
+    action_permission_codes = {
+        'create': ['delivery_add', 'delivery_create'],
+        'update': ['delivery_edit'],
+        'partial_update': ['delivery_edit'],
+        'destroy': ['delivery_delete'],
+    }
+
+    def perform_create(self, serializer):
+        # 发货人取当前登录用户，前端不必也不该传这个字段
+        delivery = serializer.save(delivery_man=self.request.user)
+        _refresh_plan_delivery_status(delivery.contract)
+
+    def _check_quantity(self, plan, quantity, exclude_id=None):
+        """校验本次发货数量不超过该计划的剩余量（编辑时排除自身）。"""
+        qs = models.ProductDelivery.objects.filter(contract=plan, is_delete=False)
+        if exclude_id:
+            qs = qs.exclude(pk=exclude_id)
+        delivered = qs.aggregate(total=Sum('quantity'))['total'] or 0
+        remaining = max(plan.quantity - delivered, 0)
+        if not quantity or int(quantity) <= 0:
+            raise ValidationError({'detail': '发货数量必须大于 0'})
+        if int(quantity) > remaining:
+            raise ValidationError({'detail': '发货数量不能大于剩余数量 {}'.format(remaining)})
+
+    def perform_update(self, serializer):
+        old_plan = serializer.instance.contract
+        plan = serializer.validated_data.get('contract', old_plan)
+        quantity = serializer.validated_data.get('quantity', serializer.instance.quantity)
+        self._check_quantity(plan, quantity, exclude_id=serializer.instance.pk)
+        delivery = serializer.save()
+        # 改挂到别的计划时，原计划也要重算
+        _refresh_plan_delivery_status(delivery.contract)
+        if old_plan and old_plan.pk != delivery.contract_id:
+            _refresh_plan_delivery_status(old_plan)
+
+    def perform_destroy(self, instance):
+        plan = instance.contract
+        super().perform_destroy(instance)
+        _refresh_plan_delivery_status(plan)
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -280,6 +340,148 @@ class ProductDeliveryViewSet(BaseModelViewSet):
         if customer_name:
             qs = qs.filter(customer__company_name__icontains=customer_name.strip())
         return qs.order_by('-date')
+
+    @action(detail=False, methods=['get'], url_path='contract-items')
+    def contract_items(self, request):
+        """按项目号（合同）返回待发货物料清单。
+
+        一个项目号下可能有多条生产计划（每个产品一条），前端据此渲染多行；
+        每行带上计划量、已发量、剩余量，避免用户超发。
+        """
+        contract_id = request.query_params.get('contract')
+        if not contract_id:
+            return Response({'detail': '请提供项目号'}, status=400)
+        contract = models.Contract.objects.filter(pk=contract_id).select_related('customer').first()
+        if contract is None:
+            return Response({'detail': '项目号不存在'}, status=404)
+
+        plans = models.Plan.objects.filter(
+            contract=contract, is_delete=False,
+        ).select_related('productcategory', 'product').order_by('id')
+
+        # 一次聚合出所有计划的已发数量，避免逐条查询
+        delivered_map = dict(
+            models.ProductDelivery.objects.filter(
+                contract__in=plans, is_delete=False,
+            ).values_list('contract_id').annotate(total=Sum('quantity'))
+        )
+
+        items = []
+        for plan in plans:
+            delivered = delivered_map.get(plan.id, 0) or 0
+            items.append({
+                'plan': plan.id,
+                'productcategory': plan.productcategory.name if plan.productcategory else '',
+                'product': plan.product.model if plan.product else '',
+                'unit': plan.get_unit_display(),
+                'quantity': plan.quantity,
+                'delivered': delivered,
+                'remaining': max(plan.quantity - delivered, 0),
+                'completed_status': plan.completed_status,
+            })
+
+        customer = contract.customer
+        contacts = [
+            {
+                'name': c.name,
+                'phone': c.phone or '',
+                'title': c.title or '',
+                'is_primary': c.is_primary,
+            }
+            for c in customer.contacts.all()
+        ]
+        return Response({
+            'contract': contract.id,
+            'contract_number': contract.contract_number,
+            'customer': customer.id,
+            'customer_name': customer.company_name,
+            'contact_person': customer.contact_person or '',
+            'phone': customer.phone or '',
+            'address': customer.address or '',
+            'contacts': contacts,
+            'items': items,
+        })
+
+    @action(detail=False, methods=['post'], url_path='batch-create')
+    def batch_create(self, request):
+        """一次提交多行发货（同一项目号下的多个产品）。
+
+        任一行校验失败则整批不落库，避免出现「发了一半」的单据。
+        """
+        customer_id = request.data.get('customer')
+        contract_id = request.data.get('contract')
+        date = request.data.get('date')
+        rows = request.data.get('items') or []
+
+        if not contract_id:
+            return Response({'detail': '请选择项目号'}, status=400)
+        if not date:
+            return Response({'detail': '请选择发货日期'}, status=400)
+        if not rows:
+            return Response({'detail': '请至少填写一行发货产品'}, status=400)
+
+        contract = models.Contract.objects.filter(pk=contract_id).select_related('customer').first()
+        if contract is None:
+            return Response({'detail': '项目号不存在'}, status=400)
+        customer = models.Customer.objects.filter(pk=customer_id).first() or contract.customer
+
+        errors = []
+        prepared = []
+        for index, row in enumerate(rows, start=1):
+            plan_id = row.get('plan')
+            plan = models.Plan.objects.filter(pk=plan_id, contract=contract).first()
+            if plan is None:
+                errors.append('第 {} 行：产品不存在或不属于该项目号'.format(index))
+                continue
+            try:
+                quantity = int(row.get('quantity') or 0)
+            except (TypeError, ValueError):
+                quantity = 0
+            if quantity <= 0:
+                errors.append('第 {} 行：发货数量必须大于 0'.format(index))
+                continue
+            delivered = models.ProductDelivery.objects.filter(
+                contract=plan, is_delete=False,
+            ).aggregate(total=Sum('quantity'))['total'] or 0
+            remaining = max(plan.quantity - delivered, 0)
+            if quantity > remaining:
+                errors.append('第 {} 行：{} {} 发货数量 {} 超出剩余数量 {}'.format(
+                    index,
+                    plan.productcategory.name if plan.productcategory else '',
+                    plan.product.model if plan.product else '',
+                    quantity, remaining))
+                continue
+            prepared.append((plan, quantity, row))
+
+        if errors:
+            return Response({'detail': '；'.join(errors)}, status=400)
+
+        receiver = (request.data.get('receiver') or '').strip()
+        receiver_phone = (request.data.get('receiver_phone') or '').strip()
+        receiver_address = (request.data.get('receiver_address') or '').strip()
+        if receiver or receiver_phone or receiver_address:
+            customer.contact_person = receiver or customer.contact_person
+            customer.phone = receiver_phone or customer.phone
+            customer.address = receiver_address or customer.address
+            customer.save()
+            sync_primary_contact(customer)
+
+        with transaction.atomic():
+            for plan, quantity, row in prepared:
+                models.ProductDelivery.objects.create(
+                    customer=customer,
+                    date=date,
+                    contract=plan,
+                    productcategory=row.get('productcategory') or (
+                        plan.productcategory.name if plan.productcategory else ''),
+                    product=row.get('product') or (plan.product.model if plan.product else ''),
+                    quantity=quantity,
+                    delivery_man=request.user,
+                )
+                _refresh_plan_delivery_status(plan)
+
+        return Response({'created': len(prepared)}, status=201)
+
 
     @action(detail=False, methods=['get'])
     def stats(self, request):

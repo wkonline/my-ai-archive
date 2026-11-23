@@ -36,6 +36,9 @@ class ContractViewSet(BaseModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        customer = self.request.query_params.get('customer')
+        if customer:
+            qs = qs.filter(customer_id=customer)
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         if start_date and end_date:
