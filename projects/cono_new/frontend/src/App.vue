@@ -176,13 +176,30 @@
 .el-overlay { backdrop-filter: blur(2px); background-color: rgba(15,30,50,0.42) !important; }
 
 /* ── 下拉与浮层 ── */
-.el-popper,
 .el-select-dropdown,
-.el-dropdown-menu {
+.el-dropdown-menu,
+.el-popper:not(.is-dark) {
   border-radius: var(--radius-md) !important;
   border: 1px solid var(--border) !important;
   box-shadow: var(--shadow-md) !important;
   background: var(--bg-card) !important;
+}
+/* 深色浮层（表格单元格溢出提示等）保留反色，避免白底白字变成空白块 */
+.el-popper.is-dark {
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid var(--navy-800, #1f2d3d) !important;
+  box-shadow: var(--shadow-md) !important;
+  background: var(--navy-800, #1f2d3d) !important;
+  color: #fff !important;
+  box-sizing: border-box;
+  max-width: 420px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.el-popper.is-dark > .el-popper__arrow::before {
+  background: var(--navy-800, #1f2d3d) !important;
+  border-color: var(--navy-800, #1f2d3d) !important;
 }
 .el-dropdown-menu__item {
   font-size: 13px !important;

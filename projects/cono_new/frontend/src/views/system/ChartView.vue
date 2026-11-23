@@ -85,10 +85,10 @@
         </el-table-column>
         <el-table-column prop="last_invoice_date" label="最后开票日期" width="120" />
         <el-table-column label="开票比例" width="100" align="center" :show-overflow-tooltip="false">
-          <template #default="{ row }"><el-progress :percentage="Number(row.invoice_ratio) || 0" :stroke-width="8" /></template>
+          <template #default="{ row }"><el-progress :percentage="Number(row.invoice_ratio) || 0" :stroke-width="8" :color="ratioColor(row.invoice_ratio)" :class="ratioClass(row.invoice_ratio)" /></template>
         </el-table-column>
         <el-table-column label="回款比例" width="100" align="center" :show-overflow-tooltip="false">
-          <template #default="{ row }"><el-progress :percentage="Number(row.collection_ratio) || 0" :stroke-width="8" /></template>
+          <template #default="{ row }"><el-progress :percentage="Number(row.collection_ratio) || 0" :stroke-width="8" :color="ratioColor(row.collection_ratio)" :class="ratioClass(row.collection_ratio)" /></template>
         </el-table-column>
       </el-table>
       <div v-if="ar.invoiced_unpaid.length === 0" class="empty-tip">暂无开票未付款合同</div>
@@ -126,10 +126,10 @@
         </el-table-column>
         <el-table-column prop="last_invoice_date" label="最后开票日期" width="120" />
         <el-table-column label="开票比例" width="100" align="center" :show-overflow-tooltip="false">
-          <template #default="{ row }"><el-progress :percentage="Number(row.invoice_ratio) || 0" :stroke-width="8" /></template>
+          <template #default="{ row }"><el-progress :percentage="Number(row.invoice_ratio) || 0" :stroke-width="8" :color="ratioColor(row.invoice_ratio)" :class="ratioClass(row.invoice_ratio)" /></template>
         </el-table-column>
         <el-table-column label="回款比例" width="100" align="center" :show-overflow-tooltip="false">
-          <template #default="{ row }"><el-progress :percentage="Number(row.collection_ratio) || 0" :stroke-width="8" /></template>
+          <template #default="{ row }"><el-progress :percentage="Number(row.collection_ratio) || 0" :stroke-width="8" :color="ratioColor(row.collection_ratio)" :class="ratioClass(row.collection_ratio)" /></template>
         </el-table-column>
       </el-table>
       <div v-if="ar.uninvoiced_unpaid.length === 0" class="empty-tip">暂无未开票未付款合同</div>
@@ -182,6 +182,10 @@ const fetchAr = async () => {
   }
 }
 
+// 开票/回款比例满 100% 标绿，未满用主题蓝；与后端 >= 100% 视为完结一致
+const ratioColor = (v) => (Number(v) >= 100 ? '#67c23a' : '')
+const ratioClass = (v) => (Number(v) >= 100 ? 'ratio-done' : 'ratio-pending')
+
 const resetFilter = () => {
   filter.customer_name = ''
   filter.salesperson = ''
@@ -210,4 +214,6 @@ onMounted(fetchAr)
 .empty-tip { padding: 24px 0; color: #909399; text-align: center; }
 .link-cell { color: #409eff; text-decoration: none; }
 .link-cell:hover { text-decoration: underline; }
+:deep(.ratio-done .el-progress__text) { color: #67c23a; font-weight: 600; }
+:deep(.ratio-pending .el-progress__text) { color: var(--el-color-primary); }
 </style>
