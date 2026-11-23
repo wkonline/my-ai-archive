@@ -28,3 +28,15 @@ Django DRF（`api/`）+ Vue3/Element Plus（`frontend/`）。部署到 NAS 192.1
 ## 数据导出
 
 导出接口需要鉴权，前端下载必须带 token；后端各 `export` action 需调用 `filter_queryset`。
+
+## 老系统本地调试（cono_new/）
+
+- `api/.venv` 没有 pip、也没装 `whitenoise`，直接用 `cono_new.settings` 会 `ModuleNotFoundError`。
+  临时做法：写一个 `/tmp/local_test_settings.py` 里 `from cono_new.settings import *` 后把
+  whitenoise 从 `MIDDLEWARE` 过滤掉，用 `--settings=local_test_settings` 启动。
+- `DEBUG=False` 时 Django 用 `cached.Loader`，改模板后**必须重启进程**才生效，
+  `--noreload` 下尤其容易误判「代码没改对」。
+- 登录有图形验证码，浏览器测试可直接造 session 绕过：
+  `SessionStore()` 写 `session['info']={'id','username','role'}` 后 `create()`，把 key 作为 `sessionid` cookie。
+- 老系统部署走 `sync_to_nas.sh`（tar 上传 + `docker restart cono_web`），不重建镜像；
+  新系统部署走 `deploy/sync_new_to_nas.sh`。
