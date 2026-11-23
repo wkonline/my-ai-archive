@@ -124,6 +124,30 @@ class Customer(ModelBase):
         # 返回客户名称
         return self.company_name
 
+#客户联系人
+class CustomerContact(ModelBase):
+    """ 客户联系人（一个客户可以有 0 到多个） """
+    # 所属客户
+    customer = models.ForeignKey(verbose_name="客户", to="Customer", on_delete=models.CASCADE,
+                                 related_name="contacts")
+    # 联系人姓名
+    name = models.CharField(verbose_name="联系人", max_length=32)
+    # 电话，允许存座机加分机等多个号码
+    phone = models.CharField(verbose_name="电话", max_length=32, blank=True, null=True)
+    # 职务，如采购、技术、财务
+    title = models.CharField(verbose_name="职务", max_length=32, blank=True, null=True)
+    # 主联系人：同一客户只应有一个，由接口层维护
+    is_primary = models.BooleanField(verbose_name="主联系人", default=False)
+    # 备注
+    remark = models.CharField(verbose_name="备注", max_length=128, blank=True, null=True)
+
+    class Meta:
+        db_table = 'customer_contact'
+        ordering = ['-is_primary', 'id']
+
+    def __str__(self):
+        return '{} ({})'.format(self.name, self.phone or '')
+
 #仓库
 class Warehouse(models.Model):
     """ 仓库 """

@@ -8,6 +8,7 @@ from django.http import JsonResponse, HttpResponse
 from io import BytesIO
 from cono.tools.form import DeliveryForm,UploadFileForm
 from cono.tools.pagination import Pagination
+from cono.tools.helper import sync_primary_contact
 
 def delivery_list(request):
     queryset = models.ProductDelivery.objects.filter(is_delete=False).order_by('-date')
@@ -89,6 +90,7 @@ def delivery_add(request):
         customer.phone = receiver_phone or customer.phone
         customer.address = receiver_address or customer.address
         customer.save()
+        sync_primary_contact(customer)
 
         instance = form.save(commit=False)
         instance.customer = customer
@@ -209,6 +211,7 @@ def delivery_edit(request, nid):
         customer.phone = receiver_phone or customer.phone
         customer.address = receiver_address or customer.address
         customer.save()
+        sync_primary_contact(customer)
 
         plan = models.Plan.objects.filter(
             pk=request.POST.get('contract'),

@@ -21,8 +21,23 @@
       <el-table :data="list" stripe border v-loading="loading">
         <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
         <el-table-column prop="company_name" label="客户名称" min-width="180" show-overflow-tooltip fixed />
-        <el-table-column prop="contact_person" label="联系人" min-width="95" />
-        <el-table-column prop="phone" label="电话" width="120" />
+        <el-table-column label="联系人" min-width="130">
+          <template #default="{ row }">
+            <span v-if="!row.contacts || !row.contacts.length" class="muted">—</span>
+            <el-tooltip v-else placement="top" :show-after="200">
+              <template #content>
+                <div v-for="c in row.contacts" :key="c.id" class="contact-line">
+                  <span class="contact-name">{{ c.name }}</span>
+                  <span v-if="c.phone" class="contact-phone">{{ c.phone }}</span>
+                  <span v-if="c.title" class="contact-title">{{ c.title }}</span>
+                  <el-tag v-if="c.is_primary" size="small" type="success" class="contact-primary">主</el-tag>
+                </div>
+              </template>
+              <span class="contact-summary">{{ contactSummary(row) }}</span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column prop="phone" label="电话" width="130" />
         <el-table-column prop="address" label="地址" min-width="180" show-overflow-tooltip />
         <el-table-column prop="saler_name" label="业务经理" min-width="100" />
         <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
@@ -70,6 +85,14 @@ const fetchStats = async () => {
 }
 
 const onSearch = () => { page.value = 1; fetchList() }
+
+const contactSummary = (row) => {
+  const contacts = row.contacts || []
+  if (!contacts.length) return ''
+  const primary = contacts.find(c => c.is_primary) || contacts[0]
+  return contacts.length > 1 ? `${primary.name} 等 ${contacts.length} 人` : primary.name
+}
+
 const openAdd = () => router.push('/customer/new')
 const openEdit = (row) => router.push(`/customer/edit/${row.id}`)
 const handleDelete = async (row) => {
@@ -97,4 +120,11 @@ onMounted(() => { fetchList(); fetchStats() })
 .stat-label { font-size: 12px; color: #909399; margin-top: 4px; }
 .card-title { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-main); }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
+.muted { color: #c0c4cc; }
+.contact-summary { color: #0078e0; cursor: default; }
+.contact-line { display: flex; align-items: center; gap: 8px; line-height: 22px; white-space: nowrap; }
+.contact-name { font-weight: 600; }
+.contact-phone { color: #c8d6e5; }
+.contact-title { color: #8fa3b8; font-size: 12px; }
+.contact-primary { transform: scale(0.85); }
 </style>

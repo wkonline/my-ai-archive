@@ -72,12 +72,62 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.hexdigest()
 
 
+class CustomerContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CustomerContact
+        fields = ['id', 'name', 'phone', 'title', 'is_primary', 'remark']
+        read_only_fields = ['id']
+
+
 class CustomerSerializer(serializers.ModelSerializer):
     saler_name = serializers.CharField(source='saler.username', read_only=True)
+    contacts = CustomerContactSerializer(many=True, required=False)
 
     class Meta:
         model = models.Customer
         fields = '__all__'
+
+    def _write_contacts(self, customer, contacts):
+        """整体替换联系人列表，并把主联系人镜像回客户表字段。
+
+        客户表的 contact_person / phone 是主联系人的镜像，老系统（发货单、Dify、
+        客户列表）只读这两个字段，所以每次改动都要同步，否则两边会对不上。
+        """
+        customer.contacts.all().delete()
+        primary = None
+        for item in contacts or []:
+            if not (item.get('name') or '').strip():
+                continue
+            contact = models.CustomerContact.objects.create(
+                customer=customer,
+                name=item['name'].strip(),
+                phone=(item.get('phone') or '').strip(),
+                title=(item.get('title') or '').strip(),
+                remark=(item.get('remark') or '').strip(),
+                is_primary=bool(item.get('is_primary')),
+            )
+            # 前端若误传多个主联系人，只认第一个
+            if contact.is_primary and primary is None:
+                primary = contact
+            elif contact.is_primary:
+                contact.is_primary = False
+                contact.save(update_fields=['is_primary'])
+        customer.contact_person = primary.name if primary else ''
+        customer.phone = (primary.phone or '') if primary else ''
+        customer.save(update_fields=['contact_person', 'phone'])
+
+    def create(self, validated_data):
+        contacts = validated_data.pop('contacts', None)
+        customer = super().create(validated_data)
+        self._write_contacts(customer, contacts)
+        return customer
+
+    def update(self, instance, validated_data):
+        contacts = validated_data.pop('contacts', None)
+        customer = super().update(instance, validated_data)
+        if contacts is not None:
+            self._write_contacts(customer, contacts)
+        return customer
 
 
 class WarehouseSerializer(serializers.ModelSerializer):

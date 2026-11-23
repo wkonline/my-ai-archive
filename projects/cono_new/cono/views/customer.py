@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from cono import models
 from cono.tools.pagination import Pagination
 from cono.tools.form import CustomerModelForm
+from cono.tools.helper import sync_primary_contact
 
 def customer_list(request):
     """ 客户列表 """
@@ -40,7 +41,8 @@ def customer_add(request):
         return render(request, 'change.html', context)
     form = CustomerModelForm(data=request.POST)
     if form.is_valid():
-        form.save()
+        customer = form.save()
+        sync_primary_contact(customer, overwrite=True)
         return redirect('/customer/list/')
     return render(request, 'change.html', {"form": form})
 
@@ -53,7 +55,8 @@ def customer_edit(request, nid):
 
     form = CustomerModelForm(data=request.POST, instance=row_object)
     if form.is_valid():
-        form.save()
+        customer = form.save()
+        sync_primary_contact(customer, overwrite=True)
         return redirect('/customer/list/')
 
     return render(request, 'customer/customer_edit.html', {"form": form})

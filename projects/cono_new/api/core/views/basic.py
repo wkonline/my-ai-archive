@@ -49,20 +49,23 @@ class UserViewSet(BaseModelViewSet):
 
 
 class CustomerViewSet(BaseModelViewSet):
-    queryset = models.Customer.objects.select_related('saler').all()
+    queryset = models.Customer.objects.select_related('saler').prefetch_related('contacts').all()
     serializer_class = CustomerSerializer
     permission_codes = 'customer_list'
     filter_backends = [filters.SearchFilter]
-    search_fields = ['company_name', 'contact_person']
+    search_fields = ['company_name', 'contact_person', 'contacts__name', 'contacts__phone']
 
     def get_queryset(self):
         qs = super().get_queryset()
         keyword = self.request.query_params.get('keyword')
         if keyword:
+            # 联系人子表联查会放大结果集，必须去重
             qs = qs.filter(
                 Q(company_name__icontains=keyword) |
                 Q(contact_person__icontains=keyword) |
-                Q(saler__username__icontains=keyword))
+                Q(contacts__name__icontains=keyword) |
+                Q(contacts__phone__icontains=keyword) |
+                Q(saler__username__icontains=keyword)).distinct()
         return qs.order_by('company_name')
 
     @action(detail=False, methods=['get'])
@@ -80,10 +83,17 @@ class CustomerViewSet(BaseModelViewSet):
         import pandas as pd
         qs = self.get_queryset()
         qs = self.filter_queryset(qs)
+
+        def all_contacts(customer):
+            return '；'.join(
+                '{}{}'.format(ct.name, ' ' + ct.phone if ct.phone else '')
+                for ct in customer.contacts.all())
+
         data = [{
             '客户名称': c.company_name,
             '联系人': c.contact_person or '',
             '电话': c.phone or '',
+            '全部联系人': all_contacts(c),
             '地址': c.address or '',
             '业务员': c.saler.username if c.saler else '',
         } for c in qs]
