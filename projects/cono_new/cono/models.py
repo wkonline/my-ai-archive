@@ -805,7 +805,10 @@ class FlowOut(ModelBase):
 
 class FlowReturn(ModelBase):
     """ 售后流转 - 客户返回登记 """
-    flow_out = models.OneToOneField(verbose_name="流转编号", to="FlowOut", on_delete=models.PROTECT)
+    # 不用 OneToOneField：撤销返回登记是软删除，旧行仍占着 flow_out_id，
+    # 数据库唯一索引会让同一张寄出单无法再次登记。唯一性由序列化器按未删除记录校验。
+    flow_out = models.ForeignKey(verbose_name="流转编号", to="FlowOut", on_delete=models.PROTECT,
+                                 related_name="returns")
     # 返回那一刻的快照
     snapshot_serial = models.CharField(verbose_name="序列号快照", max_length=64)
     snapshot_model = models.CharField(verbose_name="型号快照", max_length=64, blank=True, null=True)
