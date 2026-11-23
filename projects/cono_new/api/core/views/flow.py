@@ -407,13 +407,15 @@ class FlowReturnViewSet(BaseModelViewSet):
             old_status = old_archive.status
             old_archive.is_superseded = True
             old_archive.superseded_by = new_archive
+            old_archive.is_active = False
             old_archive.status = 1
             old_archive.location_type = 1
             old_archive.customer = None
             old_archive.save(update_fields=[
-                'is_superseded', 'superseded_by', 'status', 'location_type', 'customer'])
+                'is_superseded', 'superseded_by', 'is_active',
+                'status', 'location_type', 'customer'])
             _write_status_log(old_archive, old_status, 1, operator,
-                              '换板退役，由 {} 接替'.format(new_archive.serial_number))
+                              '换板退役，由 {} 接替，原序列号停用'.format(new_archive.serial_number))
             models.SerialTransition.objects.create(
                 old_archive=old_archive,
                 new_archive=new_archive,
@@ -471,11 +473,13 @@ class FlowReturnViewSet(BaseModelViewSet):
             old_archive = flow.archive
             old_archive.is_superseded = False
             old_archive.superseded_by = None
+            old_archive.is_active = True
             old_archive.status = 2
             old_archive.location_type = 2
             old_archive.customer = flow.customer
             old_archive.save(update_fields=[
-                'is_superseded', 'superseded_by', 'status', 'location_type', 'customer'])
+                'is_superseded', 'superseded_by', 'is_active',
+                'status', 'location_type', 'customer'])
             _write_status_log(old_archive, 1, 2, operator,
                               '撤销换板返回，恢复在客户处：{}'.format(flow.flow_number))
             models.SerialTransition.objects.filter(flow_return=instance).update(is_delete=True)

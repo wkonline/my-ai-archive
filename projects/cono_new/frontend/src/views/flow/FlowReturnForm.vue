@@ -52,7 +52,7 @@
         <div v-if="form.is_board_swapped" class="swap-block">
           <el-alert
             type="warning" :closable="false" show-icon
-            title="换板后原档案会标记为「已换板」并置灰退役，永不再寄出；新档案走同一套送修判断。"
+            title="换板后原档案会标记为「已换板」并停用、置灰退役，永不再寄出；新档案走同一套送修判断。"
           />
           <el-row :gutter="16" class="swap-row">
             <el-col :span="12">
