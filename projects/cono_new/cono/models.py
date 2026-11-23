@@ -116,6 +116,11 @@ class Customer(ModelBase):
     address = models.CharField(verbose_name="地址", max_length=128,blank=True, null=True)
     # 业务员
     saler = models.ForeignKey(verbose_name="业务员", to="User", default=1, on_delete=models.PROTECT)
+    # 开票资料：税号、账号、开户行、开户行号
+    tax_number = models.CharField(verbose_name="税号", max_length=32, blank=True, null=True)
+    bank_account = models.CharField(verbose_name="账号", max_length=64, blank=True, null=True)
+    bank_name = models.CharField(verbose_name="开户行", max_length=64, blank=True, null=True)
+    bank_code = models.CharField(verbose_name="开户行号", max_length=32, blank=True, null=True)
 
     class Meta:
         # 定义数据库表名为'customer'
@@ -125,6 +130,13 @@ class Customer(ModelBase):
         return self.company_name
 
 #客户联系人
+class CustomerContactManager(models.Manager):
+    """默认过滤掉软删除的联系人，调用方无需关心 is_delete。"""
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_delete=False)
+
+
 class CustomerContact(ModelBase):
     """ 客户联系人（一个客户可以有 0 到多个） """
     # 所属客户
@@ -140,6 +152,9 @@ class CustomerContact(ModelBase):
     is_primary = models.BooleanField(verbose_name="主联系人", default=False)
     # 备注
     remark = models.CharField(verbose_name="备注", max_length=128, blank=True, null=True)
+
+    objects = CustomerContactManager()
+    all_objects = models.Manager()
 
     class Meta:
         db_table = 'customer_contact'
@@ -603,6 +618,10 @@ class ProductDelivery(ModelBase):
     quantity = models.IntegerField(verbose_name="数量", blank=True, null=True)
     #发货人
     delivery_man = models.ForeignKey(verbose_name="发货人", to="User", on_delete=models.PROTECT)
+    # 收货信息快照：发货那一刻定格，之后客户档案怎么改都不影响历史单据
+    receiver = models.CharField(verbose_name="收货人", max_length=32, blank=True, null=True)
+    receiver_phone = models.CharField(verbose_name="收货人电话", max_length=32, blank=True, null=True)
+    receiver_address = models.CharField(verbose_name="收货地址", max_length=128, blank=True, null=True)
 
     class Meta:
         # 定义数据库表名为'product_delivery'

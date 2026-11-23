@@ -34,6 +34,30 @@
           </el-col>
         </el-row>
 
+        <el-divider content-position="left"><el-icon><Tickets /></el-icon> 开票资料</el-divider>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="税号">
+              <el-input v-model="form.tax_number" placeholder="选填" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="开户行">
+              <el-input v-model="form.bank_name" placeholder="选填" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="账号">
+              <el-input v-model="form.bank_account" placeholder="选填" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="开户行号">
+              <el-input v-model="form.bank_code" placeholder="选填" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
         <el-divider content-position="left"><el-icon><UserFilled /></el-icon> 联系人</el-divider>
         <div class="contact-head">
           <span class="contact-tip">一个客户可以登记多个联系人，可留空；勾选「主」作为默认收货联系人。</span>
@@ -89,7 +113,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, UserFilled, Plus } from '@element-plus/icons-vue'
+import { User, UserFilled, Plus, Tickets } from '@element-plus/icons-vue'
 import request from '../../api/request'
 
 const route = useRoute()
@@ -97,7 +121,11 @@ const router = useRouter()
 const isEdit = computed(() => !!route.params.id)
 const saving = ref(false)
 const formRef = ref()
-const form = reactive({ id: null, company_name: '', contact_person: '', phone: '', address: '', saler: null, contacts: [] })
+const form = reactive({
+  id: null, company_name: '', contact_person: '', phone: '', address: '', saler: null,
+  tax_number: '', bank_account: '', bank_name: '', bank_code: '',
+  contacts: [],
+})
 const users = ref([])
 let contactSeq = 0
 
@@ -118,7 +146,7 @@ const primaryContactText = computed(() => {
 })
 
 const addContact = () => {
-  const item = { _key: ++contactSeq, name: '', phone: '', title: '', remark: '', is_primary: false }
+  const item = { _key: ++contactSeq, id: null, name: '', phone: '', title: '', remark: '', is_primary: false }
   if (!form.contacts.length) item.is_primary = true
   form.contacts.push(item)
 }
@@ -139,8 +167,10 @@ const loadData = async () => {
     Object.assign(form, {
       id: data.id, company_name: data.company_name || '', contact_person: data.contact_person || '',
       phone: data.phone || '', address: data.address || '', saler: data.saler || null,
+      tax_number: data.tax_number || '', bank_account: data.bank_account || '',
+      bank_name: data.bank_name || '', bank_code: data.bank_code || '',
       contacts: (data.contacts || []).map(c => ({
-        _key: ++contactSeq, name: c.name || '', phone: c.phone || '',
+        _key: ++contactSeq, id: c.id, name: c.name || '', phone: c.phone || '',
         title: c.title || '', remark: c.remark || '', is_primary: !!c.is_primary,
       })),
     })
@@ -151,10 +181,12 @@ const handleSave = async () => {
   if (!form.company_name) { ElMessage.warning('请填写客户名称'); return }
   const contacts = form.contacts
     .filter(c => (c.name || '').trim())
-    .map(c => ({ name: c.name.trim(), phone: c.phone || '', title: c.title || '', remark: c.remark || '', is_primary: !!c.is_primary }))
+    .map(c => ({ id: c.id, name: c.name.trim(), phone: c.phone || '', title: c.title || '', remark: c.remark || '', is_primary: !!c.is_primary }))
   if (form.contacts.length && !contacts.length) { ElMessage.warning('联系人姓名不能为空'); return }
   const payload = {
     company_name: form.company_name, address: form.address,
+    tax_number: form.tax_number, bank_account: form.bank_account,
+    bank_name: form.bank_name, bank_code: form.bank_code,
     contacts,
   }
   // saler 不允许为 null，未选时不提交，交由模型默认值处理

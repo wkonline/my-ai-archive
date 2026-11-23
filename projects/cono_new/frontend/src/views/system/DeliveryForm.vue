@@ -31,7 +31,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="收货人">
-              <el-select v-if="contactOptions.length > 1" v-model="selectedContact" placeholder="从客户联系人中选择" clearable style="width:100%" @change="onContactSelect">
+              <el-select v-if="contactOptions.length" v-model="selectedContact" placeholder="选择联系人或直接输入" clearable filterable allow-create default-first-option style="width:100%" @change="onContactSelect">
                 <el-option v-for="(c, i) in contactOptions" :key="i" :label="contactLabel(c)" :value="i" />
               </el-select>
               <el-input v-else v-model="form.receiver" placeholder="收货人" />
@@ -45,6 +45,12 @@
           <el-col :span="12">
             <el-form-item label="收货地址">
               <el-input v-model="form.receiver_address" placeholder="收货地址" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label=" ">
+              <el-checkbox v-model="form.save_as_contact">同时保存为客户联系人</el-checkbox>
+              <span class="tip">默认只记录在本张发货单上，不修改客户档案</span>
             </el-form-item>
           </el-col>
         </el-row>
@@ -99,7 +105,7 @@ const saving = ref(false)
 const formRef = ref()
 const form = reactive({
   id: null, customer: null, contract: null, date: '',
-  receiver: '', receiver_phone: '', receiver_address: '',
+  receiver: '', receiver_phone: '', receiver_address: '', save_as_contact: false,
 })
 const customers = ref([])
 const customerLoading = ref(false)
@@ -229,7 +235,7 @@ const loadData = async () => {
     Object.assign(form, {
       id: null, customer: null, contract: null,
       date: new Date().toISOString().slice(0, 10),
-      receiver: '', receiver_phone: '', receiver_address: '',
+      receiver: '', receiver_phone: '', receiver_address: '', save_as_contact: false,
     })
     await loadContracts(null)
     return
@@ -246,6 +252,7 @@ const loadData = async () => {
       receiver: data.contact_person || '',
       receiver_phone: data.phone || '',
       receiver_address: data.address || '',
+      save_as_contact: false,
     })
     await ensureCustomerOption(data.customer)
     await loadContracts(data.customer)
@@ -272,6 +279,10 @@ const handleSave = async () => {
         productcategory: row.productcategory,
         product: row.product,
         quantity: row.send,
+        receiver: form.receiver,
+        receiver_phone: form.receiver_phone,
+        receiver_address: form.receiver_address,
+        save_as_contact: form.save_as_contact,
       })
     } else {
       await request.post('/delivery/batch-create/', {
@@ -281,6 +292,7 @@ const handleSave = async () => {
         receiver: form.receiver,
         receiver_phone: form.receiver_phone,
         receiver_address: form.receiver_address,
+        save_as_contact: form.save_as_contact,
         items: rows.map(r => ({ plan: r.plan, quantity: r.send })),
       })
     }

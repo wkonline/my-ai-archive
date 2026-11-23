@@ -92,3 +92,23 @@ def sync_primary_contact(customer, overwrite=False):
             customer=customer, name=name, phone=phone, is_primary=True)
     except Exception:
         pass
+
+
+def save_receiver_as_contact(customer, name, phone):
+    """用户勾选「同时保存为客户联系人」时，把收货人写入联系人列表。
+
+    只新增/更新联系人记录，不改客户表的主联系人镜像，避免一次临时发货
+    就把客户档案的联系人换掉。
+    """
+    from cono import models
+
+    name = (name or '').strip()
+    if not name:
+        return
+    contact = models.CustomerContact.objects.filter(customer=customer, name=name).first()
+    if contact:
+        contact.phone = (phone or '').strip() or contact.phone
+        contact.save(update_fields=['phone', 'update_time'])
+        return
+    models.CustomerContact.objects.create(
+        customer=customer, name=name, phone=(phone or '').strip(), is_primary=False)

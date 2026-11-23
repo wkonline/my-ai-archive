@@ -14,7 +14,7 @@ from api.core.serializers.common import (
     ContractFileSerializer, ProductLabelSerializer, ProductDeliverySerializer,
 )
 from api.core.views.base import BaseModelViewSet
-from cono.tools.helper import sync_primary_contact
+from cono.tools.helper import save_receiver_as_contact
 
 
 def _refresh_plan_delivery_status(plan):
@@ -32,6 +32,13 @@ def _refresh_plan_delivery_status(plan):
         plan.completed_status = 2
         plan.completed = False
     plan.save(update_fields=['completed_status', 'completed', 'update_time'])
+
+
+def _truthy(value):
+    """前端可能传 true/'true'/'1'/1，统一归一化。"""
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in ('1', 'true', 'yes', 'on')
 
 
 
@@ -316,11 +323,14 @@ class ProductDeliveryViewSet(BaseModelViewSet):
         plan = serializer.validated_data.get('contract', old_plan)
         quantity = serializer.validated_data.get('quantity', serializer.instance.quantity)
         self._check_quantity(plan, quantity, exclude_id=serializer.instance.pk)
+        save_as_contact = _truthy(self.request.data.get('save_as_contact'))
         delivery = serializer.save()
         # 改挂到别的计划时，原计划也要重算
         _refresh_plan_delivery_status(delivery.contract)
         if old_plan and old_plan.pk != delivery.contract_id:
             _refresh_plan_delivery_status(old_plan)
+        if save_as_contact and delivery.receiver:
+            save_receiver_as_contact(delivery.customer, delivery.receiver, delivery.receiver_phone)
 
     def perform_destroy(self, instance):
         plan = instance.contract
@@ -459,12 +469,8 @@ class ProductDeliveryViewSet(BaseModelViewSet):
         receiver = (request.data.get('receiver') or '').strip()
         receiver_phone = (request.data.get('receiver_phone') or '').strip()
         receiver_address = (request.data.get('receiver_address') or '').strip()
-        if receiver or receiver_phone or receiver_address:
-            customer.contact_person = receiver or customer.contact_person
-            customer.phone = receiver_phone or customer.phone
-            customer.address = receiver_address or customer.address
-            customer.save()
-            sync_primary_contact(customer)
+        # 收货人只落单据快照，不默认改动客户档案；用户明确勾选才回写联系人
+        save_as_contact = _truthy(request.data.get('save_as_contact'))
 
         with transaction.atomic():
             for plan, quantity, row in prepared:
@@ -477,8 +483,14 @@ class ProductDeliveryViewSet(BaseModelViewSet):
                     product=row.get('product') or (plan.product.model if plan.product else ''),
                     quantity=quantity,
                     delivery_man=request.user,
+                    receiver=receiver,
+                    receiver_phone=receiver_phone,
+                    receiver_address=receiver_address,
                 )
                 _refresh_plan_delivery_status(plan)
+
+        if save_as_contact and receiver:
+            save_receiver_as_contact(customer, receiver, receiver_phone)
 
         return Response({'created': len(prepared)}, status=201)
 

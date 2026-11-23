@@ -8,7 +8,7 @@ from django.http import JsonResponse, HttpResponse
 from io import BytesIO
 from cono.tools.form import DeliveryForm,UploadFileForm
 from cono.tools.pagination import Pagination
-from cono.tools.helper import sync_primary_contact
+from cono.tools.helper import save_receiver_as_contact
 
 def delivery_list(request):
     queryset = models.ProductDelivery.objects.filter(is_delete=False).order_by('-date')
@@ -86,11 +86,6 @@ def delivery_add(request):
         customer = models.Customer.objects.filter(
             pk=request.POST.get('customer'),
         ).first() or plan.contract.customer
-        customer.contact_person = receiver or customer.contact_person
-        customer.phone = receiver_phone or customer.phone
-        customer.address = receiver_address or customer.address
-        customer.save()
-        sync_primary_contact(customer)
 
         instance = form.save(commit=False)
         instance.customer = customer
@@ -99,7 +94,13 @@ def delivery_add(request):
         instance.product = request.POST.get('product')
         instance.quantity = delivery_quantity
         instance.delivery_man_id = request.info_dict_useid
+        instance.receiver = receiver
+        instance.receiver_phone = receiver_phone
+        instance.receiver_address = receiver_address
         instance.save()
+
+        if request.POST.get('save_as_contact'):
+            save_receiver_as_contact(customer, receiver, receiver_phone)
 
         delivered_quantity = models.ProductDelivery.objects.filter(
             contract=plan,
@@ -224,11 +225,6 @@ def delivery_edit(request, nid):
         customer = models.Customer.objects.filter(
             pk=request.POST.get('customer'),
         ).first() or row_object.customer
-        customer.contact_person = receiver or customer.contact_person
-        customer.phone = receiver_phone or customer.phone
-        customer.address = receiver_address or customer.address
-        customer.save()
-        sync_primary_contact(customer)
 
         plan = models.Plan.objects.filter(
             pk=request.POST.get('contract'),
@@ -239,7 +235,13 @@ def delivery_edit(request, nid):
         instance.productcategory = request.POST.get('productcategory')
         instance.product = request.POST.get('product')
         instance.quantity = delivery_quantity
+        instance.receiver = receiver
+        instance.receiver_phone = receiver_phone
+        instance.receiver_address = receiver_address
         instance.save()
+
+        if request.POST.get('save_as_contact'):
+            save_receiver_as_contact(customer, receiver, receiver_phone)
 
         total_delivered = (
             models.ProductDelivery.objects.filter(contract=plan, is_delete=False)

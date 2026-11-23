@@ -109,9 +109,9 @@
                     <td>{{ obj.productcategory }}</td>
                     <td>{{ obj.product }}</td>
                     <td>{{ obj.quantity }}</td>
-                    <td>{{ obj.customer.contact_person }}</td>
-                    <td>{{ obj.customer.phone }}</td>
-                    <td>{{ obj.customer.address }}</td>
+                    <td>{{ obj.receiver|default:obj.customer.contact_person }}</td>
+                    <td>{{ obj.receiver_phone|default:obj.customer.phone }}</td>
+                    <td>{{ obj.receiver_address|default:obj.customer.address }}</td>
                     <td>{{ obj.delivery_man }}</td>
                     <td>
                         <a class="btn btn-primary btn-xs" href="/delivery/{{ obj.id }}/edit/"><span

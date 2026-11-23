@@ -73,10 +73,13 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CustomerContactSerializer(serializers.ModelSerializer):
+    # DRF 默认把 AutoField 主键设为只读，那样前端回传的 id 会被丢弃，
+    # 每次保存都新建一条联系人，软删除也就失去意义。这里显式声明为可写。
+    id = serializers.IntegerField(required=False, allow_null=True)
+
     class Meta:
         model = models.CustomerContact
         fields = ['id', 'name', 'phone', 'title', 'is_primary', 'remark']
-        read_only_fields = ['id']
 
 
 class CustomerSerializer(serializers.ModelSerializer):
@@ -92,26 +95,42 @@ class CustomerSerializer(serializers.ModelSerializer):
 
         客户表的 contact_person / phone 是主联系人的镜像，老系统（发货单、Dify、
         客户列表）只读这两个字段，所以每次改动都要同步，否则两边会对不上。
+
+        删除采用软删除（is_delete=True）：发货单的收货人快照虽然独立保存，但
+        仍需保留联系人本身的追溯记录，误删也能恢复。
         """
-        customer.contacts.all().delete()
+        existing = {c.pk: c for c in customer.contacts.all()}
         primary = None
+        kept_ids = []
         for item in contacts or []:
-            if not (item.get('name') or '').strip():
+            name = (item.get('name') or '').strip()
+            if not name:
                 continue
-            contact = models.CustomerContact.objects.create(
-                customer=customer,
-                name=item['name'].strip(),
-                phone=(item.get('phone') or '').strip(),
-                title=(item.get('title') or '').strip(),
-                remark=(item.get('remark') or '').strip(),
-                is_primary=bool(item.get('is_primary')),
-            )
+            pk = item.get('id')
+            contact = existing.get(pk) if pk else None
+            if contact is None:
+                contact = models.CustomerContact(customer=customer)
+            contact.name = name
+            contact.phone = (item.get('phone') or '').strip()
+            contact.title = (item.get('title') or '').strip()
+            contact.remark = (item.get('remark') or '').strip()
+            contact.is_primary = bool(item.get('is_primary'))
+            contact.is_delete = False
+            contact.save()
+            kept_ids.append(contact.pk)
             # 前端若误传多个主联系人，只认第一个
             if contact.is_primary and primary is None:
                 primary = contact
             elif contact.is_primary:
                 contact.is_primary = False
                 contact.save(update_fields=['is_primary'])
+
+        for pk, contact in existing.items():
+            if pk not in kept_ids:
+                contact.is_delete = True
+                contact.is_primary = False
+                contact.save(update_fields=['is_delete', 'is_primary'])
+
         customer.contact_person = primary.name if primary else ''
         customer.phone = (primary.phone or '') if primary else ''
         customer.save(update_fields=['contact_person', 'phone'])
@@ -488,13 +507,13 @@ class ProductDeliverySerializer(serializers.ModelSerializer):
         return obj.contract.quantity if obj.contract else None
 
     def get_contact_person(self, obj):
-        return obj.customer.contact_person if obj.customer else ''
+        return obj.receiver or (obj.customer.contact_person if obj.customer else '')
 
     def get_phone(self, obj):
-        return obj.customer.phone if obj.customer else ''
+        return obj.receiver_phone or (obj.customer.phone if obj.customer else '')
 
     def get_address(self, obj):
-        return obj.customer.address if obj.customer else ''
+        return obj.receiver_address or (obj.customer.address if obj.customer else '')
 
 
 class CompanySerializer(serializers.ModelSerializer):
