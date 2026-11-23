@@ -53,23 +53,23 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="维修编号" required>
-              <el-select v-model="form.service" filterable style="width:100%">
-                <el-option v-for="s in services" :key="s.id" :label="s.service_number" :value="s.id" />
+              <el-select v-model="form.service" filterable style="width:100%" @change="onServiceChange">
+                <el-option v-for="s in services" :key="s.id" :label="serviceLabel(s)" :value="s.id" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="产品名称">
-              <el-input :model-value="form.productcategory_name" disabled />
+              <el-input :model-value="form.productcategory_name" disabled placeholder="选择维修编号后自动带出" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="型号">
-              <el-input :model-value="form.product_model" disabled />
+            <el-form-item label="产品型号">
+              <el-input :model-value="form.product_model" disabled placeholder="选择维修编号后自动带出" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="日期" required>
+            <el-form-item label="返件日期" required>
               <el-date-picker v-model="form.date" type="date" value-format="YYYY-MM-DD" style="width:100%" />
             </el-form-item>
           </el-col>
@@ -98,15 +98,26 @@ const isBatch = computed(() => route.query.batch === '1')
 const saving = ref(false)
 const batchSaving = ref(false)
 const formRef = ref()
+const todayStr = () => {
+  const d = new Date()
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 const form = reactive({
   id: null, customer: null, service: null, productcategory_name: '', product_model: '',
-  date: new Date().toISOString().slice(0, 10),
+  date: todayStr(),
 })
 const customers = ref([])
 const services = ref([])
 
+const serviceLabel = (s) => {
+  const parts = [s.service_number, s.productcategory__name, s.product__model].filter(Boolean)
+  return parts.join(' / ')
+}
+
 const batchCustomer = ref(null)
-const batchDate = ref(new Date().toISOString().slice(0, 10))
+const batchDate = ref(todayStr())
 const batchServices = ref([])
 const batchLoading = ref(false)
 
@@ -118,10 +129,18 @@ const searchCustomers = async (q) => {
 
 const onCustomerChange = async (cid) => {
   form.service = null
+  form.productcategory_name = ''
+  form.product_model = ''
   services.value = []
   try {
     services.value = await request.get('/return-product/services/', { params: { customer_id: cid } })
   } catch {}
+}
+
+const onServiceChange = (val) => {
+  const s = services.value.find(i => i.id === val)
+  form.productcategory_name = s?.productcategory__name || ''
+  form.product_model = s?.product__model || ''
 }
 
 const loadData = async () => {
@@ -141,14 +160,19 @@ const loadData = async () => {
       date: data.date || '',
     })
     customers.value = [{ id: data.customer, company_name: data.customer_name }]
-    services.value = [{ id: data.service, service_number: data.service_number }]
+    services.value = [{
+      id: data.service,
+      service_number: data.service_number,
+      productcategory__name: data.productcategory_name,
+      product__model: data.product_model,
+    }]
   } catch {}
 }
 
 const handleSave = async () => {
   if (!form.customer) { ElMessage.warning('请选择客户名称'); return }
   if (!form.service) { ElMessage.warning('请选择维修编号'); return }
-  if (!form.date) { ElMessage.warning('请选择日期'); return }
+  if (!form.date) { ElMessage.warning('请选择返件日期'); return }
   saving.value = true
   try {
     if (form.id) await request.put(`/return-product/${form.id}/`, form)
