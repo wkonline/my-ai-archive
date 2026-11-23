@@ -354,6 +354,7 @@ class ServiceDetailSerializer(serializers.ModelSerializer):
     product_number = serializers.CharField(source='service.product_number', read_only=True)
     warranty_display = serializers.CharField(source='service.get_warranty_display', read_only=True)
     service_date = serializers.DateField(source='service.date', read_only=True)
+    repairman = serializers.PrimaryKeyRelatedField(queryset=models.User.objects.all(), required=False)
 
     class Meta:
         model = models.ServiceDetail

@@ -18,7 +18,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="维修完成时间" required>
+            <el-form-item label="完成时间" required>
               <el-date-picker v-model="batchDate" type="date" value-format="YYYY-MM-DD" style="width:100%" />
             </el-form-item>
           </el-col>
@@ -103,22 +103,18 @@
           <el-col :span="12">
             <el-form-item label="维修编号" required>
               <el-select v-model="form.service" filterable style="width:100%" @change="onServiceChange">
-                <el-option v-for="s in services" :key="s.id" :label="s.service_number" :value="s.id" />
+                <el-option v-for="s in services" :key="s.id" :label="serviceLabel(s)" :value="s.id" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="产品名称" required>
-              <el-select v-model="form.productcategory_id" filterable style="width:100%">
-                <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
-              </el-select>
+              <el-input :model-value="form.productcategory_name" disabled placeholder="选择维修编号后自动带出" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="产品型号">
-              <el-select v-model="form.product_id" filterable :placeholder="'请选择产品型号'" style="width:100%">
-                <el-option v-for="p in productsByCategoryId(form.productcategory_id)" :key="p.id" :label="p.model" :value="p.id" />
-              </el-select>
+              <el-input :model-value="form.product_model" disabled placeholder="选择维修编号后自动带出" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -137,7 +133,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="维修完成时间" required>
+            <el-form-item label="完成时间" required>
               <el-date-picker v-model="form.repair_date" type="date" value-format="YYYY-MM-DD" style="width:100%" />
             </el-form-item>
           </el-col>
@@ -168,23 +164,28 @@ const pageTitle = computed(() => isBatch.value ? '批量登记' : (isKnowledge.v
 const saving = ref(false)
 const batchSaving = ref(false)
 const formRef = ref()
+const todayStr = () => {
+  const d = new Date()
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 const form = reactive({
-  id: null, customer: null, service: null, productcategory_name: '', product_model: '',
-  fault_text: '', fault_reason: '', repair_method: '', repair_date: '',
+  id: null, customer: null, service: null, productcategory_id: null, product_id: null,
+  productcategory_name: '', product_model: '',
+  fault_text: '', fault_reason: '', repair_method: '',
+  repair_date: todayStr(),
 })
 const customers = ref([])
 const services = ref([])
 
-const productCategories = ref([])
-const allProducts = ref([])
-
-const productsByCategoryId = (catId) => {
-  if (!catId) return []
-  return allProducts.value.filter(p => p.productcategory === catId)
+const serviceLabel = (s) => {
+  const parts = [s.service_number, s.productcategory__name, s.product__model].filter(Boolean)
+  return parts.join(' / ')
 }
 
 const batchCustomer = ref(null)
-const batchDate = ref(new Date().toISOString().slice(0, 10))
+const batchDate = ref(todayStr())
 const batchServices = ref([])
 const batchLoading = ref(false)
 
@@ -207,20 +208,13 @@ const onCustomerChange = async (cid) => {
 
 const onServiceChange = (val) => {
   const s = services.value.find(i => i.id === val)
-  if (!s) return
-  const catId = s.productcategory_id || null
-  const prodId = s.product_id || null
-  form.productcategory_id = catId
-  form.product_id = prodId
-  form.productcategory_name = s.productcategory__name || ''
-  form.product_model = prodId ? (allProducts.value.find(p => p.id === prodId)?.model || '') : ''
+  form.productcategory_id = s?.productcategory_id ?? null
+  form.product_id = s?.product_id ?? null
+  form.productcategory_name = s?.productcategory__name || ''
+  form.product_model = s?.product__model || ''
 }
 
 const loadData = async () => {
-  try {
-    productCategories.value = (await request.get('/productcategory/?page_size=200')).results || []
-    allProducts.value = (await request.get('/product/?page_size=200')).results || []
-  } catch {}
   if (isBatch.value || isKnowledge.value) {
     searchCustomers('')
     return
@@ -251,12 +245,12 @@ const handleSave = async () => {
   if (!form.customer) { ElMessage.warning('请选择客户名称'); return }
   if (!form.service) { ElMessage.warning('请选择维修编号'); return }
   if (!form.fault_text || !form.fault_reason || !form.repair_method) { ElMessage.warning('故障现象、故障原因、维修方法均不能为空'); return }
-  if (!form.repair_date) { ElMessage.warning('请选择维修完成时间'); return }
+  if (!form.repair_date) { ElMessage.warning('请选择完成时间'); return }
   saving.value = true
   try {
     const payload = {
       customer: form.customer, service: form.service,
-      productcategory: form.productcategory_name || '', product: form.product_model || '',
+      productcategory: form.productcategory_id, product: form.product_id,
       fault_text: form.fault_text, fault_reason: form.fault_reason,
       repair_method: form.repair_method, repair_date: form.repair_date,
     }
@@ -281,7 +275,7 @@ const removeBatchRow = (index) => {
 
 const handleBatchSave = async () => {
   if (!batchCustomer.value) { ElMessage.warning('请选择客户名称'); return }
-  if (!batchDate.value) { ElMessage.warning('请选择维修完成时间'); return }
+  if (!batchDate.value) { ElMessage.warning('请选择完成时间'); return }
   const items = batchServices.value.filter(s => s.fault_text || s.fault_reason || s.repair_method)
   if (!items.length) { ElMessage.warning('该项目暂无待维修产品'); return }
   batchSaving.value = true
@@ -289,10 +283,10 @@ const handleBatchSave = async () => {
     await request.post('/servicedetail/batch/', {
       customer: batchCustomer.value,
       repair_date: batchDate.value,
-      items: items.map((s, i) => ({
-        service_id: s.id,
-        productcategory_id: s.productcategory_id,
-        product_id: s.product_id,
+      items: items.map(s => ({
+        service: s.id,
+        productcategory: s.productcategory_id,
+        product: s.product_id,
         fault_text: s.fault_text, fault_reason: s.fault_reason, repair_method: s.repair_method,
       })),
     })

@@ -262,7 +262,8 @@ class ServiceDetailViewSet(BaseModelViewSet):
             return Response([])
         services = models.Service.objects.filter(
             Q(customer_id=customer_id) & Q(is_delete=False) & Q(warranty_end=1)
-        ).values('id', 'service_number', 'productcategory__name', 'product__model')
+        ).values('id', 'service_number', 'productcategory_id', 'productcategory__name',
+                 'product_id', 'product__model')
         return Response(list(services))
 
     @action(detail=False, methods=['get'], url_path='knowledge')
@@ -407,11 +408,16 @@ class ServiceDetailViewSet(BaseModelViewSet):
             if not item.get('fault_text') or not item.get('fault_reason') or not item.get('repair_method'):
                 errors.append('故障现象、故障原因、维修方法均不能为空')
                 break
+            service = models.Service.objects.filter(
+                pk=service_id, customer_id=customer_id, is_delete=False, warranty_end=1).first()
+            if service is None:
+                errors.append('该项目暂无待维修产品')
+                break
             models.ServiceDetail.objects.create(
                 customer_id=customer_id,
                 service_id=service_id,
-                productcategory_id=item.get('productcategory') or None,
-                product_id=item.get('product') or None,
+                productcategory_id=item.get('productcategory') or service.productcategory_id,
+                product_id=item.get('product') or service.product_id,
                 repairman_id=user_id,
                 fault_text=item.get('fault_text'),
                 fault_reason=item.get('fault_reason'),
@@ -437,6 +443,11 @@ class ServiceDetailViewSet(BaseModelViewSet):
         if service_id:
             models.Service.objects.filter(pk=service_id).update(warranty_end=2)
         return instance
+
+    def perform_update(self, serializer):
+        if not serializer.validated_data.get('repairman'):
+            serializer.validated_data['repairman'] = serializer.instance.repairman or self.request.user
+        super().perform_update(serializer)
 
 
 class ReturnProductViewSet(BaseModelViewSet):
