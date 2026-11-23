@@ -1,0 +1,86 @@
+{# 收货联系人选择器：客户有多位联系人时出现，选中后自动带出电话。
+   由 customer_info 接口返回的 contacts 驱动，供 delivery_add / delivery_edit 共用。
+   元素在首次使用时才查找，因为本片段可能被插在电话输入框之前。 #}
+<div class="form-group" id="receiver_contact_group" style="display: none;">
+    <label for="id_receiver_contact">选择联系人</label>
+    <select class="form-control" id="id_receiver_contact"></select>
+</div>
+<script>
+    window.DeliveryReceiver = (function () {
+        var bound = false;
+
+        function el(id) {
+            return $('#' + id);
+        }
+
+        function fill(name, phone) {
+            el('id_receiver').val(name || '');
+            el('id_receiver_phone').val(phone || '');
+        }
+
+        function bind() {
+            if (bound) return;
+            bound = true;
+            el('id_receiver_contact').on('change', function () {
+                var $option = $(this).find('option:selected');
+                fill($option.attr('data-name'), $option.attr('data-phone'));
+            });
+        }
+
+        // 一位联系人时直接填充，不打扰用户；多位时才显示下拉框
+        function render(data) {
+            bind();
+            var contacts = (data.contacts || []).slice();
+            var current = (el('id_receiver').val() || '').trim();
+            var matched = -1;
+            contacts.forEach(function (contact, i) {
+                if (matched < 0 && contact.name === current) matched = i;
+            });
+            // 当前收货人不在联系人表里（编辑历史单据、或联系人被删），
+            // 保留它作为一项，避免打开页面就把用户填的值冲掉
+            if (current && matched < 0) {
+                contacts.unshift({
+                    name: current,
+                    phone: el('id_receiver_phone').val() || '',
+                    title: '当前',
+                    is_primary: false
+                });
+                matched = 0;
+            }
+            var $group = el('receiver_contact_group');
+            var $picker = el('id_receiver_contact');
+            $picker.empty();
+            if (contacts.length < 2) {
+                $group.hide();
+                return;
+            }
+            contacts.forEach(function (contact, index) {
+                var label = contact.name
+                    + (contact.phone ? ' ' + contact.phone : '')
+                    + (contact.title ? '（' + contact.title + '）' : '');
+                $picker.append($('<option>')
+                    .val(index)
+                    .text(label)
+                    .attr('data-name', contact.name)
+                    .attr('data-phone', contact.phone || ''));
+            });
+            // 优先沿用当前收货人（编辑回填），否则用主联系人
+            var index = matched;
+            if (index < 0) {
+                contacts.forEach(function (contact, i) {
+                    if (index < 0 && contact.is_primary) index = i;
+                });
+            }
+            if (index < 0) index = 0;
+            $picker.val(index);
+            $group.show();
+            fill(contacts[index].name, contacts[index].phone);
+        }
+
+        function reset() {
+            el('receiver_contact_group').hide();
+        }
+
+        return { render: render, reset: reset };
+    })();
+</script>

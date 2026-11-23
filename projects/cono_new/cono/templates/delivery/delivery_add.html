@@ -82,6 +82,7 @@
                     <input type="text" name="receiver" class="form-control" placeholder="收货人"
                            id="id_receiver">
                 </div>
+                {% include 'delivery/_receiver_contacts.html' %}
                 <div class="form-group">
                     <label for="id_receiver_phone">收货人联系电话</label>
                     <input type="text" name="receiver_phone" class="form-control" placeholder="收货人联系电话"
@@ -123,13 +124,21 @@
                         $("#id_receiver_phone").val(product.contract__customer__phone || '');
                         $("#id_receiver_address").val(product.contract__customer__address || '');
                     });
+                    // 合同带出的客户可能变了，重新拉联系人列表刷新选择器
+                    DeliveryReceiver.reset();
+                    if (customerId) {
+                        $('#id_customer').trigger('change');
+                    }
                 }
             });
         });
 
         $('#id_customer').change(function () {
             var customerId = $(this).val();
-            if (!customerId) return;
+            if (!customerId) {
+                DeliveryReceiver.reset();
+                return;
+            }
             $.ajax({
                 url: '{% url 'delivery_customer_info' %}',
                 type: 'GET',
@@ -139,6 +148,7 @@
                     $("#id_receiver").val(data.contact_person || '');
                     $("#id_receiver_phone").val(data.phone || '');
                     $("#id_receiver_address").val(data.address || '');
+                    DeliveryReceiver.render(data);
                 }
             });
         });

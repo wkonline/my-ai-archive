@@ -123,13 +123,30 @@ def delivery_add(request):
     })
 
 def customer_info(request):
-    """按客户 ID 返回收货联系人、电话、地址。"""
+    """按客户 ID 返回收货信息，附带该客户的全部联系人。
+
+    一个客户可能有多位联系人，前端据此让用户挑选收货人；只有一位时不显示
+    选择器，直接用客户表上的主联系人（老数据未迁移时也能正常工作）。
+    """
     customer = models.Customer.objects.filter(
-        pk=request.GET.get('customer'),
-    ).values('contact_person', 'phone', 'address').first()
+        pk=request.GET.get('customer') or None,
+    ).prefetch_related('contacts').first()
     if not customer:
-        return JsonResponse({'contact_person': '', 'phone': '', 'address': ''})
-    return JsonResponse(customer)
+        return JsonResponse({'contact_person': '', 'phone': '', 'address': '', 'contacts': []})
+    return JsonResponse({
+        'contact_person': customer.contact_person or '',
+        'phone': customer.phone or '',
+        'address': customer.address or '',
+        'contacts': [
+            {
+                'name': contact.name,
+                'phone': contact.phone or '',
+                'title': contact.title or '',
+                'is_primary': contact.is_primary,
+            }
+            for contact in customer.contacts.all()
+        ],
+    })
 
 def _refresh_plan_delivery_status(plan):
     """按累计发货数量刷新生产计划的完结状态。"""
