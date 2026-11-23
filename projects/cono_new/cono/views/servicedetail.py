@@ -17,7 +17,7 @@ def servicedetail_list(request):
     keyword = request.GET.get('keyword')
     q_objects = Q()  # 初始化一个空的Q对象
     if start_date and end_date:
-        q_objects &= Q(receive_date__range=(start_date, end_date))
+        q_objects &= Q(repair_date__range=(start_date, end_date))
     if customer_name:
         q_objects &= Q(customer__company_name__icontains=customer_name.strip())  # 使用|表示OR逻辑
     if keyword:

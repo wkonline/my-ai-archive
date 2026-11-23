@@ -18,7 +18,7 @@ def service_list(request):
     keyword = request.GET.get('keyword')
     q_objects = Q()  # 初始化一个空的Q对象
     if start_date and end_date:
-        q_objects &= Q(receive_date__range=(start_date, end_date))
+        q_objects &= Q(date__range=(start_date, end_date))
     if customer_name:
         q_objects &= Q(customer__company_name__icontains=customer_name.strip())  # 使用|表示OR逻辑
     if keyword:
@@ -165,7 +165,7 @@ def service_edit(request, nid):
 def service_download_excel(request):
     services = models.Service.objects.filter(is_delete=False)
     data = [{
-        '接收日期':service.receive_date,
+        '接收日期':service.date,
         '客户名称': service.customer,
         '产品名称': service.productcategory,
         '产品型号': service.product,
