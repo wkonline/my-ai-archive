@@ -113,6 +113,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, Histogram, PieChart, List, Edit, Delete, CopyDocument } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'
 
@@ -221,7 +222,16 @@ const resetFilter = () => {
   page.value = 1
   fetchList()
 }
-const exportData = () => window.open('/api/service/export/', '_blank')
+const exportData = () => {
+  const params = {}
+  if (searchRange.value?.length === 2) {
+    params.start_date = searchRange.value[0]
+    params.end_date = searchRange.value[1]
+  }
+  if (searchCustomer.value) params.customer_name = searchCustomer.value
+  if (searchKeyword.value) params.keyword = searchKeyword.value
+  return download('/service/export/', params, 'service_data.xlsx')
+}
 
 const openAdd = () => router.push('/service/new')
 const openEdit = (row) => router.push(`/service/edit/${row.id}`)

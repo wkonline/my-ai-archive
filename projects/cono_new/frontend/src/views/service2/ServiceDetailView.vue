@@ -111,6 +111,7 @@ import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 
 const router = useRouter()
 const list = ref([])
@@ -222,7 +223,14 @@ const resetFilter = () => {
   page.value = 1
   fetchList()
 }
-const exportData = () => window.open('/api/servicedetail/export/', '_blank')
+const exportData = () => {
+  const params = {}
+  if (startDate.value) params.start_date = startDate.value
+  if (endDate.value) params.end_date = endDate.value
+  if (keyword.value) params.keyword = keyword.value
+  if (searchCustomer.value) params.customer_name = searchCustomer.value
+  return download('/servicedetail/export/', params, 'servicedetail_data.xlsx')
+}
 
 const openAdd = () => router.push('/servicedetail/new')
 const openEdit = (row) => router.push(`/servicedetail/edit/${row.id}`)

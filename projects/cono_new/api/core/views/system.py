@@ -50,6 +50,7 @@ class UserLogViewSet(BaseModelViewSet):
         from django.http import HttpResponse
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{
             '日期': str(log.timestamp),
             '用户': log.user.username if log.user else '',

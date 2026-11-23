@@ -35,6 +35,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { Download, Search, List } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 
 const list = ref([])
 const total = ref(0)
@@ -62,7 +63,11 @@ const fetchList = async () => {
 }
 
 const onSearch = () => { page.value = 1; fetchList() }
-const exportData = () => window.open('/api/log/export/', '_blank')
+const exportData = () => {
+  const params = {}
+  if (search.value) params.search = search.value
+  return download('/log/export/', params, 'log_data.xlsx')
+}
 
 onMounted(fetchList)
 </script>

@@ -74,6 +74,7 @@ class PlanViewSet(BaseModelViewSet):
         """生产计划数据导出 Excel（与原版 plan_download_excel 一致）"""
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{
             '合同编号': item.contract.contract_number,
             '产品名称': item.productcategory.name if item.productcategory else '',
@@ -139,6 +140,7 @@ class ProductionTaskViewSet(BaseModelViewSet):
         """派任务单数据导出"""
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = []
         for t in qs:
             plan = t.contract
@@ -228,6 +230,7 @@ class ProductLabelViewSet(BaseModelViewSet):
         """产品铭牌数据导出"""
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{
             '产品名称': item.product.productcategory.name if item.product.productcategory else '',
             '产品型号': item.product.model,
@@ -308,6 +311,7 @@ class ProductDeliveryViewSet(BaseModelViewSet):
         """发货信息导出"""
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = []
         for d in qs:
             data.append({

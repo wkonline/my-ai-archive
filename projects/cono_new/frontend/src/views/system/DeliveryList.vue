@@ -98,6 +98,7 @@ import { Plus, Download, Search, Refresh, TrendCharts, Histogram, List, Edit, De
 import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 
 const router = useRouter()
 const list = ref([])
@@ -157,7 +158,13 @@ const resetFilter = () => {
   page.value = 1
   fetchList()
 }
-const exportData = () => window.open('/api/delivery/export/', '_blank')
+const exportData = () => {
+  const params = {}
+  if (startDate.value) params.start_date = startDate.value
+  if (endDate.value) params.end_date = endDate.value
+  if (customerName.value) params.customer_name = customerName.value
+  return download('/delivery/export/', params, 'delivery_data.xlsx')
+}
 
 const openAdd = () => router.push('/delivery/new')
 const openEdit = (row) => router.push(`/delivery/edit/${row.id}`)

@@ -93,6 +93,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Download, Search, Refresh, Promotion, List, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 
 const router = useRouter()
 const list = ref([])
@@ -158,7 +159,14 @@ const resetFilter = () => {
   page.value = 1
   fetchList()
 }
-const exportData = () => window.open('/api/task/export/', '_blank')
+const exportData = () => {
+  const params = {}
+  if (startDate.value) params.start_date = startDate.value
+  if (endDate.value) params.end_date = endDate.value
+  if (contractNumber.value) params.contract_number = contractNumber.value
+  if (keyword.value) params.keyword = keyword.value
+  return download('/task/export/', params, 'task_data.xlsx')
+}
 
 const openAdd = () => router.push('/task/new')
 const openEdit = (row) => router.push(`/task/edit/${row.id}`)

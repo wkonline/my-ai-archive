@@ -83,6 +83,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Download, Search, Refresh, List, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 
 const router = useRouter()
 const list = ref([])
@@ -120,7 +121,14 @@ const resetFilter = () => {
   page.value = 1
   fetchList()
 }
-const exportData = () => window.open('/api/return-product/export/', '_blank')
+const exportData = () => {
+  const params = {}
+  if (startDate.value) params.start_date = startDate.value
+  if (endDate.value) params.end_date = endDate.value
+  if (serviceNumber.value) params.service_number = serviceNumber.value
+  if (searchCustomer.value) params.customer_name = searchCustomer.value
+  return download('/return-product/export/', params, 'return_product_data.xlsx')
+}
 
 const openAdd = () => router.push('/return-product/new')
 const openEdit = (row) => router.push(`/return-product/edit/${row.id}`)

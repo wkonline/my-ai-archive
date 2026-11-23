@@ -91,6 +91,7 @@ class ServiceViewSet(BaseModelViewSet):
         """售后服务数据导出 Excel（与原版 service_download_excel 一致）"""
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{
             '接收日期': s.date,
             '客户名称': s.customer.company_name if s.customer else '',
@@ -215,6 +216,7 @@ class ServiceDetailViewSet(BaseModelViewSet):
         """维修服务数据导出"""
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{
             '客户名称': s.customer.company_name if s.customer else '',
             '维修编号': s.service.service_number if s.service else '',
@@ -461,6 +463,7 @@ class ReturnProductViewSet(BaseModelViewSet):
         """售后返件数据导出"""
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{
             '客户名称': r.customer.company_name if r.customer else '',
             '维修编号': r.service.service_number if r.service else '',

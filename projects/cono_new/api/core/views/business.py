@@ -81,6 +81,7 @@ class ContractViewSet(BaseModelViewSet):
         from io import BytesIO
         from django.http import HttpResponse
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         order_by = request.query_params.get('order_by')
         # 只接受列表页可排序的字段，避免非法字段让 order_by 抛 500
         allowed_sort = {'date', '-date', 'id', '-id'}
@@ -552,6 +553,7 @@ class ContractProductViewSet(BaseModelViewSet):
         from io import BytesIO
         from django.http import HttpResponse
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = []
         for cp in qs:
             contract = cp.contract
@@ -797,6 +799,7 @@ class CollectionViewSet(BaseModelViewSet):
         from io import BytesIO
         from django.http import HttpResponse
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{
             '回款日期': c.date,
             '客户名称': c.customer.company_name,
@@ -935,6 +938,7 @@ class InvoiceViewSet(BaseModelViewSet):
         from io import BytesIO
         from django.http import HttpResponse
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{
             '开票日期': i.date,
             '客户名称': i.customer.company_name,

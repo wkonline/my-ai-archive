@@ -104,6 +104,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, PieChart, List, Edit, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 import BaseChart from '../../components/BaseChart.vue'
 
 const router = useRouter()
@@ -195,7 +196,15 @@ const resetFilter = () => {
   fetchStats()
 }
 
-const exportData = () => window.open('/api/plan/export/', '_blank')
+const exportData = () => {
+  const params = {}
+  if (startDate.value) params.start_date = startDate.value
+  if (endDate.value) params.end_date = endDate.value
+  if (contractNumber.value) params.contract_number = contractNumber.value
+  if (keyword.value) params.keyword = keyword.value
+  if (filters.status !== '') params.completed_status = filters.status
+  return download('/plan/export/', params, 'plan_data.xlsx')
+}
 const openAdd = () => router.push('/plan/new')
 const openEdit = (row) => router.push(`/plan/edit/${row.id}`)
 

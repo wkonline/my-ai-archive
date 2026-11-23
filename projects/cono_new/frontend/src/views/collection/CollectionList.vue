@@ -122,6 +122,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, PieChart, List, Edit, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'
 
@@ -209,12 +210,11 @@ const resetFilter = () => {
 }
 
 const exportData = () => {
-  const params = new URLSearchParams()
-  if (dateFrom.value) params.set('date_from', dateFrom.value)
-  if (dateTo.value) params.set('date_to', dateTo.value)
-  if (keyword.value) params.set('keyword', keyword.value)
-  const qs = params.toString()
-  window.open('/api/collection/export/' + (qs ? '?' + qs : ''), '_blank')
+  const params = {}
+  if (dateFrom.value) params.date_from = dateFrom.value
+  if (dateTo.value) params.date_to = dateTo.value
+  if (keyword.value) params.keyword = keyword.value
+  return download('/collection/export/', params, 'collection_data.xlsx')
 }
 const openAdd = () => router.push('/collection/new')
 const openEdit = (row) => router.push(`/collection/edit/${row.id}`)

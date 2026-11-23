@@ -79,6 +79,7 @@ class CustomerViewSet(BaseModelViewSet):
         """客户数据导出"""
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{
             '客户名称': c.company_name,
             '联系人': c.contact_person or '',
@@ -153,6 +154,7 @@ class ProductCategoryViewSet(BaseModelViewSet):
     def export(self, request):
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{'产品名称': c.name, '产品描述': c.description or ''} for c in qs]
         df = pd.DataFrame(data)
         output = BytesIO()
@@ -201,6 +203,7 @@ class ProductViewSet(BaseModelViewSet):
         """产品数据导出"""
         import pandas as pd
         qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
         data = [{
             '产品名称': p.productcategory.name if p.productcategory else '',
             '产品型号': p.model,

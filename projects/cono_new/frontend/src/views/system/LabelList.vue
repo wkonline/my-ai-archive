@@ -47,6 +47,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Download, Search, List, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { download } from '../../utils/download'
 
 const router = useRouter()
 const list = ref([])
@@ -67,7 +68,11 @@ const fetchList = async () => {
 }
 
 const onSearch = () => { page.value = 1; fetchList() }
-const exportData = () => window.open('/api/product-label/export/', '_blank')
+const exportData = () => {
+  const params = {}
+  if (search.value) params.q = search.value
+  return download('/product-label/export/', params, 'product_label_data.xlsx')
+}
 const openAdd = () => router.push('/product-label/new')
 const openEdit = (row) => router.push(`/product-label/edit/${row.id}`)
 const handleDelete = async (row) => {
