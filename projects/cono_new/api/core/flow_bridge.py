@@ -5,6 +5,8 @@
 """
 import datetime
 
+from django.db.models import Q
+
 from api.core import models
 
 FLOW_DESCRIPTION_PREFIX = '从售后流转过来'
@@ -61,6 +63,28 @@ def create_service_for_return(flow_return, archive, operator, remark=None):
     return service
 
 
+def sync_return_result(archive, flow_return=None):
+    """档案状态变了，把它返回登记的「返回后状态」跟着改。
+
+    返回登记落库后档案还会继续变（售后返件登记、产品档案页标记维修完成），
+    返回后状态如果一直停在登记那一刻，列表看起来就像没修过。
+    档案又被寄给客户（客户试用中）时不改：那一次的返回后状态是历史事实。
+    """
+    if archive is None or archive.pk is None or archive.status == 2:
+        return None
+    if flow_return is None:
+        flow_return = models.FlowReturn.objects.filter(is_delete=False).filter(
+            Q(flow_out__archive=archive) | Q(new_archive=archive)
+        ).order_by('-id').first()
+    if flow_return is None:
+        return None
+    target = 2 if archive.status == 3 else 1
+    if flow_return.result_status != target:
+        flow_return.result_status = target
+        flow_return.save(update_fields=['result_status'])
+    return flow_return
+
+
 def complete_archive_repair(service, operator):
     """售后返件登记后：这块板的维修结束，档案回到公司库存。
 
@@ -71,14 +95,14 @@ def complete_archive_repair(service, operator):
     if flow_return is None:
         return None
     archive = flow_return.new_archive or flow_return.flow_out.archive
-    if archive.status != 3:
-        return archive
-    write_status_log(archive, 3, 1, operator,
-                     '售后返件登记，维修完成（维修单 {}）'.format(service.service_number))
-    archive.status = 1
-    archive.location_type = 1
-    archive.customer = None
-    archive.save(update_fields=['status', 'location_type', 'customer'])
+    if archive.status == 3:
+        write_status_log(archive, 3, 1, operator,
+                         '售后返件登记，维修完成（维修单 {}）'.format(service.service_number))
+        archive.status = 1
+        archive.location_type = 1
+        archive.customer = None
+        archive.save(update_fields=['status', 'location_type', 'customer'])
+    sync_return_result(archive, flow_return)
     return archive
 
 
@@ -89,12 +113,12 @@ def reopen_archive_repair(service, operator):
     if flow_return is None:
         return None
     archive = flow_return.new_archive or flow_return.flow_out.archive
-    if archive.status != 1:
-        return archive
-    write_status_log(archive, 1, 3, operator,
-                     '撤销售后返件登记，回到维修中（维修单 {}）'.format(service.service_number))
-    archive.status = 3
-    archive.location_type = 1
-    archive.customer = None
-    archive.save(update_fields=['status', 'location_type', 'customer'])
+    if archive.status == 1:
+        write_status_log(archive, 1, 3, operator,
+                         '撤销售后返件登记，回到维修中（维修单 {}）'.format(service.service_number))
+        archive.status = 3
+        archive.location_type = 1
+        archive.customer = None
+        archive.save(update_fields=['status', 'location_type', 'customer'])
+    sync_return_result(archive, flow_return)
     return archive

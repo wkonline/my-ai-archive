@@ -18,7 +18,7 @@ from rest_framework.response import Response
 
 from api.core import models
 from api.core.flow_bridge import (
-    create_service_for_return, write_status_log,
+    create_service_for_return, sync_return_result, write_status_log,
 )
 from api.core.serializers.flow import (
     ProductArchiveSerializer, FlowOutSerializer, FlowReturnSerializer,
@@ -97,6 +97,7 @@ class ProductArchiveViewSet(BaseModelViewSet):
         if old_status != archive.status:
             operator = _current_operator(self.request) or archive.handler
             _write_status_log(archive, old_status, archive.status, operator, '编辑档案')
+            sync_return_result(archive)
 
     @action(detail=True, methods=['post'], url_path='stock')
     def stock(self, request, pk=None):
@@ -110,6 +111,7 @@ class ProductArchiveViewSet(BaseModelViewSet):
         archive.customer = None
         archive.save(update_fields=['status', 'location_type', 'customer'])
         _write_status_log(archive, 3, 1, operator, '维修完成')
+        sync_return_result(archive)
         return Response(ProductArchiveSerializer(archive).data)
 
     @action(detail=True, methods=['post'], url_path='toggle-active')

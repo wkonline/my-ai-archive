@@ -449,6 +449,17 @@ class ServiceDetailViewSet(BaseModelViewSet):
             serializer.validated_data['repairman'] = serializer.instance.repairman or self.request.user
         super().perform_update(serializer)
 
+    def destroy(self, request, *args, **kwargs):
+        """删除维修记录后，维修单回到「正在维修」，否则售后服务列表会一直显示维修完成。"""
+        instance = self.get_object()
+        service_id = instance.service_id
+        result = super().destroy(request, *args, **kwargs)
+        still_repaired = models.ServiceDetail.objects.filter(
+            service_id=service_id, is_delete=False).exists()
+        if not still_repaired:
+            models.Service.objects.filter(pk=service_id).update(warranty_end=1)
+        return result
+
 
 class ReturnProductViewSet(BaseModelViewSet):
     queryset = models.ReturnProduct.objects.select_related(
