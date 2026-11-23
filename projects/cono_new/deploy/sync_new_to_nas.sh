@@ -7,7 +7,8 @@
 #                              (/volume1/docker/cono_app -> /app，工作目录 /app/api)
 #   8000  cono_web             老版系统，本脚本不触碰
 #
-# 部署策略：整仓同步 → 重建 API 镜像（含 pip 依赖）→ 重建 API 容器 → 重载 Nginx。
+# 部署策略：整仓同步 → 重建 API 镜像（含 pip 依赖）→ 重建 API 容器
+#           → 执行数据库迁移 → 重载 Nginx → 校验。
 #   * 新版后端依赖仓库根目录的 cono/（复用老版模型）和 cono_new/settings.py
 #     （CONO_PERMISSION / CONO_MENU），所以必须整仓同步，不能只传 api/。
 #   * 后端代码是 bind mount，但 Python 依赖烤在镜像里，requirements.txt 变化
@@ -47,15 +48,15 @@ EXCLUDES=(
 )
 
 # 仅当 src/ 有变更时才重建前端；否则直接跳过以节省时间
-echo "==> 1/6 重新构建前端 ..."
+echo "==> 1/7 重新构建前端 ..."
 cd "$ROOT/frontend"
 npm run build
 
-echo "==> 2/6 整仓同步到 $HOST:$DEST ..."
+echo "==> 2/7 整仓同步到 $HOST:$DEST ..."
 COPYFILE_DISABLE=1 tar -czf - "${EXCLUDES[@]}" -C "$ROOT" . \
   | ssh "${SSH_OPTS[@]}" "$HOST" "tar -xzf - -C $DEST"
 
-echo "==> 3/6 同步前端产物（原地覆盖 + 清理旧 hash 文件）..."
+echo "==> 3/7 同步前端产物（原地覆盖 + 清理旧 hash 文件）..."
 # 必须原地覆盖：nginx 容器的 /usr/share/nginx/html 是 bind mount，
 # 一旦把 dist 目录整体换掉（mv 成新 inode），容器里的挂载仍指向已删除的旧目录，会 403。
 COPYFILE_DISABLE=1 tar -czf - -C "$ROOT/frontend/dist" . \
@@ -73,10 +74,10 @@ if [ -s "$tmp_del" ]; then
 fi
 rm -f "$tmp_remote" "$tmp_local" "$tmp_del"
 
-echo "==> 4/6 重建新版 API 镜像（同步 pip 依赖）..."
+echo "==> 4/7 重建新版 API 镜像（同步 pip 依赖）..."
 ssh "${SSH_OPTS[@]}" "$HOST" "cd $DEST/api && sudo -n $DOCKER build -q -t cono_api:latest . >/tmp/cono_api_build.log 2>&1 && echo '    镜像已更新' || { echo '!! 镜像构建失败，容器保持原状'; tail -20 /tmp/cono_api_build.log; exit 1; }"
 
-echo "==> 5/6 重建新版 API 容器 ..."
+echo "==> 5/7 重建新版 API 容器 ..."
 # restart 不会切换到新镜像，必须 rm + run；-w /app/api 让 cono_api 包可导入。
 ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER rm -f cono_api >/dev/null 2>&1 || true; \
   sudo -n $DOCKER run -d --name cono_api --restart unless-stopped --network host \
@@ -94,6 +95,12 @@ ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER rm -f cono_api >/dev/null 2>&1 || 
     -v /volume1/docker/cono_backups:/app/backups \
     cono_api:latest gunicorn cono_api.wsgi:application --bind 0.0.0.0:8002 --workers 2 --timeout 120 >/dev/null && \
   sudo -n $DOCKER ps --filter name=cono_api --format '    {{.Names}}  {{.Status}}'"
+
+echo "==> 6/7 执行数据库迁移 ..."
+# 代码是 bind mount，第 5 步一重建容器新代码就生效，但表结构还没跟上；
+# 少了这一步，新增迁移对应的页面会 500（例如 0044 的客户联系人）。
+# 走 cono_api（工作目录 /app/api，PyMySQL），与备份命令同一条路径。
+ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER exec cono_api python manage.py migrate --noinput 2>&1 | tail -5"
 
 # nginx 配置/前端产物变化后重载（不重启容器）
 ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER exec cono_web_new nginx -t >/dev/null 2>&1 && sudo -n $DOCKER exec cono_web_new nginx -s reload >/dev/null 2>&1 && echo '    Nginx 已重载'"
@@ -121,7 +128,7 @@ else
         cono_api:latest sh -c 'while true; do $BACKUP_CMD; sleep 300; done'"
 fi
 
-echo "==> 6/6 校验 ..."
+echo "==> 7/7 校验 ..."
 page=""; api=""; old=""
 for _ in $(seq 1 10); do
   page=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://192.168.1.202:8001/ || true)
@@ -133,7 +140,13 @@ old=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://192.168.1.202:8
 echo "    新版前端 : $page   (期望 200)"
 echo "    新版 API  : $api   (期望 401，代表服务已响应未认证请求)"
 echo "    老版系统  : $old   (期望 200)"
+
+# /api/ 返回 401 只能说明服务活着，表缺失时它照样 401，所以这里直接查表结构，
+# 避免「脚本报成功、页面却 500」。未执行的迁移数必须为 0。
+pending=$(ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER exec cono_api python manage.py showmigrations cono --plan 2>/dev/null | grep -c '\\[ \\]' || true")
+echo "    待执行迁移: ${pending:-?}   (期望 0)"
 [ "$page" = "200" ] || { echo "!! 新版前端异常"; exit 1; }
 [ "$api" = "401" ] || { echo "!! 新版 API 异常"; exit 1; }
 [ "$old" = "200" ] || { echo "!! 老版系统异常"; exit 1; }
+[ "$pending" = "0" ] || { echo "!! 还有未执行的数据库迁移"; exit 1; }
 echo "==> 部署完成: http://192.168.1.202:8001/"
