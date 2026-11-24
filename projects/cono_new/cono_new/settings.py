@@ -32,6 +32,10 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
 # 本地开发可设置为 http://127.0.0.1:5173/（Vite 开发服务器）。
 NEW_APP_URL = os.environ.get('CONO_NEW_APP_URL', 'http://192.168.1.202:8001/')
 
+# 是否允许自助注册。默认关闭：注册出来的账号即使是最低权限角色也带着 user_reset 等
+# 用户管理权限，局域网内任何人都能借此重置管理员密码。账号统一由管理员在用户管理里创建。
+CONO_ALLOW_REGISTER = os.environ.get('CONO_ALLOW_REGISTER', 'false').lower() == 'true'
+
 
 # Application definition
 

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { login as apiLogin, register as apiRegister } from '../api/auth'
+import { login as apiLogin } from '../api/auth'
 
 const EXPIRY_KEY_PREFIX = 'token_expiry_'
 const TOKEN_KEYS = ['access_token', 'refresh_token', 'user_info', 'user_permissions', 'user_menus']
@@ -91,23 +91,6 @@ export const useUserStore = defineStore('user', {
         user_permissions: JSON.stringify(this.permissions),
         user_menus: JSON.stringify(this.menus),
       }, rememberDuration, expiresAt)
-      return data
-    },
-    async register(payload) {
-      const data = await apiRegister(payload)
-      const rememberDuration = payload.rememberDuration || 0
-      this.rememberDuration = rememberDuration
-      this.token = data.access
-      this.user = data.user
-      this.permissions = data.user?.permissions || []
-      this.menus = data.user?.menus || []
-      saveTokens({
-        access_token: data.access,
-        refresh_token: data.refresh,
-        user_info: JSON.stringify(data.user),
-        user_permissions: JSON.stringify(this.permissions),
-        user_menus: JSON.stringify(this.menus),
-      }, rememberDuration, data.expires_at)
       return data
     },
     logout() {

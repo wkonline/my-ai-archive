@@ -112,10 +112,16 @@ class LoginView(APIView):
 
 
 class RegisterView(APIView):
-    """用户注册：创建新账号并自动登录"""
+    """用户注册：创建新账号并自动登录。
+
+    默认关闭（settings.CONO_ALLOW_REGISTER），账号由管理员在用户管理里创建。
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
+        from django.conf import settings
+        if not getattr(settings, 'CONO_ALLOW_REGISTER', False):
+            return Response({'detail': '系统未开放自助注册，请联系管理员创建账号'}, status=403)
         username = request.data.get('username', '').strip()
         password = request.data.get('password', '')
         confirm_password = request.data.get('confirm_password', '')
@@ -228,15 +234,6 @@ class RegisterView(APIView):
                 'menus': menus,
             }
         })
-
-
-class PublicDepartmentsView(APIView):
-    """注册页使用：匿名可读取部门 id/名称，不暴露其他资料。"""
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        data = list(Department.objects.order_by('id').values('id', 'title'))
-        return Response(data)
 
 
 class ChangePasswordView(APIView):

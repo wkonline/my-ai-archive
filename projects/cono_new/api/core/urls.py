@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from api.core.views.auth import (
-    LoginView, RegisterView, PublicDepartmentsView, ChangePasswordView,
+    LoginView, RegisterView, ChangePasswordView,
 )
 from api.core.views.captcha_view import CreateCaptchaView
 from api.core.views.home import HomeView
@@ -58,7 +58,6 @@ router.register('account-vault', AccountVaultViewSet)
 urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='api_login'),
     path('auth/register/', RegisterView.as_view(), name='api_register'),
-    path('auth/departments/', PublicDepartmentsView.as_view(), name='api_public_departments'),
     path('auth/captcha/', CreateCaptchaView.as_view(), name='api_captcha'),
     path('auth/change-password/', ChangePasswordView.as_view(), name='api_change_password'),
     path('home/', HomeView.as_view(), name='api_home'),

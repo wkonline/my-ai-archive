@@ -1,4 +1,5 @@
 from django.shortcuts import render, HttpResponse, redirect
+from django.conf import settings
 from django import forms
 from django.contrib import messages
 from io import BytesIO
@@ -83,7 +84,9 @@ def logout(request):
     return redirect('/login/')
 
 def register(request):
-    """ 注册 """
+    """ 注册（默认关闭，需 CONO_ALLOW_REGISTER=true 才开放） """
+    if not getattr(settings, 'CONO_ALLOW_REGISTER', False):
+        return redirect('/login/')
     title = "用户注册"
     if request.method == "GET":
         form = RegisterUserModelForm()

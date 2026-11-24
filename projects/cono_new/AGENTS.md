@@ -34,6 +34,10 @@ Django DRF（`api/`）+ Vue3/Element Plus（`frontend/`）。部署到 NAS 192.1
   不按「权限条数最少」动态挑选：条数会随管理员调整而变，且 finance 之类角色条数少却掌握金额数据。
 - `admin` 权限/菜单由 `sync_admin_role()` 与 settings 对齐；权限管理页对 admin 只允许改中文名。
 - 删除角色前必须先清空该角色下的用户（后端会拒绝），不会自动改用户角色。
+- **自助注册默认关闭**（`settings.CONO_ALLOW_REGISTER`，环境变量 `CONO_ALLOW_REGISTER=true` 可临时开放）。
+  老系统 `/register/`、新系统 `/api/auth/register/` 都会拒绝，账号只能由管理员在用户管理里创建；
+  匿名部门接口 `/api/auth/departments/` 已随注册页一起移除。原因：最低权限的 upkeeper 仍带
+  `user_reset`，开放注册等于让局域网内任何人重置管理员密码。
 
 ## 数据导出
 
