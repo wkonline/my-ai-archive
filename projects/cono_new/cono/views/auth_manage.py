@@ -1,3 +1,5 @@
+import re
+
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from cono import models
@@ -8,6 +10,8 @@ from cono.tools.auth_profile import (
     canonical_menus,
     grouped_permission_items,
     grouped_menus,
+    is_builtin_role,
+    BUILTIN_ROLE_KEYS,
 )
 
 def require_admin(request):
@@ -19,7 +23,10 @@ def role_list(request):
         return HttpResponse("无权访问")
     ensure_default_roles()
     roles = models.AuthRole.objects.all()
-    return render(request, 'auth/role_list.html', {'roles': roles})
+    return render(request, 'auth/role_list.html', {
+        'roles': roles,
+        'builtin_role_keys': BUILTIN_ROLE_KEYS,
+    })
 
 def role_add(request):
     if require_admin(request):
@@ -35,6 +42,13 @@ def role_add(request):
                 'error': '角色标识和名称不能为空',
                 'permission_groups': grouped_permission_items(),
                 'menu_groups': grouped_menus(),
+            })
+        if not re.fullmatch(r'[A-Za-z0-9_-]{1,32}', key):
+            return render(request, 'auth/role_edit.html', {
+                'error': '角色标识只能包含字母、数字、下划线和短横线',
+                'permission_groups': grouped_permission_items(),
+                'menu_groups': grouped_menus(),
+                'form': request.POST,
             })
         if models.AuthRole.objects.filter(key=key).exists():
             return render(request, 'auth/role_edit.html', {
@@ -74,8 +88,11 @@ def role_edit(request, pk):
             })
         menu_map = {item['title']: item for item in canonical_menus()}
         role.name = name
-        role.permissions = sorted(set(permissions))
-        role.menus = [menu_map[title] for title in menu_titles if title in menu_map]
+        # 管理员角色固定全部权限/栏目，由 ensure_default_roles 每次按 settings 同步；
+        # 这里只允许改中文名，避免页面显示「已保存」但权限又被覆盖。
+        if role.key != 'admin':
+            role.permissions = sorted(set(permissions))
+            role.menus = [menu_map[title] for title in menu_titles if title in menu_map]
         role.save()
         return redirect('/auth/role/list/')
     return render(request, 'auth/role_edit.html', {
@@ -88,7 +105,10 @@ def role_delete(request, pk):
     if require_admin(request):
         return HttpResponse("无权访问")
     role = get_object_or_404(models.AuthRole, pk=pk)
-    models.User.objects.filter(role=role.key).update(role='servicer')
+    if is_builtin_role(role.key):
+        return HttpResponse("内置角色不可删除")
+    if models.User.objects.filter(role=role.key).exists():
+        return HttpResponse("该角色下还有用户，请先在用户管理里改角色")
     role.delete()
     return redirect('/auth/role/list/')
 

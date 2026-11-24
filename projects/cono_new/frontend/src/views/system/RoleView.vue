@@ -9,7 +9,7 @@
         <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
         <el-table-column prop="key" label="角色标识" width="120">
           <template #default="{ row }">
-            <el-tag v-if="BUILTIN.includes(row.key)" type="info" size="small">{{ row.key }}（内置）</el-tag>
+            <el-tag v-if="row.builtin" type="info" size="small">{{ row.key }}（内置）</el-tag>
             <span v-else>{{ row.key }}</span>
           </template>
         </el-table-column>
@@ -22,7 +22,7 @@
         </el-table-column>
         <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
           <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
-            <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
+            <el-button v-if="!row.builtin" class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -47,7 +47,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
 
 const router = useRouter()
-const BUILTIN = ['admin','saler','servicer','upkeeper','finance']
 
 const list = ref([])
 const total = ref(0)

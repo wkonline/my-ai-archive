@@ -85,6 +85,10 @@ def _normalize_menus(raw):
 def get_effective_menus(user):
     """用户有效菜单 = 角色 menus（优先）+ 个人 menus（若 menu_customize）。"""
     role_key = getattr(user, 'role', 'servicer')
+    if role_key == 'admin':
+        # 管理员始终看全部栏目，避免库里 admin 记录未同步时看不到新栏目
+        from django.conf import settings
+        return _normalize_menus(settings.CONO_MENU.get('admin', []))
     profile = AuthUserProfile.objects.filter(user=user).first()
     if profile is not None and getattr(profile, 'menu_customize', False):
         return _normalize_menus(profile.menus)

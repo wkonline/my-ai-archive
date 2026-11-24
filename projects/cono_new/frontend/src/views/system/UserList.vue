@@ -21,7 +21,7 @@
         <el-table-column prop="id_number" label="身份证号" min-width="175" show-overflow-tooltip />
         <el-table-column prop="phone" label="手机" width="120" />
         <el-table-column prop="department_name" label="所属部门" min-width="115" />
-        <el-table-column prop="role" label="角色" width="100" />
+        <el-table-column prop="role_display" label="角色" width="100" />
         <el-table-column prop="create_date" label="入职时间" width="105" align="center" />
         <el-table-column label="操作" class-name="op-cell" width="230" fixed="right">
           <template #default="{ row }"><el-button v-if="isAdmin" class="op-btn op-perm" size="small" @click="openPermission(row)"><el-icon><Lock /></el-icon>&nbsp;权限</el-button>

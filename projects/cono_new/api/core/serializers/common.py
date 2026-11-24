@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import serializers
 from api.core import models
 
@@ -11,6 +13,10 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.title', read_only=True)
     gender_display = serializers.CharField(source='get_gender_display', read_only=True)
+    role_display = serializers.CharField(read_only=True)
+    # 角色来源改为 auth_role 表，模型上的 ROLE_CHOICES 只是老系统遗留的默认值，
+    # 这里显式声明避免 DRF 按固定选项拒绝自定义角色。
+    role = serializers.CharField(required=False, max_length=models.User._meta.get_field('role').max_length)
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
@@ -29,23 +35,34 @@ class UserSerializer(serializers.ModelSerializer):
     # 否则任何拥有 user_edit 的账号都能把自己改成 admin 或重置管理员密码。
     ADMIN_ONLY_FIELDS = ('role', 'password')
 
+    def validate_role(self, value):
+        """角色取自 auth_role 表，因此不能沿用 User.ROLE_CHOICES 的固定选项校验。"""
+        if not models.AuthRole.objects.filter(key=value).exists():
+            raise serializers.ValidationError('角色不存在')
+        return value
+
     def _is_admin(self):
         request = self.context.get('request')
         user = getattr(request, 'user', None)
         return bool(user and getattr(user, 'role', '') == 'admin')
 
     def validate(self, attrs):
+        # 非管理员提交的角色一律丢弃：老版 UserModelForm 也没有 role 字段，
+        # 前端新建/编辑用户时却总会带上 role，报错会让有 user_edit 权限的账号
+        # 连普通资料都改不了。
         if not self._is_admin():
-            illegal = [f for f in self.ADMIN_ONLY_FIELDS if f in attrs]
-            if illegal:
-                raise serializers.ValidationError(
-                    {f: '只有管理员可以修改该字段。' for f in illegal})
+            attrs.pop('role', None)
+            # 新建用户必须能设初始密码；修改他人密码则只有管理员可以做
+            if self.instance is not None:
+                attrs.pop('password', None)
         return attrs
 
     def create(self, validated_data):
-        from django.conf import settings
-        import hashlib
+        from cono.tools.auth_profile import default_role_key, ensure_default_roles
         password = validated_data.pop('password', None) or '123456'
+        if not validated_data.get('role'):
+            ensure_default_roles()
+            validated_data['role'] = default_role_key()
         obj = models.User(**validated_data)
         if password:
             obj.password = self._hash(password)
@@ -533,9 +550,32 @@ class UserLogSerializer(serializers.ModelSerializer):
 
 
 class AuthRoleSerializer(serializers.ModelSerializer):
+    builtin = serializers.SerializerMethodField()
+
     class Meta:
         model = models.AuthRole
         fields = '__all__'
+
+    def get_builtin(self, obj):
+        from cono.tools.auth_profile import is_builtin_role
+        return is_builtin_role(obj.key)
+
+    def validate_key(self, value):
+        # 角色标识会写进 user.role 并作为权限缓存键，限制为字母/数字/下划线/短横线。
+        if not re.fullmatch(r'[A-Za-z0-9_-]{1,32}', value or ''):
+            raise serializers.ValidationError('角色标识只能包含字母、数字、下划线和短横线')
+        return value
+
+    def validate(self, attrs):
+        if self.instance is not None:
+            if 'key' in attrs and attrs['key'] != self.instance.key:
+                raise serializers.ValidationError({'key': '角色标识创建后不可修改'})
+            if self.instance.key == 'admin':
+                # admin 的权限/菜单始终由 settings 同步（中间件与 API 也直接放行），
+                # 允许改中文名，但忽略权限与栏目修改，避免前端以为改成功了。
+                attrs.pop('permissions', None)
+                attrs.pop('menus', None)
+        return attrs
 
 
 class AccountVaultSerializer(serializers.ModelSerializer):

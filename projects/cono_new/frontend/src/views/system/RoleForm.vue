@@ -22,7 +22,16 @@
         </el-row>
       </el-form>
 
-      <el-tabs v-model="activeTab" class="role-tabs">
+      <el-alert
+        v-if="isAdminRole"
+        class="admin-tip"
+        type="warning"
+        :closable="false"
+        show-icon
+        title="管理员角色固定拥有全部权限和栏目，这里只改中文名"
+      />
+
+      <el-tabs v-if="!isAdminRole" v-model="activeTab" class="role-tabs">
         <el-tab-pane label="菜单栏目" name="menus">
           <div class="perm-groups">
             <div v-for="group in menuGroupList" :key="group.name" class="perm-group">
@@ -74,6 +83,7 @@ import request from '../../api/request'
 const route = useRoute()
 const router = useRouter()
 const isEdit = computed(() => !!route.params.id)
+const isAdminRole = ref(false)
 const saving = ref(false)
 const activeTab = ref('menus')
 const options = ref({ role_names: {}, permission_groups: {}, menu_groups: {}, all_codes: [], permission_labels: {} })
@@ -196,6 +206,7 @@ const loadData = async () => {
     try {
       const data = await request.get(`/auth-role/${route.params.id}/`)
       Object.assign(form, { id: data.id, key: data.key || '', name: data.name || '', menus: data.menus || [], permissions: data.permissions || [] })
+      isAdminRole.value = data.key === 'admin'
     } catch {}
   }
   Object.keys(permSet).forEach(k => delete permSet[k])
@@ -206,6 +217,16 @@ const loadData = async () => {
 async function handleSave() {
   if (!form.key) { ElMessage.warning('请输入角色标识'); return }
   if (!form.name) { ElMessage.warning('请输入角色名称'); return }
+  if (isAdminRole.value) {
+    // 管理员的权限/栏目由后端按 settings 同步，提交也没用，只提交中文名
+    saving.value = true
+    try {
+      await request.put(`/auth-role/${form.id}/`, { name: form.name })
+      ElMessage.success('保存成功')
+      router.push('/auth/role')
+    } finally { saving.value = false }
+    return
+  }
   const perms = Object.keys(permSet).filter(c => permSet[c])
   form.permissions = perms
   saving.value = true
@@ -228,6 +249,7 @@ onMounted(loadData)
 .page-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
 .form-card { width: 100%; }
 .role-tabs { margin-top: 8px; }
+.admin-tip { margin-top: 8px; }
 .perm-groups { max-height: 500px; overflow-y: auto; padding-right: 4px; }
 .perm-group { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #ebeef5; }
 .perm-group-title { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }

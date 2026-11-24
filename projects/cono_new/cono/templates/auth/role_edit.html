@@ -36,6 +36,9 @@
     </div>
 
     {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+    {% if role.key == 'admin' %}
+        <div class="alert alert-warning">管理员角色固定拥有全部权限和栏目，此处只能修改角色名称。</div>
+    {% endif %}
 
     <form method="post">
         {% csrf_token %}

@@ -58,7 +58,8 @@ class Department(models.Model):
 #员工表
 class User(models.Model):
     """ 员工表 """
-    #角色
+    # 角色：实际可选值以 auth_role 表为准，这里只保留内置角色的中文名做兜底显示。
+    # 不再使用 choices 限制，否则自定义角色无法保存（DRF/表单会按固定选项校验）。
     ROLE_CHOICES = (
         ('admin', "管理员"),
         ('saler', "业务员"),
@@ -66,7 +67,7 @@ class User(models.Model):
         ('upkeeper', "售后服务"),
         ('finance', "财务经理"),
     )
-    role = models.CharField(verbose_name="角色", max_length=12,choices=ROLE_CHOICES, default="servicer")
+    role = models.CharField(verbose_name="角色", max_length=32, default="upkeeper")
     # 员工姓名
     username = models.CharField(verbose_name="用户名",max_length=16)
     # 员工登录密码
@@ -98,6 +99,12 @@ class User(models.Model):
     @property
     def is_anonymous(self):
         return False
+
+    @property
+    def role_display(self):
+        """角色中文名：优先用 auth_role 表里配置的名称，兼容自定义角色。"""
+        from cono.tools.auth_profile import role_display_name
+        return role_display_name(self.role)
 
     def __str__(self):
         # 返回员工姓名

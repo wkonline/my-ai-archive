@@ -8,6 +8,7 @@ from cono import models
 from cono.tools.bootstrap import BootStrapForm
 from cono.tools.form import RegisterUserModelForm
 from cono.tools.encrypt import md5
+from cono.tools.auth_profile import default_role_key
 
 class LoginForm(BootStrapForm):
     username = forms.CharField(
@@ -97,7 +98,7 @@ def register(request):
             return render(request, 'register.html', {'form': form, 'title': title})
 
         instance = form.save(commit=False)
-        instance.role = 'servicer'
+        instance.role = default_role_key()
         instance.create_date = date.today()
         instance.save()
         return render(request, 'register_success.html', {

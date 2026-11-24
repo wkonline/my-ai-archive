@@ -47,9 +47,10 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="所属角色" required>
-              <el-select v-model="form.role" style="width:100%">
-                <el-option v-for="(label, value) in roleMap" :key="value" :label="label" :value="value" />
+              <el-select v-model="form.role" :disabled="!isAdmin" style="width:100%">
+                <el-option v-for="r in roles" :key="r.key" :label="`${r.name}（${r.key}）`" :value="r.key" />
               </el-select>
+              <div v-if="!isAdmin" class="form-tip">只有管理员可以调整角色</div>
             </el-form-item>
           </el-col>
           <el-col :span="12" v-if="!form.id">
@@ -79,22 +80,35 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { UserFilled } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { useUserStore } from '../../stores/user'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.isAdmin)
 const isEdit = computed(() => !!route.params.id)
 const saving = ref(false)
 const formRef = ref()
-const form = reactive({ id: null, username: '', password: '', gender: 1, id_number: '', phone: '', address: '', department: null, role: 'servicer', create_date: '' })
+const form = reactive({ id: null, username: '', password: '', gender: 1, id_number: '', phone: '', address: '', department: null, role: 'upkeeper', create_date: '' })
 const departments = ref([])
-const roleMap = { admin: '管理员', saler: '业务员', servicer: '客户经理', upkeeper: '售后服务', finance: '财务经理' }
+const roles = ref([])
 
 const loadData = async () => {
   try {
     departments.value = (await request.get('/department/?page_size=200')).results || []
   } catch {}
+  try {
+    const data = await request.get('/auth-role/?page_size=200')
+    roles.value = data.results || data || []
+  } catch {}
   if (!isEdit.value) {
-    Object.assign(form, { id: null, username: '', password: '', gender: 1, id_number: '', phone: '', address: '', department: null, role: 'servicer', create_date: '' })
+    // 默认角色与后端 default_role_key() 一致：权限最少的非管理员角色，同权限数优先内置售后服务
+    const candidates = roles.value.filter(r => r.key !== 'admin')
+    const fallback = [...candidates].sort((a, b) =>
+      (a.permissions || []).length - (b.permissions || []).length
+      || (a.key === 'upkeeper' ? -1 : b.key === 'upkeeper' ? 1 : 0)
+      || a.key.localeCompare(b.key))[0]
+    Object.assign(form, { id: null, username: '', password: '', gender: 1, id_number: '', phone: '', address: '', department: null, role: fallback?.key || 'upkeeper', create_date: '' })
     return
   }
   try {
@@ -103,7 +117,7 @@ const loadData = async () => {
       id: data.id, username: data.username || '', password: '',
       gender: data.gender ?? 1, id_number: data.id_number || '', phone: data.phone || '',
       address: data.address || '', department: data.department || null,
-      role: data.role || 'servicer', create_date: data.create_date || '',
+      role: data.role || 'upkeeper', create_date: data.create_date || '',
     })
   } catch {}
 }
@@ -136,6 +150,7 @@ onMounted(loadData)
 
 <style scoped>
 .page-header { margin-bottom: 16px; }
+.form-tip { font-size: 12px; color: #909399; line-height: 1.4; }
 .page-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
 .form-card { width: 100%; }
 .footer-actions { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e4e7ed; display: flex; justify-content: flex-end; gap: 8px; }

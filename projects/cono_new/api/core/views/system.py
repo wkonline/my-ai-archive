@@ -89,33 +89,12 @@ def _permission_labels():
 
 
 def _ensure_default_roles():
-    """确保内置角色（admin/saler/servicer/upkeeper/finance）在 auth_role 表中存在。
+    """补齐内置角色（admin/upkeeper），逻辑统一由 cono.tools.auth_profile 维护。
 
-    必须逐个 key 检查：早期版本用 `exists()` 做整体判断，只要表里还剩一个角色
-    就整体跳过，导致被删掉的其他内置角色再也不会补回来。
+    业务员/客户经理/财务经理等已改为普通角色，被删除后不再自动重建。
     """
-    from django.conf import settings
-    from api.core.models import AuthRole
-    role_names = {
-        'admin': '管理员', 'saler': '业务员', 'servicer': '客户经理',
-        'upkeeper': '售后服务', 'finance': '财务经理',
-    }
-    try:
-        existing = set(AuthRole.objects.values_list('key', flat=True))
-    except Exception:
-        return
-    missing = [k for k in role_names if k not in existing]
-    if not missing:
-        return
-    cono_perm = getattr(settings, 'CONO_PERMISSION', {}) or {}
-    cono_menu = getattr(settings, 'CONO_MENU', {}) or {}
-    for key in missing:
-        AuthRole.objects.create(
-            key=key,
-            name=role_names[key],
-            permissions=sorted(set(cono_perm.get(key, []) or [])),
-            menus=cono_menu.get(key, []) or [],
-        )
+    from cono.tools.auth_profile import ensure_default_roles
+    ensure_default_roles()
 
 
 class AuthRoleViewSet(BaseModelViewSet):
@@ -131,15 +110,11 @@ class AuthRoleViewSet(BaseModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='permission-options')
     def permission_options(self, request):
-        """返回老版 CONO_PERMISSION / CONO_MENU / CONO_ROLE_NAMES 供前端勾选。"""
+        """返回老版 CONO_PERMISSION / CONO_MENU / 内置角色名，供前端勾选。"""
         _ensure_default_roles()
         from django.conf import settings
-        from api.core.models import User
+        from cono.tools.auth_profile import ROLE_NAMES
 
-        role_names = {
-            'admin': '管理员', 'saler': '业务员', 'servicer': '客户经理',
-            'upkeeper': '售后服务', 'finance': '财务经理',
-        }
         # Build grouped permissions (reuse old CONO_PERMISSION structure)
         cono_perm = getattr(settings, 'CONO_PERMISSION', {})
         cono_menu = getattr(settings, 'CONO_MENU', {})
@@ -148,7 +123,7 @@ class AuthRoleViewSet(BaseModelViewSet):
         for codes in cono_perm.values():
             all_codes.update(codes)
         return Response({
-            'role_names': role_names,
+            'role_names': ROLE_NAMES,
             'permission_groups': cono_perm,
             'menu_groups': {k: v for k, v in cono_menu.items()},
             'all_codes': sorted(all_codes),
@@ -161,12 +136,18 @@ class AuthRoleViewSet(BaseModelViewSet):
         return Response({'total': qs.count(), 'keys': list(qs.values_list('key', flat=True))})
 
     def destroy(self, request, *args, **kwargs):
-        """删除角色时，将引用该角色的用户回退到 servicer（与老版一致）。"""
+        """删除角色：内置角色（admin/upkeeper）不可删，仍有用户使用的角色也不可删。
+
+        不自动把用户改到别的角色：角色切换会静默改变用户权限，必须由管理员显式操作。
+        """
         role = self.get_object()
-        if role.key in ('admin', 'saler', 'servicer', 'upkeeper', 'finance'):
+        from cono.tools.auth_profile import is_builtin_role
+        if is_builtin_role(role.key):
+            return Response({'detail': f'内置角色 {role.key} 不可删除'}, status=400)
+        in_use = models.User.objects.filter(role=role.key).count()
+        if in_use:
             return Response(
-                {'detail': f'内置角色 {role.key} 不可删除'}, status=400)
-        models.User.objects.filter(role=role.key).update(role='servicer')
+                {'detail': f'还有 {in_use} 个用户属于该角色，请先在用户管理里改角色'}, status=400)
         role.delete()
         return Response(status=204)
 

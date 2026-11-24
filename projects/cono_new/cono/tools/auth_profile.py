@@ -20,6 +20,40 @@ def all_permission_codes():
     return sorted(codes)
 
 
+# 内置角色：只有管理员和售后服务常驻，其余角色（含自定义角色）都可在权限管理页删除。
+BUILTIN_ROLE_KEYS = ('admin', 'upkeeper')
+# 兜底中文名：角色被删除后，仍属于该角色的用户还能显示出可读的名字。
+ROLE_NAMES = dict(models.User.ROLE_CHOICES)
+# 新用户默认角色 / 角色表为空时的兜底角色
+DEFAULT_ROLE_KEY = 'upkeeper'
+
+
+def is_builtin_role(role_key):
+    return role_key in BUILTIN_ROLE_KEYS
+
+
+def role_display_name(role_key):
+    profile = get_role_profile(role_key)
+    if profile is not None and profile.name:
+        return profile.name
+    return ROLE_NAMES.get(role_key, role_key)
+
+
+def default_role_key():
+    """新注册/新建用户的默认角色：权限最少的非管理员角色。
+
+    权限数相同时优先内置的 upkeeper，保证同样的角色表在不同环境里选出同一个默认值；
+    没有任何非管理员角色时回退到 upkeeper。
+    """
+    rows = list(_try(lambda: list(models.AuthRole.objects.exclude(key='admin'))) or [])
+    if not rows:
+        return DEFAULT_ROLE_KEY
+    return min(
+        rows,
+        key=lambda r: (len(r.permissions or []), 0 if r.key == DEFAULT_ROLE_KEY else 1, r.key),
+    ).key
+
+
 PERMISSION_GROUPS = {
     '业务流程': [
         'contract_',
@@ -395,26 +429,47 @@ def grouped_menus():
     return [{'name': name, 'items': items} for name, items in grouped.items() if items]
 
 
-def ensure_default_roles():
-    if _try(lambda: models.AuthRole.objects.exists()):
+def sync_admin_role():
+    """管理员角色始终与 settings 对齐：权限取全部权限码，菜单同步全部栏目。
+
+    新增权限码/栏目只加在 settings 里，历史库里已有的 admin 记录不会自动更新，
+    会出现「管理员进不了新功能、导航里也看不到新栏目」。管理员本来就放行全部
+    （中间件与 API 都对 admin 直接 return），因此这里只对 admin 做强制对齐，
+    其他角色（含 upkeeper）仍然尊重管理员在权限管理页里的勾选。
+    """
+    role = get_role_profile('admin')
+    if role is None:
         return
-    role_names = {
-        'admin': '管理员',
-        'saler': '业务员',
-        'servicer': '客户经理',
-        'upkeeper': '售后服务',
-        'finance': '财务经理',
-    }
-    for key, permissions in settings.CONO_PERMISSION.items():
-        menus = settings.CONO_MENU.get(key, [])
+    permissions = sorted(set(role.permissions or []) | set(all_permission_codes()))
+    menus = settings.CONO_MENU.get('admin') or []
+    if permissions == list(role.permissions or []) and menus == list(role.menus or []):
+        return
+    role.permissions = permissions
+    role.menus = menus
+    role.save(update_fields=['permissions', 'menus'])
+
+
+def ensure_default_roles():
+    """补齐内置角色（仅 admin/upkeeper）。
+
+    按 key 逐个判断而不是整表 `exists()`：否则删掉某个内置角色后，只要表里还有
+    其他角色就永远不会补回来。
+    """
+    existing = _try(lambda: set(models.AuthRole.objects.values_list('key', flat=True)))
+    if existing is None:
+        return
+    for key in BUILTIN_ROLE_KEYS:
+        if key in existing:
+            continue
         models.AuthRole.objects.update_or_create(
             key=key,
             defaults={
-                'name': role_names.get(key, key),
-                'permissions': sorted(set(permissions)),
-                'menus': menus,
+                'name': ROLE_NAMES.get(key, key),
+                'permissions': sorted(set(settings.CONO_PERMISSION.get(key, []) or [])),
+                'menus': settings.CONO_MENU.get(key, []) or [],
             },
         )
+    sync_admin_role()
 
 
 def get_role_profile(role_key):
@@ -451,6 +506,10 @@ def get_session_permissions(role_key, user_id):
 
 
 def get_effective_menus(user):
+    # 管理员始终看全部栏目：新增栏目只改 settings 时，库里的 admin 记录可能还没同步，
+    # 直接读 settings 才不会出现「新栏目看不到」。
+    if getattr(user, 'role', '') == 'admin':
+        return list(settings.CONO_MENU.get('admin', []) or [])
     profile = get_user_profile(user.id)
     if profile is not None and profile.menu_customize:
         raw = profile.menus or []

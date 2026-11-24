@@ -25,6 +25,15 @@ Django DRF（`api/`）+ Vue3/Element Plus（`frontend/`）。部署到 NAS 192.1
 - 验收脚本判定「换行/截断」时，`el-progress` 单元格会因行盒亚像素出现 `scrollHeight > clientHeight` 的误报，
   需结合文字实际渲染高度判断。
 
+## 角色与权限
+
+- 角色来源是 `auth_role` 表（`AuthRole`），`User.role` 只是 key，**没有 choices 校验**。
+  内置角色只有 `admin` / `upkeeper`（`BUILTIN_ROLE_KEYS`），其余角色可删。
+- 新用户默认角色由 `default_role_key()` 决定（权限最少的非 admin 角色，平局优先 upkeeper），
+  注册、新建用户（新旧系统）都必须走它，不要硬编码角色名。
+- `admin` 权限/菜单由 `sync_admin_role()` 与 settings 对齐；权限管理页对 admin 只允许改中文名。
+- 删除角色前必须先清空该角色下的用户（后端会拒绝），不会自动改用户角色。
+
 ## 数据导出
 
 导出接口需要鉴权，前端下载必须带 token；后端各 `export` action 需调用 `filter_queryset`。

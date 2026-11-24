@@ -72,7 +72,7 @@ class UserViewSet(BaseModelViewSet):
                 'id': user.id,
                 'username': user.username,
                 'role': user.role,
-                'role_display': user.get_role_display(),
+                'role_display': user.role_display,
             },
             'roles': [
                 {'key': r.key, 'name': r.name}

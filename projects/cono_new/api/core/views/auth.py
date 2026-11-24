@@ -104,6 +104,7 @@ class LoginView(APIView):
                 'username': user.username,
                 'name': user.username,
                 'role': user.role,
+                'role_display': user.role_display,
                 'permissions': sorted(perms) if perms is not None else [],
                 'menus': menus,
             }
@@ -178,6 +179,7 @@ class RegisterView(APIView):
             gender = 1
 
         # 自助注册一律使用最低权限角色，忽略前端传入的 role，避免越权。
+        from cono.tools.auth_profile import default_role_key
         try:
             with transaction.atomic():
                 user = User.objects.create(
@@ -187,7 +189,7 @@ class RegisterView(APIView):
                     id_number=id_number,
                     address=address or '',
                     department=department,
-                    role='servicer',
+                    role=default_role_key(),
                     gender=gender,
                     create_date=timezone.now().date(),
                 )
@@ -221,6 +223,7 @@ class RegisterView(APIView):
                 'username': user.username,
                 'name': user.username,
                 'role': user.role,
+                'role_display': user.role_display,
                 'permissions': sorted(perms) if perms is not None else [],
                 'menus': menus,
             }

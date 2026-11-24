@@ -105,7 +105,8 @@ const router = useRouter()
 
 const roleMap = { admin: '管理员', saler: '业务员', servicer: '客户经理', upkeeper: '售后服务', finance: '财务经理' }
 const genderMap = { 1: '男', 2: '女' }
-const roleLabel = (r) => roleMap[r] || r || '-'
+// 角色可由管理员自定义，中文名以接口返回的 role_display 为准，roleMap 仅作兜底
+const roleLabel = (r) => user.value?.role_display || roleMap[r] || r || '-'
 const genderLabel = (g) => genderMap[g] || '-'
 const roleTagType = (r) => {
   const m = { admin: 'danger', saler: 'primary', servicer: 'success', upkeeper: 'info', finance: 'warning' }

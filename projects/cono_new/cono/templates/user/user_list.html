@@ -42,7 +42,7 @@
                     <td>{{ obj.address }}</td>
                     <td>{{ obj.create_date|date:"Y-m-d" }}</td>
                     <td>{{ obj.department }}</td>
-                    <td>{{ obj.role }}</td>
+                    <td>{{ obj.role_display }}</td>
                     <td>
                         {% if request.info_dict_role == 'admin' %}
                             <a class="btn btn-warning btn-xs" href="/auth/user/{{ obj.id }}/permission/">

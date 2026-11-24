@@ -16,6 +16,20 @@ URL_PERMISSION_ALIASES = {
 }
 
 
+def _permission_candidates(url_name):
+    """某个 url_name 可接受的全部权限码。
+
+    建单路由在 URL 里叫 *_create（如 contract_create），而权限码习惯用 *_add，
+    两套命名历史上并存，任一方有权限都应放行，否则会出现「有 contract_add 却建不了合同」。
+    """
+    code = URL_PERMISSION_ALIASES.get(url_name, url_name)
+    codes = {code}
+    for suffix, other in (('_create', '_add'), ('_add', '_create')):
+        if code.endswith(suffix):
+            codes.add(code[:-len(suffix)] + other)
+    return codes
+
+
 class AuthMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
@@ -32,6 +46,17 @@ class AuthMiddleware(MiddlewareMixin):
         request.info_dict_useid=info_dict['id']
         request.info_dict_username=info_dict['username']
         request.info_dict_role=info_dict['role']
+        # 角色可被管理员随时改到别的角色，session 里的旧角色会让权限滞后到下次登录。
+        # 这里以库里的当前角色为准（顺带处理账号被删除的情况）。
+        current = models.User.objects.filter(id=request.info_dict_useid).values('role').first()
+        if current is None:
+            request.session.clear()
+            return redirect('/login/')
+        if current['role'] != info_dict['role']:
+            request.info_dict_role = current['role']
+            info_dict['role'] = current['role']
+            request.session['info'] = info_dict
+            request.session.modified = True
         cleanup_expired_user_logs_daily()
         models.UserLog.objects.create(user_id=request.info_dict_useid,
                                       action=request.path,
@@ -49,6 +74,10 @@ class AuthMiddleware(MiddlewareMixin):
             return
         # 1.当前用户角色
         role = request.info_dict_role
+        # 管理员放行全部功能（与新版 API 的 HasPermission 保持一致）。
+        # 否则新增权限码只写进 settings、没同步到 auth_role 表时，管理员会被自己挡在门外。
+        if role == 'admin':
+            return
         # 2.允许用户修改/重置自己的资料和密码
         url_name = request.resolver_match.url_name
         if url_name in ('user_edit', 'user_reset', 'user_profile', 'user_profile_edit', 'user_change_password'):
@@ -72,8 +101,7 @@ class AuthMiddleware(MiddlewareMixin):
         ):
             return
         # 3.是否具有权限（有权限)
-        required_permission = URL_PERMISSION_ALIASES.get(url_name, url_name)
-        if required_permission in user_permission_set:
+        if _permission_candidates(url_name) & user_permission_set:
             return
 
         # 4.无权限

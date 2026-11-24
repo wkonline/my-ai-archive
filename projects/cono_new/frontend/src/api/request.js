@@ -71,6 +71,19 @@ request.interceptors.request.use(config => {
   return config
 })
 
+function firstErrorMessage(data) {
+  if (!data) return ''
+  // 500 时后端可能返回整页 HTML，直接弹出来会把页面源码糊到用户脸上
+  if (typeof data === 'string') return data.includes('<') ? '' : data
+  if (data.detail) return data.detail
+  // DRF 字段校验错误形如 {"key": ["..."]}，直接取第一条，避免统一显示「请求失败」
+  for (const value of Object.values(data)) {
+    if (Array.isArray(value) && value.length) return String(value[0])
+    if (typeof value === 'string') return value
+  }
+  return ''
+}
+
 request.interceptors.response.use(
   response => {
     // 下载类请求需要读取 content-disposition 头，返回完整响应
@@ -79,7 +92,7 @@ request.interceptors.response.use(
   },
   async error => {
     const status = error.response?.status
-    const detail = error.response?.data?.detail || '请求失败'
+    const detail = firstErrorMessage(error.response?.data) || '请求失败'
     const url = error.config?.url || ''
     const isAuthEndpoint = url.includes('/auth/login/') || url.includes('/auth/refresh/')
 

@@ -6,6 +6,7 @@ from cono import models
 from cono.tools.pagination import Pagination
 from cono.tools.form import UserModelForm, UserResetModelForm, ProfileEditModelForm, ChangePasswordForm
 from cono.tools.encrypt import md5
+from cono.tools.auth_profile import default_role_key
 
 def user_list(request):
     """ 用户管理 """
@@ -29,6 +30,7 @@ def user_add(request):
     if form.is_valid():
         instance = form.save(commit=False)
         instance.create_date = date.today()
+        instance.role = default_role_key()
         instance.save()
         return redirect('/user/list/')
 
