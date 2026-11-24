@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 const routes = [
   {
@@ -129,6 +130,9 @@ const ROUTE_PERM = {
   '/company': ['company_show'],
   '/account-vault': ['account_vault_list'],
   '/auth/role': ['auth_role_list', 'auth_user_permission'],
+  '/flow/archive': ['flow_archive_list'],
+  '/flow/out': ['flow_out_list'],
+  '/flow/return': ['flow_return_list'],
 }
 function routePermRequired(path) {
   // 用户权限页必须走 auth_user_permission，不能退回 /user 的 user_list
@@ -137,6 +141,32 @@ function routePermRequired(path) {
     || ROUTE_PERM[path.replace(/\/new$/, '')]
     || ROUTE_PERM[path.replace(/\/edit\/\d+$/, '')]
     || null
+}
+
+// 新增/编辑页除列表权限外还要动作权限，否则直接输网址或刷新页面能绕过列表按钮上的拦截。
+// 权限码与后端 _perm_code_for 保持一致；只有「按 base_list 推不出来」的模块才需要覆盖。
+const ACTION_PERM_OVERRIDE = {
+  // 后端 ContractFileViewSet：create 认 contract_file / contract_file_list，update 认 edit_contract_file
+  '/contract-file': { new: ['contract_file', 'contract_file_list'], edit: ['edit_contract_file'] },
+}
+
+function actionPermRequired(path) {
+  const suffix = /\/edit\/\d+$/.test(path) ? 'edit' : /\/new$/.test(path) ? 'new' : null
+  if (!suffix) return null
+  const base = path.replace(/\/edit\/\d+$/, '').replace(/\/new$/, '')
+  const override = ACTION_PERM_OVERRIDE[base]?.[suffix]
+  if (override) return override
+  const derived = (ROUTE_PERM[base] || [])
+    .filter(code => code.endsWith('_list'))
+    .flatMap(code => {
+      const stem = code.slice(0, -'_list'.length)
+      return suffix === 'new' ? [`${stem}_add`, `${stem}_create`] : [`${stem}_edit`]
+    })
+  return derived.length ? derived : null
+}
+
+function allowed(codes, user, perms) {
+  return (user?.role || '') === 'admin' || codes.some(c => perms.includes(c))
 }
 router.beforeEach((to, from, next) => {
   if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('dev')) {
@@ -168,7 +198,13 @@ router.beforeEach((to, from, next) => {
   if (required) {
     const user = JSON.parse(storage.getItem('user_info') || 'null')
     const perms = JSON.parse(storage.getItem('user_permissions') || '[]')
-    if ((user?.role || '') !== 'admin' && !required.some(c => perms.includes(c))) {
+    if (!allowed(required, user, perms)) {
+      next('/')
+      return
+    }
+    const actionCodes = actionPermRequired(to.path)
+    if (actionCodes && actionCodes.length && !allowed(actionCodes, user, perms)) {
+      ElMessage.warning('您没有该操作权限，请联系管理员')
       next('/')
       return
     }

@@ -122,6 +122,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, PieChart, List, Edit, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import { download } from '../../utils/download'
 import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'
@@ -216,8 +217,8 @@ const exportData = () => {
   if (keyword.value) params.keyword = keyword.value
   return download('/collection/export/', params, 'collection_data.xlsx')
 }
-const openAdd = () => router.push('/collection/new')
-const openEdit = (row) => router.push(`/collection/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['collection_add'], '新增回款')) return; router.push('/collection/new') }
+const openEdit = (row) => { if (!requirePerm(['collection_edit'], '编辑回款')) return; router.push(`/collection/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
   try {

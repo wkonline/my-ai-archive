@@ -126,6 +126,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Download, Search, Refresh, Box, Edit, CircleCheck } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import FlowTabs from './FlowTabs.vue'
 import { download } from '../../utils/download'
 
@@ -183,8 +184,8 @@ const exportData = () => {
   return download('/flow-archive/export/', params, 'product_archive.xlsx')
 }
 
-const openAdd = () => router.push('/flow/archive/new')
-const openEdit = (row) => router.push(`/flow/archive/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['flow_archive_add'], '新增档案')) return; router.push('/flow/archive/new') }
+const openEdit = (row) => { if (!requirePerm(['flow_archive_edit'], '编辑档案')) return; router.push(`/flow/archive/edit/${row.id}`) }
 
 const openDetail = async (row) => {
   detailRow.value = row

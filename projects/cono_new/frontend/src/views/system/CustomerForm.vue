@@ -159,7 +159,7 @@ const removeContact = (index) => {
 
 const loadData = async () => {
   try {
-    users.value = (await request.get('/user/?page_size=200')).results || []
+    users.value = await request.get('/user/options/')
   } catch {}
   if (!isEdit.value) return
   try {

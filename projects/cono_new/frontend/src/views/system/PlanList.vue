@@ -104,6 +104,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, PieChart, List, Edit, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import { download } from '../../utils/download'
 import BaseChart from '../../components/BaseChart.vue'
 
@@ -205,8 +206,8 @@ const exportData = () => {
   if (filters.status !== '') params.completed_status = filters.status
   return download('/plan/export/', params, 'plan_data.xlsx')
 }
-const openAdd = () => router.push('/plan/new')
-const openEdit = (row) => router.push(`/plan/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['plan_add'], '新增生产计划')) return; router.push('/plan/new') }
+const openEdit = (row) => { if (!requirePerm(['plan_edit'], '编辑生产计划')) return; router.push(`/plan/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
   try {

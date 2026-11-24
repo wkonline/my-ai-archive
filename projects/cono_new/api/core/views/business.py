@@ -531,6 +531,12 @@ class ContractProductViewSet(BaseModelViewSet):
         'contract', 'customer', 'category', 'product').all()
     serializer_class = ContractProductSerializer
     permission_codes = 'contract_product'
+    # 合同详情/编辑页要显示产品明细；能看合同的人一定看得到明细（老版也是这样，
+    # 明细随合同表单一起返回，不单独鉴权）。仅放开读取，导入/导出仍需 contract_product。
+    action_permission_codes = {
+        'list': ['contract_product', 'contract_list'],
+        'retrieve': ['contract_product', 'contract_list'],
+    }
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['contract', 'customer', 'category', 'product']
 

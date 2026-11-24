@@ -63,8 +63,8 @@ const warehouses = ref([])
 
 const loadData = async () => {
   try {
-    categories.value = (await request.get('/productcategory/?page_size=200')).results || []
-    warehouses.value = (await request.get('/warehouse/?page_size=200')).results || []
+    categories.value = (await request.get('/productcategory/?page_size=200', { silent: true })).results || []
+    warehouses.value = (await request.get('/warehouse/?page_size=200', { silent: true })).results || []
   } catch {}
   if (!isEdit.value) return
   try {

@@ -267,7 +267,7 @@ const defaultContractNumber = () => {
 const searchCustomers = async (q = '') => {
   customerLoading.value = true
   try {
-    const data = await request.get('/customer/', { params: { keyword: q, page_size: 50 } })
+    const data = await request.get('/customer/', { params: { keyword: q, page_size: 50 }, silent: true })
     customers.value = data.results || data || []
   } catch {
     customers.value = []
@@ -287,7 +287,7 @@ const ensureCustomerOption = async (cid) => {
 
 const loadData = async () => {
   try {
-    const catData = await request.get('/productcategory/', { params: { page_size: 200 } })
+    const catData = await request.get('/productcategory/', { params: { page_size: 200 }, silent: true })
     productCategories.value = catData.results || catData || []
   } catch {}
   await searchCustomers('')
@@ -303,7 +303,7 @@ const loadData = async () => {
       await ensureCustomerOption(row.customer)
       uploadedSize.value = 0
       try {
-        const data = await request.get(`/contract-product/?contract=${row.id}&page_size=200`)
+        const data = await request.get(`/contract-product/?contract=${row.id}&page_size=200`, { silent: true })
         const items = (data.results || data || []).map(p => ({
           id: p.id, category: p.category, product: p.product,
           contract_type: p.contract_type, quantity: Number(p.quantity),

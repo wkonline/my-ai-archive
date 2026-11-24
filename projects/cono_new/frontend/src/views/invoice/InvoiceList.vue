@@ -176,6 +176,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh, TrendCharts, PieChart, List, Edit, Delete, Upload, Check, Loading } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'
 
@@ -366,8 +367,8 @@ const resetFilter = () => {
 
 
 
-const openAdd = () => router.push('/invoice/new')
-const openEdit = (row) => router.push(`/invoice/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['invoice_add', 'invoice_create'], '新增发票')) return; router.push('/invoice/new') }
+const openEdit = (row) => { if (!requirePerm(['invoice_edit'], '编辑发票')) return; router.push(`/invoice/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
   try {

@@ -101,6 +101,29 @@
   transform: translateY(-1px);
   box-shadow: 0 6px 22px rgba(0,120,224,0.30) !important;
 }
+/* plain 变体必须显式给浅底深字：上面的实心渐变规则会盖住 Element 自带的
+   浅蓝底，剩下的蓝色文字落在深蓝底上就成了看不见的蓝底蓝字 */
+.el-button--primary.is-plain {
+  background: var(--navy-50) !important;
+  border-color: var(--navy-200) !important;
+  color: var(--navy-700) !important;
+  box-shadow: none !important;
+}
+.el-button--primary.is-plain:hover {
+  background: var(--navy-100) !important;
+  border-color: var(--navy-400) !important;
+  color: var(--navy-700) !important;
+}
+/* 上面的 !important 会盖掉 Element 的禁用配色，不补这条会让禁用按钮和可用按钮长得一样 */
+.el-button.is-disabled,
+.el-button.is-disabled:hover {
+  background: var(--bg-subtle) !important;
+  border-color: var(--border) !important;
+  color: var(--text-dim) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 0.7;
+}
 /* link / text 按钮不带实心背景，避免被上面的 primary 样式套成实心按钮 */
 .el-button.is-link,
 .el-button.is-text {

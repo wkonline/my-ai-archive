@@ -45,6 +45,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 
 const router = useRouter()
 
@@ -64,8 +65,8 @@ function fetchList() {
     .finally(() => { loading.value = false })
 }
 
-const openAdd = () => router.push('/auth/role/new')
-const openEdit = (row) => router.push(`/auth/role/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['auth_role_add'], '新增角色')) return; router.push('/auth/role/new') }
+const openEdit = (row) => { if (!requirePerm(['auth_role_edit'], '编辑角色')) return; router.push(`/auth/role/edit/${row.id}`) }
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm('确定删除该角色吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })

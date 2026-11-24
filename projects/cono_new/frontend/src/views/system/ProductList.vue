@@ -42,6 +42,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Search, List, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 
 const router = useRouter()
 const list = ref([])
@@ -69,8 +70,8 @@ const fetchStats = async () => {
 }
 
 const onSearch = () => { page.value = 1; fetchList() }
-const openAdd = () => router.push('/product/new')
-const openEdit = (row) => router.push(`/product/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['product_add'], '新增产品')) return; router.push('/product/new') }
+const openEdit = (row) => { if (!requirePerm(['product_edit'], '编辑产品')) return; router.push(`/product/edit/${row.id}`) }
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm('确定删除该产品吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })

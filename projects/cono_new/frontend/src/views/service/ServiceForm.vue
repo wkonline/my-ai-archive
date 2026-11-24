@@ -114,7 +114,7 @@ const searchCustomers = async (q) => {
 
 const loadData = async () => {
   try {
-    categories.value = (await request.get('/productcategory/?page_size=200')).results || []
+    categories.value = (await request.get('/productcategory/?page_size=200', { silent: true })).results || []
     searchCustomers('')
   } catch {}
   const id = route.params.id

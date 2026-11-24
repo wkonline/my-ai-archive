@@ -36,6 +36,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Search, List, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 
 const router = useRouter()
 const list = ref([])
@@ -56,8 +57,8 @@ const fetchList = async () => {
 }
 
 const onSearch = () => { page.value = 1; fetchList() }
-const openAdd = () => router.push('/department/new')
-const openEdit = (row) => router.push(`/department/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['department_add'], '新增部门')) return; router.push('/department/new') }
+const openEdit = (row) => { if (!requirePerm(['department_edit'], '编辑部门')) return; router.push(`/department/edit/${row.id}`) }
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm('确定删除该部门吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })

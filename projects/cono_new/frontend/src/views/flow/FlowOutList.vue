@@ -100,6 +100,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Download, Search, Refresh, Van, Edit, Delete, RefreshLeft } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import FlowTabs from './FlowTabs.vue'
 import { download } from '../../utils/download'
 
@@ -150,9 +151,9 @@ const exportData = () => {
   return download('/flow-out/export/', params, 'flow_out.xlsx')
 }
 
-const openAdd = () => router.push('/flow/out/new')
-const openEdit = (row) => router.push(`/flow/out/edit/${row.id}`)
-const openReturn = (row) => router.push({ path: '/flow/return/new', query: { flow_out: row.id } })
+const openAdd = () => { if (!requirePerm(['flow_out_add'], '寄给客户登记')) return; router.push('/flow/out/new') }
+const openEdit = (row) => { if (!requirePerm(['flow_out_edit'], '编辑寄出登记')) return; router.push(`/flow/out/edit/${row.id}`) }
+const openReturn = (row) => { if (!requirePerm(['flow_return_add'], '客户返回登记')) return; router.push({ path: '/flow/return/new', query: { flow_out: row.id } }) }
 
 const handleDelete = async (row) => {
   try {

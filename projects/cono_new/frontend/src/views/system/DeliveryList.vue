@@ -98,6 +98,7 @@ import { Plus, Download, Search, Refresh, TrendCharts, Histogram, List, Edit, De
 import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import { download } from '../../utils/download'
 
 const router = useRouter()
@@ -166,8 +167,8 @@ const exportData = () => {
   return download('/delivery/export/', params, 'delivery_data.xlsx')
 }
 
-const openAdd = () => router.push('/delivery/new')
-const openEdit = (row) => router.push(`/delivery/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['delivery_add'], '新增发货单')) return; router.push('/delivery/new') }
+const openEdit = (row) => { if (!requirePerm(['delivery_edit'], '编辑发货单')) return; router.push(`/delivery/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
   try {

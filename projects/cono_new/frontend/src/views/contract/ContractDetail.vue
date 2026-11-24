@@ -174,6 +174,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Briefcase, Document, List, Money, CircleClose, TrendCharts, Van, Edit, Back } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 
 const route = useRoute()
 const router = useRouter()
@@ -200,21 +201,24 @@ const loadData = async () => {
   try {
     const data = await request.get(`/contract/${route.params.id}/`)
     contract.value = data
+    // 明细是详情页的附加信息：没有发票/发货权限的账号（如业务员）看不到就该是空表，
+    // 不需要弹「没有权限」，所以逐个 silent + 兜底 null，避免一个失败拖掉整组数据。
+    const get = (url) => request.get(url, { silent: true }).catch(() => null)
     const [cp, inv, col, del] = await Promise.all([
-      request.get(`/contract-product/?contract=${route.params.id}&page_size=200`),
-      request.get(`/invoice/?contract=${route.params.id}&page_size=200`),
-      request.get(`/collection/?contract=${route.params.id}&page_size=200`),
-      request.get(`/delivery/?contract=${route.params.id}&page_size=200`),
+      get(`/contract-product/?contract=${route.params.id}&page_size=200`),
+      get(`/invoice/?contract=${route.params.id}&page_size=200`),
+      get(`/collection/?contract=${route.params.id}&page_size=200`),
+      get(`/delivery/?contract=${route.params.id}&page_size=200`),
     ])
-    contractProducts.value = cp.results || []
-    invoices.value = inv.results || []
-    collections.value = col.results || []
-    deliveries.value = del.results || []
+    contractProducts.value = (cp && (cp.results || cp)) || []
+    invoices.value = (inv && (inv.results || inv)) || []
+    collections.value = (col && (col.results || col)) || []
+    deliveries.value = (del && (del.results || del)) || []
   } catch {} finally { loading.value = false }
 }
 
 const goBack = () => router.push('/contract')
-const goEdit = () => router.push(`/contract/edit/${route.params.id}`)
+const goEdit = () => { if (!requirePerm(['contract_edit'], '编辑合同')) return; router.push(`/contract/edit/${route.params.id}`) }
 
 const openAttachment = (row) => {
   if (!row.attachment) return

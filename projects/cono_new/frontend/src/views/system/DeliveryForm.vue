@@ -137,7 +137,7 @@ const contactLabel = (c) => {
 const searchCustomers = async (q = '') => {
   customerLoading.value = true
   try {
-    const data = await request.get('/customer/', { params: { keyword: q, page_size: 50 } })
+    const data = await request.get('/customer/', { params: { keyword: q, page_size: 50 }, silent: true })
     customers.value = data.results || data || []
   } catch {
     customers.value = []

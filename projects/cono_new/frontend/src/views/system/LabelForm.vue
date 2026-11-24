@@ -78,7 +78,7 @@ const products = ref([])
 
 const loadData = async () => {
   try {
-    products.value = (await request.get('/product/?page_size=200')).results || []
+    products.value = (await request.get('/product/?page_size=200', { silent: true })).results || []
   } catch {}
   if (!isEdit.value) return
   try {

@@ -111,6 +111,7 @@ import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import { download } from '../../utils/download'
 
 const router = useRouter()
@@ -232,8 +233,8 @@ const exportData = () => {
   return download('/servicedetail/export/', params, 'servicedetail_data.xlsx')
 }
 
-const openAdd = () => router.push('/servicedetail/new')
-const openEdit = (row) => router.push(`/servicedetail/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['servicedetail_add'], '新增维修记录')) return; router.push('/servicedetail/new') }
+const openEdit = (row) => { if (!requirePerm(['servicedetail_edit'], '编辑维修记录')) return; router.push(`/servicedetail/edit/${row.id}`) }
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm('确定删除该维修记录吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
@@ -246,8 +247,8 @@ const handleDelete = async (row) => {
     ElMessage.error(e?.response?.data?.detail || '删除失败')
   }
 }
-const openBatchAdd = () => router.push({ path: '/servicedetail/new', query: { batch: '1' } })
-const openKnowledge = () => router.push({ path: '/servicedetail/new', query: { knowledge: '1' } })
+const openBatchAdd = () => { if (!requirePerm(['servicedetail_add', 'servicedetail_batch_add'], '批量维修登记')) return; router.push({ path: '/servicedetail/new', query: { batch: '1' } }) }
+const openKnowledge = () => { if (!requirePerm(['servicedetail_add', 'servicedetail_knowledge'], '维修知识库')) return; router.push({ path: '/servicedetail/new', query: { knowledge: '1' } }) }
 
 onMounted(() => {
   fetchList()

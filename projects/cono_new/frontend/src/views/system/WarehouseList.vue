@@ -36,6 +36,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Search, List, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 
 const router = useRouter()
 const list = ref([])
@@ -56,8 +57,8 @@ const fetchList = async () => {
 }
 
 const onSearch = () => { page.value = 1; fetchList() }
-const openAdd = () => router.push('/warehouse/new')
-const openEdit = (row) => router.push(`/warehouse/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['warehouse_add'], '新增仓库')) return; router.push('/warehouse/new') }
+const openEdit = (row) => { if (!requirePerm(['warehouse_edit'], '编辑仓库')) return; router.push(`/warehouse/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
   try {

@@ -101,6 +101,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Download, Search, Refresh, RefreshLeft, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import FlowTabs from './FlowTabs.vue'
 import { download } from '../../utils/download'
 
@@ -148,7 +149,7 @@ const exportData = () => {
   return download('/flow-return/export/', params, 'flow_return.xlsx')
 }
 
-const openAdd = () => router.push('/flow/return/new')
+const openAdd = () => { if (!requirePerm(['flow_return_add'], '返回登记')) return; router.push('/flow/return/new') }
 
 const handleDelete = async (row) => {
   try {

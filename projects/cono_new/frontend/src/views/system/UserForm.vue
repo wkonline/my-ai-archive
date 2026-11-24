@@ -95,10 +95,10 @@ const roles = ref([])
 
 const loadData = async () => {
   try {
-    departments.value = (await request.get('/department/?page_size=200')).results || []
+    departments.value = (await request.get('/department/?page_size=200', { silent: true })).results || []
   } catch {}
   try {
-    const data = await request.get('/auth-role/?page_size=200')
+    const data = await request.get('/auth-role/?page_size=200', { silent: true })
     roles.value = data.results || data || []
   } catch {}
   if (!isEdit.value) {

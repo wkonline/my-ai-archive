@@ -58,6 +58,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Search, List, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 
 const router = useRouter()
 const list = ref([])
@@ -93,8 +94,8 @@ const contactSummary = (row) => {
   return contacts.length > 1 ? `${primary.name} 等 ${contacts.length} 人` : primary.name
 }
 
-const openAdd = () => router.push('/customer/new')
-const openEdit = (row) => router.push(`/customer/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['customer_add'], '新增客户')) return; router.push('/customer/new') }
+const openEdit = (row) => { if (!requirePerm(['customer_edit'], '编辑客户')) return; router.push(`/customer/edit/${row.id}`) }
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm('确定删除该客户吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })

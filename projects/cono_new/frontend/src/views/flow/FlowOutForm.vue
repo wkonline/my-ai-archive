@@ -157,7 +157,7 @@ const searchArchives = async (q) => {
 
 const searchCustomers = async (q) => {
   try {
-    const data = await request.get('/customer/', { params: { keyword: q || '', page_size: 50 } })
+    const data = await request.get('/customer/', { params: { keyword: q || '', page_size: 50 }, silent: true })
     customers.value = data.results || data
   } catch { /* 保留上次结果 */ }
 }

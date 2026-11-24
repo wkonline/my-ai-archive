@@ -93,6 +93,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Download, Search, Refresh, Promotion, List, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import { download } from '../../utils/download'
 
 const router = useRouter()
@@ -168,8 +169,8 @@ const exportData = () => {
   return download('/task/export/', params, 'task_data.xlsx')
 }
 
-const openAdd = () => router.push('/task/new')
-const openEdit = (row) => router.push(`/task/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['task_add'], '派任务单')) return; router.push('/task/new') }
+const openEdit = (row) => { if (!requirePerm(['task_edit'], '编辑任务单')) return; router.push(`/task/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
   try {

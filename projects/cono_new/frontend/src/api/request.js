@@ -114,7 +114,9 @@ request.interceptors.response.use(
     if (status === 401 && !isAuthEndpoint) {
       redirectToLogin()
     }
-    ElMessage.error(detail)
+    // 可选的辅助请求（下拉选项等）用 config.silent 关掉全局提示，
+    // 否则页面明明能正常用，却先弹一个「您没有执行该操作的权限」
+    if (!error.config?.silent) ElMessage.error(detail)
     return Promise.reject(error)
   }
 )

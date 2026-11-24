@@ -83,7 +83,11 @@ def _normalize_menus(raw):
 
 
 def get_effective_menus(user):
-    """用户有效菜单 = 角色 menus（优先）+ 个人 menus（若 menu_customize）。"""
+    """用户有效菜单 = 角色 menus（优先）+ 个人 menus（若 menu_customize）。
+
+    结果再按权限过滤一次：CONO_MENU 里登记了权限码的入口，用户没有对应权限就不下发，
+    避免侧边栏出现点击后报「无权限」的栏目（老版 /views/index.py 也是这么过滤的）。
+    """
     role_key = getattr(user, 'role', 'upkeeper')
     if role_key == 'admin':
         # 管理员始终看全部栏目，避免库里 admin 记录未同步时看不到新栏目
@@ -91,15 +95,29 @@ def get_effective_menus(user):
         return _normalize_menus(settings.CONO_MENU.get('admin', []))
     profile = AuthUserProfile.objects.filter(user=user).first()
     if profile is not None and getattr(profile, 'menu_customize', False):
-        return _normalize_menus(profile.menus)
-    role = AuthRole.objects.filter(key=role_key).first()
-    if role is not None:
-        return _normalize_menus(role.menus)
+        menus = _normalize_menus(profile.menus)
+    else:
+        role = AuthRole.objects.filter(key=role_key).first()
+        if role is not None:
+            menus = _normalize_menus(role.menus)
+        else:
+            try:
+                from django.conf import settings
+                menus = _normalize_menus(settings.CONO_MENU.get(role_key, []))
+            except Exception:
+                return []
+    return _filter_menus_by_permission(menus, get_effective_permissions(user))
+
+
+def _filter_menus_by_permission(menus, permissions):
+    """按 MENU_PERMISSIONS 过滤菜单；未登记权限码的入口保持可见。"""
+    if permissions is None:
+        return menus
     try:
-        from django.conf import settings
-        return _normalize_menus(settings.CONO_MENU.get(role_key, []))
+        from cono.tools.auth_profile import filter_allowed_menus
     except Exception:
-        return []
+        return menus
+    return filter_allowed_menus(menus, permissions)
 
 
 # 标准 action -> 权限后缀映射（与老版 CONO_PERMISSION 的命名一致）。

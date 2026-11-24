@@ -160,6 +160,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Search, Refresh, TrendCharts, PieChart, List, View, Edit, ArrowDown, ArrowUp, Goods, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import { download } from '../../utils/download'
 import BaseChart from '../../components/BaseChart.vue'
 import { pickColors } from '../../components/chartColors'
@@ -293,8 +294,8 @@ const onSortChange = ({ prop, order }) => {
 }
 
 // 跳转到独立页面
-const openAdd = () => router.push('/contract/new')
-const openEdit = (row) => router.push(`/contract/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['contract_add', 'contract_create'], '新增合同')) return; router.push('/contract/new') }
+const openEdit = (row) => { if (!requirePerm(['contract_edit'], '编辑合同')) return; router.push(`/contract/edit/${row.id}`) }
 const openDetail = (row) => router.push(`/contract/${row.id}`)
 
 const handleDelete = async (row) => {

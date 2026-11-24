@@ -170,7 +170,7 @@ const serviceBoardSerial = computed(() =>
 
 const searchPending = async (q) => {
   try {
-    pendingList.value = await request.get('/flow-out/pending/', { params: { q: q || '' } })
+    pendingList.value = await request.get('/flow-out/pending/', { params: { q: q || '' }, silent: true })
   } catch { /* 保留上次结果 */ }
 }
 
@@ -196,7 +196,7 @@ const loadOptions = async () => {
   const [catData, prodData, userData] = await Promise.all([
     request.get('/productcategory/', { params: { page_size: 500 } }),
     request.get('/product/', { params: { page_size: 1000 } }),
-    request.get('/user/', { params: { page_size: 500 } }),
+    request.get('/user/options/'),
   ])
   categories.value = catData.results || catData
   allProducts.value = prodData.results || prodData

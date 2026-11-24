@@ -42,6 +42,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Search, List, Edit, Delete, Lock } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import { useUserStore } from '../../stores/user'
 
 const router = useRouter()
@@ -65,9 +66,9 @@ const fetchList = async () => {
 }
 
 const onSearch = () => { page.value = 1; fetchList() }
-const openAdd = () => router.push('/user/new')
-const openEdit = (row) => router.push(`/user/edit/${row.id}`)
-const openPermission = (row) => router.push(`/user/permission/${row.id}`)
+const openAdd = () => { if (!requirePerm(['user_add'], '新建用户')) return; router.push('/user/new') }
+const openEdit = (row) => { if (!requirePerm(['user_edit'], '编辑用户')) return; router.push(`/user/edit/${row.id}`) }
+const openPermission = (row) => { if (!requirePerm(['auth_user_permission'], '配置用户权限')) return; router.push(`/user/permission/${row.id}`) }
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm('确定删除该用户吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })

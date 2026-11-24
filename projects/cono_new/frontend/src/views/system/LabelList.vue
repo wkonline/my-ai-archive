@@ -47,6 +47,7 @@ import { useRouter } from 'vue-router'
 import { Plus, Download, Search, List, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { requirePerm } from '../../utils/perm'
 import { download } from '../../utils/download'
 
 const router = useRouter()
@@ -73,8 +74,8 @@ const exportData = () => {
   if (search.value) params.q = search.value
   return download('/product-label/export/', params, 'product_label_data.xlsx')
 }
-const openAdd = () => router.push('/product-label/new')
-const openEdit = (row) => router.push(`/product-label/edit/${row.id}`)
+const openAdd = () => { if (!requirePerm(['productlabel_add'], '新增产品铭牌')) return; router.push('/product-label/new') }
+const openEdit = (row) => { if (!requirePerm(['productlabel_edit'], '编辑产品铭牌')) return; router.push(`/product-label/edit/${row.id}`) }
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm('确定删除该铭牌吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })

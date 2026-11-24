@@ -32,17 +32,17 @@ export const useDictStore = defineStore('dict', {
   
   actions: {
     async fetchCategories() {
-      const res = await request.get('/productcategory/?page_size=200')
+      const res = await request.get('/productcategory/?page_size=200', { silent: true })
       this.categories = res.results || []
     },
     
     async fetchProducts() {
-      const res = await request.get('/product/?page_size=200')
+      const res = await request.get('/product/?page_size=200', { silent: true })
       this.products = res.results || []
     },
     
     async fetchContracts() {
-      const res = await request.get('/contract/?page_size=200')
+      const res = await request.get('/contract/?page_size=200', { silent: true })
       this.contracts = res.results || []
     },
     

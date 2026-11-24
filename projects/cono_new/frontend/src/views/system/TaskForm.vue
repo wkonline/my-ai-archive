@@ -109,7 +109,7 @@ const removeRow = (idx) => form.rows.splice(idx, 1)
 const loadData = async () => {
   try {
     const [planRes, taskRes] = await Promise.all([
-      request.get('/plan/?page_size=2000'),
+      request.get('/plan/?page_size=2000', { silent: true }),
       request.get('/task/?page_size=2000'),
     ])
     planOptions.value = planRes.results || []

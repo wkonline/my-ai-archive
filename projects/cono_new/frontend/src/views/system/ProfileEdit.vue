@@ -67,11 +67,12 @@ const rules = {
 }
 
 const fetchData = async () => {
-  const [me, depts] = await Promise.all([
+  // 选项走 /user/profile-options/：本人操作，不要求部门管理权限
+  const [me, options] = await Promise.all([
     request.get('/user/me').catch(() => null),
-    request.get('/department/', { params: { page_size: 100 } }).catch(() => []),
+    request.get('/user/profile-options/').catch(() => null),
   ])
-  departments.value = depts?.results || depts || []
+  departments.value = options?.departments || []
   if (me) {
     form.username = me.username || ''
     form.gender = me.gender ? String(me.gender) : ''

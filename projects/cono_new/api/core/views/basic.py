@@ -33,14 +33,32 @@ class UserViewSet(BaseModelViewSet):
     search_fields = ['username', 'phone']
     # 个人中心接口是“本人操作”，不应要求 user_list 权限
     action_permission_codes = {
-        'me': [], 'update_profile': [],
+        'me': [], 'update_profile': [], 'profile_options': [], 'options': [],
         'permission': ['auth_user_permission'],
     }
+
+    @action(detail=False, methods=['get'], url_path='options')
+    def options(self, request):
+        """业务表单的「业务经理 / 经手人」下拉：只返回 id 和用户名。
+
+        老系统这些下拉是服务端直接渲染的，不受用户管理权限约束；
+        新接口若复用 /user/ 就会要求 user_list，业务员填客户资料时下拉是空的。
+        """
+        return Response(list(
+            models.User.objects.order_by('id').values('id', 'username')))
 
     @action(detail=False, methods=['get'], url_path='me')
     def me(self, request):
         """当前登录用户资料（个人中心 / 修改资料页）"""
         return Response(self.get_serializer(request.user).data)
+
+    @action(detail=False, methods=['get'], url_path='profile-options')
+    def profile_options(self, request):
+        """修改资料页的下拉数据。都属本人操作，不能要求 department_list 等管理权限。"""
+        return Response({
+            'departments': list(
+                models.Department.objects.order_by('id').values('id', 'title')),
+        })
 
     @action(detail=False, methods=['post'], url_path='profile')
     def update_profile(self, request):
