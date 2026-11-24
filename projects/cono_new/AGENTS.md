@@ -34,6 +34,13 @@ Django DRF（`api/`）+ Vue3/Element Plus（`frontend/`）。部署到 NAS 192.1
   不按「权限条数最少」动态挑选：条数会随管理员调整而变，且 finance 之类角色条数少却掌握金额数据。
 - `admin` 权限/菜单由 `sync_admin_role()` 与 settings 对齐；权限管理页对 admin 只允许改中文名。
 - 删除角色前必须先清空该角色下的用户（后端会拒绝），不会自动改用户角色。
+- **权限解析 fail-closed**：`get_role_permissions()` / `get_effective_menus()` 先读 `auth_role`，
+  查不到时**只有内置角色**（`BUILTIN_ROLE_KEYS`）回退到 `settings.CONO_PERMISSION` / `CONO_MENU`；
+  非内置角色直接返回空集合。否则删掉的角色会因 settings 里还留着同名默认配置而继续生效，
+  等于「删除角色」收不回权限。老系统 `cono/tools/auth_profile.py` 与新系统
+  `api/core/permissions.py` 两处必须同步修改，否则两端行为不一致。
+- 角色被删后仍可能有账号指向它（历史数据/导入）：权限管理页会把该角色作为禁用的占位项
+  显示为「XX（角色已删除）」，避免下拉静默落到第一个角色上；管理员选个新角色保存即可恢复。
 - **自助注册默认关闭**（`settings.CONO_ALLOW_REGISTER`，环境变量 `CONO_ALLOW_REGISTER=true` 可临时开放）。
   老系统 `/register/`、新系统 `/api/auth/register/` 都会拒绝，账号只能由管理员在用户管理里创建；
   匿名部门接口 `/api/auth/departments/` 已随注册页一起移除。原因：最低权限的 upkeeper 仍带

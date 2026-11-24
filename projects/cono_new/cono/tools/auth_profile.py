@@ -473,9 +473,16 @@ def get_role_profile(role_key):
 
 
 def get_role_permissions(role_key):
+    """角色权限码集合：优先 auth_role 表，查不到时仅内置角色回退 settings。
+
+    非内置角色（含已从 auth_role 删除的角色）不回退：settings.CONO_PERMISSION 里
+    可能仍留有同名默认配置，继续回退会让「删除角色」无法真正收回权限。
+    """
     profile = get_role_profile(role_key)
     if profile is not None:
         return set(profile.permissions or [])
+    if not is_builtin_role(role_key):
+        return set()
     return set(settings.CONO_PERMISSION.get(role_key, []))
 
 
@@ -514,6 +521,9 @@ def get_effective_menus(user):
     if role_profile is not None:
         raw = role_profile.menus or []
         return _ensure_list(raw)
+    # 非内置角色没有 auth_role 记录 = 角色已被删除，不下发菜单（与权限的 fail-closed 一致）
+    if not is_builtin_role(user.role):
+        return []
     return settings.CONO_MENU.get(user.role, [])
 
 

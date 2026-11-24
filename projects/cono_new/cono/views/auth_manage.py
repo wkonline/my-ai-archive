@@ -136,7 +136,10 @@ def user_permission(request, nid):
         profile.menu_customize = request.POST.get('custom_menu') == '1'
         profile.save()
         return redirect('/user/list/')
-    role_choices = models.AuthRole.objects.all()
+    role_choices = list(models.AuthRole.objects.all())
+    # 角色被删除后账号仍可能指向它：补一个占位项，否则下拉会静默落到第一个角色上
+    if user.role and not any(r.key == user.role for r in role_choices):
+        role_choices.insert(0, {'key': user.role, 'name': '{}（角色已删除）'.format(user.role_display)})
     return render(request, 'auth/user_permission.html', {
         'user': user,
         'role_choices': role_choices,

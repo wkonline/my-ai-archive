@@ -85,6 +85,17 @@ class UserViewSet(BaseModelViewSet):
     def _permission_payload(self, user):
         profile = models.AuthUserProfile.objects.filter(user=user).first()
         groups, menu_groups = permission_catalog()
+        roles = [
+            {'key': r.key, 'name': r.name}
+            for r in models.AuthRole.objects.all().order_by('id')
+        ]
+        # 角色被删除后账号仍可能指向它：补一个占位项，否则下拉会静默落到第一个角色上
+        if user.role and not any(r['key'] == user.role for r in roles):
+            roles.insert(0, {
+                'key': user.role,
+                'name': '{}（角色已删除）'.format(user.role_display),
+                'deleted': True,
+            })
         return {
             'user': {
                 'id': user.id,
@@ -92,10 +103,7 @@ class UserViewSet(BaseModelViewSet):
                 'role': user.role,
                 'role_display': user.role_display,
             },
-            'roles': [
-                {'key': r.key, 'name': r.name}
-                for r in models.AuthRole.objects.all().order_by('id')
-            ],
+            'roles': roles,
             'permission_groups': groups,
             'menu_groups': menu_groups,
             'extra_permissions': list(profile.extra_permissions or []) if profile else [],

@@ -28,8 +28,23 @@ def permission_catalog():
         return groups, menus
 
 
+def _is_builtin_role(role_key):
+    """只有内置角色允许回退到 settings 默认配置。"""
+    try:
+        from cono.tools.auth_profile import is_builtin_role
+        return is_builtin_role(role_key)
+    except Exception:
+        return role_key in ('admin', 'upkeeper')
+
+
 def _builtin_permissions(role_key):
-    """从老版 settings.CONO_PERMISSION 读取内置角色默认权限。"""
+    """从老版 settings.CONO_PERMISSION 读取内置角色默认权限。
+
+    仅内置角色生效。非内置角色（含已从 auth_role 删除的角色）在 settings 里可能
+    还留着同名的默认配置，若继续回退，删除角色就无法真正收回权限。
+    """
+    if not _is_builtin_role(role_key):
+        return set()
     try:
         from django.conf import settings
         perms = getattr(settings, 'CONO_PERMISSION', {}) or {}
@@ -43,14 +58,14 @@ def get_role_permissions(role_key):
 
     - admin 返回 None（放行所有）
     - 优先读取 auth_role 表对应角色的 permissions
-    - 无 auth_role 记录时回退到内置 CONO_PERMISSION 默认权限（保证旧角色仍生效）
+    - 无 auth_role 记录时，仅内置角色回退到 CONO_PERMISSION 默认权限；
+      其他角色视为已删除，返回空集合（fail-closed）
     """
     if role_key == 'admin':
         return None  # admin 放行所有
     profile = AuthRole.objects.filter(key=role_key).first()
     if profile is not None:
         return set(profile.permissions or [])
-    # 没有 auth_role 记录：使用内置默认权限
     return _builtin_permissions(role_key)
 
 
@@ -100,12 +115,12 @@ def get_effective_menus(user):
         role = AuthRole.objects.filter(key=role_key).first()
         if role is not None:
             menus = _normalize_menus(role.menus)
+        elif _is_builtin_role(role_key):
+            from django.conf import settings
+            menus = _normalize_menus(settings.CONO_MENU.get(role_key, []))
         else:
-            try:
-                from django.conf import settings
-                menus = _normalize_menus(settings.CONO_MENU.get(role_key, []))
-            except Exception:
-                return []
+            # 非内置角色没有 auth_role 记录 = 角色已被删除，不下发菜单
+            menus = []
     return _filter_menus_by_permission(menus, get_effective_permissions(user))
 
 

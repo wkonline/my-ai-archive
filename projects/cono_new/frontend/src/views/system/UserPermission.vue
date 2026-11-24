@@ -12,8 +12,17 @@
           <el-col :span="8">
             <el-form-item label="角色">
               <el-select v-model="roleKey" style="width:100%">
-                <el-option v-for="r in roles" :key="r.key" :label="`${r.name}（${r.key}）`" :value="r.key" />
+                <el-option
+                  v-for="r in roles"
+                  :key="r.key"
+                  :label="`${r.name}（${r.key}）`"
+                  :value="r.key"
+                  :disabled="r.deleted"
+                />
               </el-select>
+              <div v-if="roleDeleted" class="role-warning">
+                该账号的角色「{{ user.role_display }}」已被删除，当前没有任何权限，请重新选择角色。
+              </div>
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -87,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import request from '../../api/request'
@@ -101,6 +110,10 @@ const activeTab = ref('perms')
 const user = reactive({ id: null, username: '', role: '', role_display: '' })
 const roles = ref([])
 const roleKey = ref('')
+const roleDeleted = computed(() => {
+  const current = roles.value.find((r) => r.key === roleKey.value)
+  return !!current?.deleted
+})
 const menuCustomize = ref(false)
 const permGroups = ref([])
 const menuGroups = ref([])
@@ -181,6 +194,7 @@ onMounted(loadData)
 .page-header { margin-bottom: 16px; }
 .page-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
 .form-card { width: 100%; }
+.role-warning { margin-top: 6px; font-size: 12px; line-height: 1.5; color: #e6a23c; }
 .base-form { margin-bottom: 4px; }
 .tip { margin-bottom: 12px; }
 .group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
