@@ -154,6 +154,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Tools, Search, Document, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { applyCustomerResults, mergeSelectedCustomer } from '../../utils/customerOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -194,7 +195,8 @@ const kbData = ref({})
 
 const searchCustomers = async (q) => {
   try {
-    customers.value = await request.get('/servicedetail/customers/', { params: { q: q || '' } })
+    const data = await request.get('/servicedetail/customers/', { params: { q: q || '' } })
+    customers.value = applyCustomerResults(data, form.customer, customers.value)
   } catch {}
 }
 
@@ -216,11 +218,11 @@ const onServiceChange = (val) => {
 
 const loadData = async () => {
   if (isBatch.value || isKnowledge.value) {
-    searchCustomers('')
+    await searchCustomers('')
     return
   }
   if (!isEdit.value) {
-    searchCustomers('')
+    await searchCustomers('')
     return
   }
   try {
@@ -232,7 +234,7 @@ const loadData = async () => {
       fault_text: data.fault_text || '', fault_reason: data.fault_reason || '',
       repair_method: data.repair_method || '', repair_date: data.repair_date || '',
     })
-    customers.value = [{ id: data.customer, company_name: data.customer_name }]
+    customers.value = mergeSelectedCustomer(customers.value, data.customer, data.customer_name)
     services.value = [{
       id: data.service, service_number: data.service_number,
       productcategory_id: data.productcategory || null, product_id: data.product || null,

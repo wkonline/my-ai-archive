@@ -158,6 +158,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { CreditCard, List, Plus, Delete, Document, Download, UploadFilled } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { applyCustomerResults } from '../../utils/customerOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -267,10 +268,10 @@ const defaultContractNumber = () => {
 const searchCustomers = async (q = '') => {
   customerLoading.value = true
   try {
-    const data = await request.get('/customer/', { params: { keyword: q, page_size: 50 }, silent: true })
-    customers.value = data.results || data || []
+    const data = await request.get('/customer/', { params: { keyword: q, page_size: 200 }, silent: true })
+    customers.value = applyCustomerResults(data.results || data, form.customer, customers.value)
   } catch {
-    customers.value = []
+    // 搜索失败不清空候选：已选客户必须留在列表里，否则下拉会退化成显示 id
   } finally {
     customerLoading.value = false
   }

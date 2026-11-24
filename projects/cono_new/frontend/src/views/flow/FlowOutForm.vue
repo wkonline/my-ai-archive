@@ -122,6 +122,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Box, User, Van } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { applyCustomerResults, mergeSelectedCustomer } from '../../utils/customerOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -157,8 +158,8 @@ const searchArchives = async (q) => {
 
 const searchCustomers = async (q) => {
   try {
-    const data = await request.get('/customer/', { params: { keyword: q || '', page_size: 50 }, silent: true })
-    customers.value = data.results || data
+    const data = await request.get('/customer/', { params: { keyword: q || '', page_size: 200 }, silent: true })
+    customers.value = applyCustomerResults(data.results || data, form.customer, customers.value)
   } catch { /* 保留上次结果 */ }
 }
 
@@ -210,7 +211,7 @@ const loadData = async () => {
         productcategory_name: data.productcategory_name,
         product_model: data.product_model,
       }]
-      customers.value = [{ id: data.customer, company_name: data.customer_name }]
+      customers.value = mergeSelectedCustomer(customers.value, data.customer, data.customer_name)
       return
     }
     await refreshNumber()

@@ -90,6 +90,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Box } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { applyCustomerResults, mergeSelectedCustomer } from '../../utils/customerOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -123,7 +124,8 @@ const batchLoading = ref(false)
 
 const searchCustomers = async (q) => {
   try {
-    customers.value = await request.get('/return-product/customers/', { params: { q: q || '' } })
+    const data = await request.get('/return-product/customers/', { params: { q: q || '' } })
+    customers.value = applyCustomerResults(data, form.customer, customers.value)
   } catch {}
 }
 
@@ -145,11 +147,11 @@ const onServiceChange = (val) => {
 
 const loadData = async () => {
   if (isBatch.value) {
-    searchCustomers('')
+    await searchCustomers('')
     return
   }
   if (!isEdit.value) {
-    searchCustomers('')
+    await searchCustomers('')
     return
   }
   try {
@@ -159,7 +161,7 @@ const loadData = async () => {
       productcategory_name: data.productcategory_name || '', product_model: data.product_model || '',
       date: data.date || '',
     })
-    customers.value = [{ id: data.customer, company_name: data.customer_name }]
+    customers.value = mergeSelectedCustomer(customers.value, data.customer, data.customer_name)
     services.value = [{
       id: data.service,
       service_number: data.service_number,

@@ -12,7 +12,7 @@ from api.core.flow_bridge import complete_archive_repair, reopen_archive_repair
 from api.core.serializers.common import (
     ServiceSerializer, ServiceDetailSerializer, ReturnProductSerializer,
 )
-from api.core.views.base import BaseModelViewSet
+from api.core.views.base import BaseModelViewSet, CUSTOMER_SEARCH_LIMIT
 
 
 class ServiceViewSet(BaseModelViewSet):
@@ -121,14 +121,16 @@ class ServiceViewSet(BaseModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='customers')
     def customers(self, request):
-        """获取有待维修售后服务的客户列表"""
+        """售后服务新增/编辑的客户下拉：搜索全部客户。
+
+        老版 service_add/service_edit 用的是 search_companys（全量搜索）。这里若按
+        「已有售后记录」过滤，从未报修过的客户永远选不到，也就无法为其登记首单。
+        """
         query = request.query_params.get('q', '').strip()
-        customers = models.Customer.objects.filter(
-            Exists(models.Service.objects.filter(
-                customer=OuterRef('pk'), is_delete=False)))
+        customers = models.Customer.objects.filter(is_delete=False)
         if query:
             customers = customers.filter(company_name__icontains=query)
-        customers = customers.order_by('company_name')[:20]
+        customers = customers.order_by('company_name')[:CUSTOMER_SEARCH_LIMIT]
         return Response([{'id': c.id, 'company_name': c.company_name} for c in customers])
 
     def create(self, request, *args, **kwargs):
@@ -251,7 +253,7 @@ class ServiceDetailViewSet(BaseModelViewSet):
                 customer=OuterRef('pk'), is_delete=False, warranty_end=1)))
         if query:
             customers = customers.filter(company_name__icontains=query)
-        customers = customers.order_by('company_name')[:20]
+        customers = customers.order_by('company_name')[:CUSTOMER_SEARCH_LIMIT]
         return Response([{'id': c.id, 'company_name': c.company_name} for c in customers])
 
     @action(detail=False, methods=['get'], url_path='services')
@@ -515,7 +517,7 @@ class ReturnProductViewSet(BaseModelViewSet):
                 customer=OuterRef('pk'), is_delete=False, warranty_end=2, return_status=1)))
         if query:
             customers = customers.filter(company_name__icontains=query)
-        customers = customers.order_by('company_name')[:20]
+        customers = customers.order_by('company_name')[:CUSTOMER_SEARCH_LIMIT]
         return Response([{'id': c.id, 'company_name': c.company_name} for c in customers])
 
     @action(detail=False, methods=['get'], url_path='services')

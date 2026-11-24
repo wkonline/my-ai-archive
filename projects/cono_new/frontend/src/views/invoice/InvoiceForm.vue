@@ -63,6 +63,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Ticket } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { applyCustomerResults, mergeSelectedCustomer } from '../../utils/customerOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -88,7 +89,7 @@ const contractOptions = ref([])
 const searchCustomers = async (q) => {
   try {
     const data = await request.get('/invoice/customers/', { params: { q: q || '' } })
-    customerOptions.value = data || []
+    customerOptions.value = applyCustomerResults(data, form.customer, customerOptions.value)
   } catch {}
 }
 
@@ -104,7 +105,7 @@ const onCustomerChange = async (cid) => {
 const loadData = async () => {
   if (!isEdit.value) {
     Object.assign(form, { id: null, customer: null, contract: null, date: today(), amount: 0, invoice_number: '', invoice_man_name: '' })
-    searchCustomers('')
+    await searchCustomers('')
     return
   }
   try {
@@ -118,7 +119,7 @@ const loadData = async () => {
       invoice_number: data.invoice_number,
       invoice_man_name: data.invoice_man_name || '',
     })
-    customerOptions.value = [{ id: data.customer, company_name: data.customer_name }]
+    customerOptions.value = mergeSelectedCustomer(customerOptions.value, data.customer, data.customer_name)
     contractOptions.value = [{ id: data.contract, contract_number: data.contract_number }]
   } catch {}
 }
