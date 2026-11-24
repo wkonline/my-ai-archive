@@ -23,8 +23,9 @@
         <el-table-column prop="department_name" label="所属部门" min-width="115" />
         <el-table-column prop="role" label="角色" width="100" />
         <el-table-column prop="create_date" label="入职时间" width="105" align="center" />
-        <el-table-column label="操作" class-name="op-cell" width="150" fixed="right">
-          <template #default="{ row }"><el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
+        <el-table-column label="操作" class-name="op-cell" width="230" fixed="right">
+          <template #default="{ row }"><el-button v-if="isAdmin" class="op-btn op-perm" size="small" @click="openPermission(row)"><el-icon><Lock /></el-icon>&nbsp;权限</el-button>
+            <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
             <el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
           </template>
         </el-table-column>
@@ -36,13 +37,16 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Search, List, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Search, List, Edit, Delete, Lock } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../api/request'
+import { useUserStore } from '../../stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.isAdmin)
 const list = ref([])
 const total = ref(0)
 const page = ref(1)
@@ -63,6 +67,7 @@ const fetchList = async () => {
 const onSearch = () => { page.value = 1; fetchList() }
 const openAdd = () => router.push('/user/new')
 const openEdit = (row) => router.push(`/user/edit/${row.id}`)
+const openPermission = (row) => router.push(`/user/permission/${row.id}`)
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm('确定删除该用户吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })

@@ -85,6 +85,9 @@ class FlowReturnSerializer(serializers.ModelSerializer):
     flow_number = serializers.CharField(source='flow_out.flow_number', read_only=True)
     customer_name = serializers.CharField(source='flow_out.customer.company_name', read_only=True)
     archive_serial = serializers.CharField(source='flow_out.archive.serial_number', read_only=True)
+    # 返回的是原板，产品名称取原档案；换板后的新板信息在 new_archive_serial
+    productcategory_name = serializers.CharField(
+        source='flow_out.archive.productcategory.name', read_only=True)
     new_archive_serial = serializers.CharField(source='new_archive.serial_number', read_only=True)
     result_status_display = serializers.CharField(source='get_result_status_display', read_only=True)
     service_number = serializers.CharField(source='service.service_number', read_only=True)

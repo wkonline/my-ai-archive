@@ -142,9 +142,9 @@ class ProductArchiveViewSet(BaseModelViewSet):
         import pandas as pd
         qs = self.filter_queryset(self.get_queryset())
         data = [{
-            '产品序列号': a.serial_number,
             '产品名称': a.productcategory.name if a.productcategory else '',
             '产品型号': a.product.model if a.product else '',
+            '产品序列号': a.serial_number,
             '经手人': a.handler.username if a.handler else '',
             '入库日期': a.stock_date,
             '当前状态': a.get_status_display(),
@@ -275,8 +275,9 @@ class FlowOutViewSet(BaseModelViewSet):
         qs = self.filter_queryset(self.get_queryset())
         data = [{
             '流转编号': f.flow_number,
-            '产品序列号': f.archive.serial_number if f.archive else '',
+            '产品名称': f.archive.productcategory.name if f.archive and f.archive.productcategory else '',
             '产品型号': f.archive.product.model if f.archive and f.archive.product else '',
+            '产品序列号': f.archive.serial_number if f.archive else '',
             '客户名称': f.customer.company_name if f.customer else '',
             '客户地址': f.customer_address or '',
             '联系人': f.contact_name or '',
@@ -328,7 +329,8 @@ class FlowReturnViewSet(BaseModelViewSet):
     """客户返回登记：换板建档 + 送修判定"""
     queryset = models.FlowReturn.objects.select_related(
         'flow_out', 'flow_out__customer', 'flow_out__archive',
-        'flow_out__archive__product', 'new_archive').all()
+        'flow_out__archive__product', 'flow_out__archive__productcategory',
+        'new_archive').all()
     serializer_class = FlowReturnSerializer
     permission_codes = 'flow_return_list'
     action_permission_codes = {
@@ -520,8 +522,11 @@ class FlowReturnViewSet(BaseModelViewSet):
         qs = self.filter_queryset(self.get_queryset())
         data = [{
             '流转编号': r.flow_out.flow_number if r.flow_out else '',
-            '返回时序列号': r.snapshot_serial,
-            '返回时型号': r.snapshot_model or '',
+            '产品名称': (r.flow_out.archive.productcategory.name
+                         if r.flow_out and r.flow_out.archive
+                         and r.flow_out.archive.productcategory else ''),
+            '产品型号': r.snapshot_model or '',
+            '产品序列号': r.snapshot_serial,
             '客户名称': r.flow_out.customer.company_name if r.flow_out and r.flow_out.customer else '',
             '寄出日期': r.flow_out.ship_date if r.flow_out else '',
             '实际返回日期': r.actual_return_date,

@@ -4,6 +4,30 @@ from rest_framework.exceptions import PermissionDenied
 from api.core.models import AuthRole, AuthUserProfile
 
 
+def permission_catalog():
+    """权限/菜单分组与中文名，供权限管理页面勾选。
+
+    直接复用老版 cono/tools/auth_profile.py 的分组逻辑，避免两套分组规则不一致；
+    老版模块不可用时退回 CONO_PERMISSION 平铺 + 简单分组。
+    """
+    try:
+        from cono.tools.auth_profile import grouped_permission_items, grouped_menus
+        return grouped_permission_items(), grouped_menus()
+    except Exception:
+        from django.conf import settings
+        cono_perm = getattr(settings, 'CONO_PERMISSION', {}) or {}
+        cono_menu = getattr(settings, 'CONO_MENU', {}) or {}
+        codes = sorted({c for v in cono_perm.values() for c in (v or [])})
+        groups = [{'name': '全部权限', 'items': [{'code': c, 'label': c} for c in codes]}]
+        titles = {}
+        for items in cono_menu.values():
+            for item in (items or []):
+                if item.get('title'):
+                    titles[item['title']] = {'title': item['title'], 'url': item.get('url', '')}
+        menus = [{'name': '顶部栏目', 'items': list(titles.values())}]
+        return groups, menus
+
+
 def _builtin_permissions(role_key):
     """从老版 settings.CONO_PERMISSION 读取内置角色默认权限。"""
     try:

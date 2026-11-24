@@ -269,6 +269,8 @@ html, body, #app {
 .op-delete:hover { background: var(--danger) !important; color: #fff !important; border-color: var(--danger) !important; }
 .op-download { color: var(--success) !important; border-color: rgba(47,133,90,0.26) !important; background: rgba(47,133,90,0.05) !important; }
 .op-download:hover { background: var(--success) !important; color: #fff !important; border-color: var(--success) !important; }
+.op-perm { color: #7a4fbf !important; border-color: rgba(122,79,191,0.28) !important; background: rgba(122,79,191,0.06) !important; }
+.op-perm:hover { background: #7a4fbf !important; color: #fff !important; border-color: #7a4fbf !important; }
 
 /* ── 内容卡片 ── */
 .group-card,

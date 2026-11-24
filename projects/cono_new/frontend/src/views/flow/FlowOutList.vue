@@ -54,9 +54,9 @@
             <el-link type="primary" :underline="false">{{ row.flow_number }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="archive_serial" label="产品序列号" min-width="170" show-overflow-tooltip />
         <el-table-column prop="productcategory_name" label="产品名称" min-width="130" show-overflow-tooltip />
         <el-table-column prop="product_model" label="产品型号" min-width="130" show-overflow-tooltip />
+        <el-table-column prop="archive_serial" label="产品序列号" min-width="170" show-overflow-tooltip />
         <el-table-column prop="customer_name" label="客户名称" min-width="200" show-overflow-tooltip />
         <el-table-column prop="contact_name" label="联系人" width="100" />
         <el-table-column prop="ship_date" label="寄出日期" width="110" align="center" />

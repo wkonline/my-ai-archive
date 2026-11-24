@@ -13,6 +13,8 @@ from api.core.serializers.common import (
     WarehouseSerializer, ProductCategorySerializer, ProductSerializer,
 )
 from api.core.views.base import BaseModelViewSet
+from api.core.permissions import permission_catalog
+from cono.tools.auth_profile import canonical_menus
 
 
 class DepartmentViewSet(BaseModelViewSet):
@@ -30,7 +32,10 @@ class UserViewSet(BaseModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'phone']
     # 个人中心接口是“本人操作”，不应要求 user_list 权限
-    action_permission_codes = {'me': [], 'update_profile': []}
+    action_permission_codes = {
+        'me': [], 'update_profile': [],
+        'permission': ['auth_user_permission'],
+    }
 
     @action(detail=False, methods=['get'], url_path='me')
     def me(self, request):
@@ -46,6 +51,72 @@ class UserViewSet(BaseModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(self.get_serializer(request.user).data)
+
+    @action(detail=True, methods=['get', 'post'], url_path='permission')
+    def permission(self, request, pk=None):
+        """单个用户的权限配置（对应老版 /auth/user/<id>/permission/）。
+
+        权限模型是「角色权限 + 个人额外允许 - 个人禁止」，
+        所以这里保存的是相对角色的差异，而不是完整权限清单。
+        """
+        user = self.get_object()
+        if request.method == 'POST':
+            return self._save_permission(request, user)
+        return Response(self._permission_payload(user))
+
+    def _permission_payload(self, user):
+        profile = models.AuthUserProfile.objects.filter(user=user).first()
+        groups, menu_groups = permission_catalog()
+        return {
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'role': user.role,
+                'role_display': user.get_role_display(),
+            },
+            'roles': [
+                {'key': r.key, 'name': r.name}
+                for r in models.AuthRole.objects.all().order_by('id')
+            ],
+            'permission_groups': groups,
+            'menu_groups': menu_groups,
+            'extra_permissions': list(profile.extra_permissions or []) if profile else [],
+            'denied_permissions': list(profile.denied_permissions or []) if profile else [],
+            'menus': [m.get('title') for m in (profile.menus or []) if m.get('title')] if profile else [],
+            'menu_customize': bool(profile.menu_customize) if profile else False,
+        }
+
+    def _save_permission(self, request, user):
+        data = request.data
+        role_key = (data.get('role') or '').strip()
+        if role_key:
+            # 改角色等于提权，与 UserSerializer 保持一致只允许管理员操作
+            if getattr(request.user, 'role', '') != 'admin':
+                return Response({'detail': '只有管理员可以修改用户角色'}, status=403)
+            if not models.AuthRole.objects.filter(key=role_key).exists():
+                return Response({'role': '角色不存在'}, status=400)
+            if user.role != role_key:
+                user.role = role_key
+                user.save(update_fields=['role'])
+
+        groups, _ = permission_catalog()
+        known = {item['code'] for g in groups for item in g['items']}
+        extra = [c for c in (data.get('extra_permissions') or []) if c in known]
+        denied = [c for c in (data.get('denied_permissions') or []) if c in known]
+        # 同一权限既允许又禁止时以禁止为准，避免两条规则打架
+        denied_set = set(denied)
+        extra = [c for c in extra if c not in denied_set]
+
+        menu_map = {item['title']: item for item in canonical_menus()}
+        menus = [menu_map[t] for t in (data.get('menus') or []) if t in menu_map]
+
+        profile, _ = models.AuthUserProfile.objects.get_or_create(user=user)
+        profile.extra_permissions = sorted(set(extra))
+        profile.denied_permissions = sorted(denied_set)
+        profile.menus = menus
+        profile.menu_customize = bool(data.get('menu_customize'))
+        profile.save()
+        return Response(self._permission_payload(user))
 
 
 class CustomerViewSet(BaseModelViewSet):

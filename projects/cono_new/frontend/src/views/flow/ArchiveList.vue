@@ -49,15 +49,15 @@
       </template>
       <el-table :data="list" stripe border v-loading="loading" :row-class-name="rowClass">
         <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
-        <el-table-column prop="serial_number" label="产品序列号" min-width="180" fixed>
+        <el-table-column prop="productcategory_name" label="产品名称" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="product_model" label="产品型号" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="serial_number" label="产品序列号" min-width="180">
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="openDetail(row)">{{ row.serial_number }}</el-link>
             <el-tag v-if="row.is_superseded" size="small" type="info" class="tag-inline">已换板</el-tag>
             <el-tag v-if="!row.is_active" size="small" type="danger" class="tag-inline">已停用</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="productcategory_name" label="产品名称" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="product_model" label="产品型号" min-width="140" show-overflow-tooltip />
         <el-table-column prop="handler_name" label="经手人" width="100" />
         <el-table-column prop="stock_date" label="入库日期" width="110" align="center" />
         <el-table-column label="当前状态" width="120" align="center">

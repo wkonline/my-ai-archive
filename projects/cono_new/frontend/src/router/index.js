@@ -49,6 +49,7 @@ const routes = [
       { path: 'user', name: 'User', component: () => import('../views/system/UserList.vue'), meta: { title: '用户管理' } },
       { path: 'user/new', name: 'UserNew', component: () => import('../views/system/UserForm.vue'), meta: { title: '新增用户' } },
       { path: 'user/edit/:id', name: 'UserEdit', component: () => import('../views/system/UserForm.vue'), meta: { title: '编辑用户' } },
+      { path: 'user/permission/:id', name: 'UserPermission', component: () => import('../views/system/UserPermission.vue'), meta: { title: '用户权限管理' } },
       { path: 'user/me', name: 'UserProfile', component: () => import('../views/system/ProfileView.vue'), meta: { title: '我的资料' } },
       { path: 'user/profile/edit', name: 'ProfileEdit', component: () => import('../views/system/ProfileEdit.vue'), meta: { title: '修改资料' } },
       { path: 'user/profile/password', name: 'PasswordChange', component: () => import('../views/system/PasswordChange.vue'), meta: { title: '修改密码' } },
@@ -121,6 +122,7 @@ const ROUTE_PERM = {
   '/warehouse': ['warehouse_list'],
   '/department': ['department_list'],
   '/user': ['user_list'],
+  '/user/permission': ['auth_user_permission'],
   '/accounts': ['chart_list', 'chart_bar', 'chart_bar2', 'chart_pie', 'chart_line', 'highcharts'],
   '/backup': ['backup_database', 'restore_database'],
   '/log': ['get_log'],
@@ -129,7 +131,12 @@ const ROUTE_PERM = {
   '/auth/role': ['auth_role_list', 'auth_user_permission'],
 }
 function routePermRequired(path) {
-  return ROUTE_PERM[path] || ROUTE_PERM[path.replace(/\/new$/, '')] || ROUTE_PERM[path.replace(/\/edit\/\d+$/, '')] || null
+  // 用户权限页必须走 auth_user_permission，不能退回 /user 的 user_list
+  return ROUTE_PERM[path.replace(/\/permission\/\d+$/, '/permission')]
+    || ROUTE_PERM[path]
+    || ROUTE_PERM[path.replace(/\/new$/, '')]
+    || ROUTE_PERM[path.replace(/\/edit\/\d+$/, '')]
+    || null
 }
 router.beforeEach((to, from, next) => {
   if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('dev')) {
