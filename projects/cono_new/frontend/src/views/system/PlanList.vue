@@ -210,6 +210,7 @@ const openAdd = () => { if (!requirePerm(['plan_add'], '新增生产计划')) re
 const openEdit = (row) => { if (!requirePerm(['plan_edit'], '编辑生产计划')) return; router.push(`/plan/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
+  if (!requirePerm(['plan_delete'], '删除生产计划')) return
   try {
     await ElMessageBox.confirm(`确认删除该生产计划？`, '提示', { type: 'warning' })
     await request.delete(`/plan/${row.id}/`)

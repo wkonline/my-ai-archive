@@ -371,6 +371,7 @@ const openAdd = () => { if (!requirePerm(['invoice_add', 'invoice_create'], '新
 const openEdit = (row) => { if (!requirePerm(['invoice_edit'], '编辑发票')) return; router.push(`/invoice/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
+  if (!requirePerm(['invoice_delete'], '删除发票')) return
   try {
     await ElMessageBox.confirm(`确认删除该发票记录？`, '提示', { type: 'warning' })
     await request.delete(`/invoice/${row.id}/`)

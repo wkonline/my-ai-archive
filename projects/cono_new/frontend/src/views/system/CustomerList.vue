@@ -97,6 +97,7 @@ const contactSummary = (row) => {
 const openAdd = () => { if (!requirePerm(['customer_add'], '新增客户')) return; router.push('/customer/new') }
 const openEdit = (row) => { if (!requirePerm(['customer_edit'], '编辑客户')) return; router.push(`/customer/edit/${row.id}`) }
 const handleDelete = async (row) => {
+  if (!requirePerm(['customer_delete'], '删除客户')) return
   try {
     await ElMessageBox.confirm('确定删除该客户吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
   } catch { return }

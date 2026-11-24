@@ -77,6 +77,7 @@ const exportData = () => {
 const openAdd = () => { if (!requirePerm(['productlabel_add'], '新增产品铭牌')) return; router.push('/product-label/new') }
 const openEdit = (row) => { if (!requirePerm(['productlabel_edit'], '编辑产品铭牌')) return; router.push(`/product-label/edit/${row.id}`) }
 const handleDelete = async (row) => {
+  if (!requirePerm(['productlabel_delete'], '删除产品铭牌')) return
   try {
     await ElMessageBox.confirm('确定删除该铭牌吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
   } catch { return }

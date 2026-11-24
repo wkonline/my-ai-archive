@@ -236,6 +236,7 @@ const exportData = () => {
 const openAdd = () => { if (!requirePerm(['servicedetail_add'], '新增维修记录')) return; router.push('/servicedetail/new') }
 const openEdit = (row) => { if (!requirePerm(['servicedetail_edit'], '编辑维修记录')) return; router.push(`/servicedetail/edit/${row.id}`) }
 const handleDelete = async (row) => {
+  if (!requirePerm(['servicedetail_delete'], '删除维修记录')) return
   try {
     await ElMessageBox.confirm('确定删除该维修记录吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
   } catch { return }

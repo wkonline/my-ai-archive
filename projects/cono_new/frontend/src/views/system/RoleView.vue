@@ -68,6 +68,7 @@ function fetchList() {
 const openAdd = () => { if (!requirePerm(['auth_role_add'], '新增角色')) return; router.push('/auth/role/new') }
 const openEdit = (row) => { if (!requirePerm(['auth_role_edit'], '编辑角色')) return; router.push(`/auth/role/edit/${row.id}`) }
 const handleDelete = async (row) => {
+  if (!requirePerm(['auth_role_delete'], '删除角色')) return
   try {
     await ElMessageBox.confirm('确定删除该角色吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
   } catch { return }

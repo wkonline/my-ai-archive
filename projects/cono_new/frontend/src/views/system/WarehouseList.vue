@@ -61,6 +61,7 @@ const openAdd = () => { if (!requirePerm(['warehouse_add'], '新增仓库')) ret
 const openEdit = (row) => { if (!requirePerm(['warehouse_edit'], '编辑仓库')) return; router.push(`/warehouse/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
+  if (!requirePerm(['warehouse_delete'], '删除仓库')) return
   try {
     await ElMessageBox.confirm(`确认删除该仓库？`, '提示', { type: 'warning' })
     await request.delete(`/warehouse/${row.id}/`)

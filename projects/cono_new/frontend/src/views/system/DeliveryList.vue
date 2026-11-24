@@ -171,6 +171,7 @@ const openAdd = () => { if (!requirePerm(['delivery_add'], '新增发货单')) r
 const openEdit = (row) => { if (!requirePerm(['delivery_edit'], '编辑发货单')) return; router.push(`/delivery/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
+  if (!requirePerm(['delivery_delete'], '删除发货单')) return
   try {
     await ElMessageBox.confirm(`确认删除该发货记录？`, '提示', { type: 'warning' })
     await request.delete(`/delivery/${row.id}/`)

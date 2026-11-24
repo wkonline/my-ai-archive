@@ -236,10 +236,12 @@ const exportData = () => {
 
 const openAdd = () => { if (!requirePerm(['service_add'], '新增售后')) return; router.push('/service/new') }
 const openEdit = (row) => { if (!requirePerm(['service_edit'], '编辑售后')) return; router.push(`/service/edit/${row.id}`) }
-const openDetail = (row) => router.push(`/service/edit/${row.id}`)
+// 售后没有独立的详情页，编号链接复用编辑页，因此也要校验编辑权限
+const openDetail = (row) => { if (!requirePerm(['service_edit'], '查看售后详情')) return; router.push(`/service/edit/${row.id}`) }
 const openCopy = (row) => { if (!requirePerm(['service_add', 'service_edit'], '复制售后')) return; router.push(`/service/edit/${row.id}?copy=1`) }
 
 const handleDelete = async (row) => {
+  if (!requirePerm(['service_delete'], '删除售后')) return
   try {
     await ElMessageBox.confirm(`确认删除该售后记录？`, '提示', { type: 'warning' })
     await request.delete(`/service/${row.id}/`)

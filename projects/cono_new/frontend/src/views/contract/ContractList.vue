@@ -299,6 +299,7 @@ const openEdit = (row) => { if (!requirePerm(['contract_edit'], '编辑合同'))
 const openDetail = (row) => router.push(`/contract/${row.id}`)
 
 const handleDelete = async (row) => {
+  if (!requirePerm(['contract_delete'], '删除合同')) return
   await ElMessageBox.confirm(`确认删除合同 ${row.contract_number}？`, '提示', { type: 'warning' })
   await request.delete(`/contract/${row.id}/`)
   ElMessage.success('删除成功')

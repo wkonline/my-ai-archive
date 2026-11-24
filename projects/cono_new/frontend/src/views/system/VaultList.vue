@@ -63,6 +63,7 @@ const onSearch = () => { page.value = 1; fetchList() }
 const openAdd = () => { if (!requirePerm(['account_vault_add'], '新增账号密码')) return; router.push('/account-vault/new') }
 const openEdit = (row) => { if (!requirePerm(['account_vault_edit'], '编辑账号密码')) return; router.push(`/account-vault/edit/${row.id}`) }
 const handleDelete = async (row) => {
+  if (!requirePerm(['account_vault_delete'], '删除账号密码')) return
   try {
     await ElMessageBox.confirm('确定删除该账号密码吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
   } catch { return }

@@ -134,6 +134,7 @@ const exportData = () => {
 const openAdd = () => { if (!requirePerm(['return_product_add'], '新增返件')) return; router.push('/return-product/new') }
 const openEdit = (row) => { if (!requirePerm(['return_product_edit'], '编辑返件')) return; router.push(`/return-product/edit/${row.id}`) }
 const handleDelete = async (row) => {
+  if (!requirePerm(['return_product_delete'], '删除返件')) return
   try {
     await ElMessageBox.confirm('确定删除该返件记录吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
   } catch { return }

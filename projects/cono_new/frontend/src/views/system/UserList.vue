@@ -70,6 +70,7 @@ const openAdd = () => { if (!requirePerm(['user_add'], '新建用户')) return; 
 const openEdit = (row) => { if (!requirePerm(['user_edit'], '编辑用户')) return; router.push(`/user/edit/${row.id}`) }
 const openPermission = (row) => { if (!requirePerm(['auth_user_permission'], '配置用户权限')) return; router.push(`/user/permission/${row.id}`) }
 const handleDelete = async (row) => {
+  if (!requirePerm(['user_delete'], '删除用户')) return
   try {
     await ElMessageBox.confirm('确定删除该用户吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
   } catch { return }

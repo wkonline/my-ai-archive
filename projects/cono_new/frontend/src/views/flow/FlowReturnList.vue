@@ -152,6 +152,7 @@ const exportData = () => {
 const openAdd = () => { if (!requirePerm(['flow_return_add'], '返回登记')) return; router.push('/flow/return/new') }
 
 const handleDelete = async (row) => {
+  if (!requirePerm(['flow_return_delete'], '删除返回登记')) return
   try {
     await ElMessageBox.confirm(
       `确定删除「${row.flow_number}」的返回登记吗？该单会退回「在客户处」，产品档案状态同步回滚。`,

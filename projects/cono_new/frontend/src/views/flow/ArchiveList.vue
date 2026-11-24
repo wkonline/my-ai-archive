@@ -203,6 +203,7 @@ const openDetail = async (row) => {
 }
 
 const markStocked = async (row) => {
+  if (!requirePerm(['flow_archive_stock'], '维修完成')) return
   try {
     await ElMessageBox.confirm(
       `确认「${row.serial_number}」维修完成并回到公司库存吗？`, '维修完成',
@@ -218,6 +219,7 @@ const markStocked = async (row) => {
 }
 
 const toggleActive = async (row) => {
+  if (!requirePerm(['flow_archive_edit'], '停用/启用档案')) return
   try {
     await request.post(`/flow-archive/${row.id}/toggle-active/`)
     ElMessage.success(row.is_active ? '已停用' : '已启用')

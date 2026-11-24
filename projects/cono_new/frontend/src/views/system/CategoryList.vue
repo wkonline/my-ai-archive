@@ -60,6 +60,7 @@ const onSearch = () => { page.value = 1; fetchList() }
 const openAdd = () => { if (!requirePerm(['productcategory_add'], '新增产品分类')) return; router.push('/product-category/new') }
 const openEdit = (row) => { if (!requirePerm(['productcategory_edit'], '编辑产品分类')) return; router.push(`/product-category/edit/${row.id}`) }
 const handleDelete = async (row) => {
+  if (!requirePerm(['productcategory_delete'], '删除产品分类')) return
   try {
     await ElMessageBox.confirm('确定删除该分类吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
   } catch { return }

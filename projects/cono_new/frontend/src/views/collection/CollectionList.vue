@@ -221,6 +221,7 @@ const openAdd = () => { if (!requirePerm(['collection_add'], '新增回款')) re
 const openEdit = (row) => { if (!requirePerm(['collection_edit'], '编辑回款')) return; router.push(`/collection/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
+  if (!requirePerm(['collection_delete'], '删除回款')) return
   try {
     await ElMessageBox.confirm(`确认删除该回款记录？`, '提示', { type: 'warning' })
     await request.delete(`/collection/${row.id}/`)

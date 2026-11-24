@@ -109,6 +109,7 @@ const onSearch = () => { page.value = 1; fetchList() }
 const openAdd = () => { if (!requirePerm(['contract_file', 'contract_file_list'], '上传资料')) return; router.push('/contract-file/new') }
 const openEdit = (row) => { if (!requirePerm(['edit_contract_file'], '编辑资料')) return; router.push(`/contract-file/edit/${row.id}`) }
 const handleDelete = async (row) => {
+  if (!requirePerm(['delete_contract_file'], '删除资料')) return
   try {
     await ElMessageBox.confirm('确定删除该资料吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
   } catch { return }

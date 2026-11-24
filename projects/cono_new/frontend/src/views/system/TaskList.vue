@@ -173,6 +173,7 @@ const openAdd = () => { if (!requirePerm(['task_add'], '派任务单')) return; 
 const openEdit = (row) => { if (!requirePerm(['task_edit'], '编辑任务单')) return; router.push(`/task/edit/${row.id}`) }
 
 const handleDelete = async (row) => {
+  if (!requirePerm(['task_delete'], '删除任务单')) return
   try {
     await ElMessageBox.confirm(`确认删除该任务单？`, '提示', { type: 'warning' })
     await request.delete(`/task/${row.id}/`)

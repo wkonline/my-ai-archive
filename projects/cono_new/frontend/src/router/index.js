@@ -107,6 +107,7 @@ function isTokenExpired() {
 
 const ROUTE_PERM = {
   '/contract': ['contract_list'],
+  '/contract-product': ['contract_product', 'contract_list'],
   '/service': ['service_list'],
   '/collection': ['collection_list'],
   '/invoice': ['invoice_list'],

@@ -156,6 +156,7 @@ const openEdit = (row) => { if (!requirePerm(['flow_out_edit'], '编辑寄出登
 const openReturn = (row) => { if (!requirePerm(['flow_return_add'], '客户返回登记')) return; router.push({ path: '/flow/return/new', query: { flow_out: row.id } }) }
 
 const handleDelete = async (row) => {
+  if (!requirePerm(['flow_out_delete'], '删除寄出登记')) return
   try {
     await ElMessageBox.confirm(
       `确定删除寄出单「${row.flow_number}」吗？删除后该产品档案会退回公司库存。`,

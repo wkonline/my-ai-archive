@@ -60,6 +60,7 @@ const onSearch = () => { page.value = 1; fetchList() }
 const openAdd = () => { if (!requirePerm(['department_add'], '新增部门')) return; router.push('/department/new') }
 const openEdit = (row) => { if (!requirePerm(['department_edit'], '编辑部门')) return; router.push(`/department/edit/${row.id}`) }
 const handleDelete = async (row) => {
+  if (!requirePerm(['department_delete'], '删除部门')) return
   try {
     await ElMessageBox.confirm('确定删除该部门吗？删除后不可恢复。', '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
   } catch { return }
