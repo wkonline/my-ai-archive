@@ -29,8 +29,9 @@ Django DRF（`api/`）+ Vue3/Element Plus（`frontend/`）。部署到 NAS 192.1
 
 - 角色来源是 `auth_role` 表（`AuthRole`），`User.role` 只是 key，**没有 choices 校验**。
   内置角色只有 `admin` / `upkeeper`（`BUILTIN_ROLE_KEYS`），其余角色可删。
-- 新用户默认角色由 `default_role_key()` 决定（权限最少的非 admin 角色，平局优先 upkeeper），
-  注册、新建用户（新旧系统）都必须走它，不要硬编码角色名。
+- 新用户默认角色由 `default_role_key()` 决定，固定返回内置的 `upkeeper`（它会先调用
+  `ensure_default_roles()` 保证角色存在）；注册、新建用户（新旧系统）都必须走它，不要硬编码角色名。
+  不按「权限条数最少」动态挑选：条数会随管理员调整而变，且 finance 之类角色条数少却掌握金额数据。
 - `admin` 权限/菜单由 `sync_admin_role()` 与 settings 对齐；权限管理页对 admin 只允许改中文名。
 - 删除角色前必须先清空该角色下的用户（后端会拒绝），不会自动改用户角色。
 

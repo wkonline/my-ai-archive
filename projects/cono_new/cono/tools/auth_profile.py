@@ -40,18 +40,14 @@ def role_display_name(role_key):
 
 
 def default_role_key():
-    """新注册/新建用户的默认角色：权限最少的非管理员角色。
+    """新注册/新建用户的默认角色：内置的 upkeeper（售后服务）。
 
-    权限数相同时优先内置的 upkeeper，保证同样的角色表在不同环境里选出同一个默认值；
-    没有任何非管理员角色时回退到 upkeeper。
+    不按「权限条数最少」动态挑选：条数会随管理员调整而变，而且 finance 之类角色
+    条数少却握着金额数据，不适合当新用户的默认归属。先补内置角色，保证这个 key
+    在 auth_role 表里一定存在，用户列表里不会出现指向空角色的账号。
     """
-    rows = list(_try(lambda: list(models.AuthRole.objects.exclude(key='admin'))) or [])
-    if not rows:
-        return DEFAULT_ROLE_KEY
-    return min(
-        rows,
-        key=lambda r: (len(r.permissions or []), 0 if r.key == DEFAULT_ROLE_KEY else 1, r.key),
-    ).key
+    ensure_default_roles()
+    return DEFAULT_ROLE_KEY
 
 
 PERMISSION_GROUPS = {

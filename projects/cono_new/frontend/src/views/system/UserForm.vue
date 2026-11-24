@@ -102,13 +102,8 @@ const loadData = async () => {
     roles.value = data.results || data || []
   } catch {}
   if (!isEdit.value) {
-    // 默认角色与后端 default_role_key() 一致：权限最少的非管理员角色，同权限数优先内置售后服务
-    const candidates = roles.value.filter(r => r.key !== 'admin')
-    const fallback = [...candidates].sort((a, b) =>
-      (a.permissions || []).length - (b.permissions || []).length
-      || (a.key === 'upkeeper' ? -1 : b.key === 'upkeeper' ? 1 : 0)
-      || a.key.localeCompare(b.key))[0]
-    Object.assign(form, { id: null, username: '', password: '', gender: 1, id_number: '', phone: '', address: '', department: null, role: fallback?.key || 'upkeeper', create_date: '' })
+    // 默认角色与后端 default_role_key() 一致：内置的 upkeeper（售后服务）
+    Object.assign(form, { id: null, username: '', password: '', gender: 1, id_number: '', phone: '', address: '', department: null, role: 'upkeeper', create_date: '' })
     return
   }
   try {

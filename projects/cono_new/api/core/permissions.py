@@ -56,7 +56,7 @@ def get_role_permissions(role_key):
 
 def get_effective_permissions(user):
     """用户有效权限 = 角色权限 + 个人 extra - 个人 denied。"""
-    role_key = getattr(user, 'role', 'servicer')
+    role_key = getattr(user, 'role', 'upkeeper')
     perms = get_role_permissions(role_key)
     if perms is None:
         return None  # admin
@@ -84,7 +84,7 @@ def _normalize_menus(raw):
 
 def get_effective_menus(user):
     """用户有效菜单 = 角色 menus（优先）+ 个人 menus（若 menu_customize）。"""
-    role_key = getattr(user, 'role', 'servicer')
+    role_key = getattr(user, 'role', 'upkeeper')
     if role_key == 'admin':
         # 管理员始终看全部栏目，避免库里 admin 记录未同步时看不到新栏目
         from django.conf import settings
