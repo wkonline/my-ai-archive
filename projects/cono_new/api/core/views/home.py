@@ -1,15 +1,13 @@
 """首页聚合接口：一次性返回老版首页所需的指标、最近列表、图表数据。"""
 import datetime
-import json
-from calendar import monthrange
-from decimal import Decimal
 
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from api.core import models
+from api.core.permissions import get_effective_permissions
 
 
 def _amount(queryset, field='amount'):
@@ -17,10 +15,31 @@ def _amount(queryset, field='amount'):
 
 
 class HomeView(APIView):
-    """参照老版 cono/views/index.py home() 实现，返回首页全量数据。"""
+    """参照老版 cono/views/index.py home() 实现，返回首页数据。
+
+    各模块按用户权限门控：未授权的模块不查询、不返回数据，与老版
+    cono/views/index.py:41-53 的 can_xxx 语义保持一致。
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        perms = get_effective_permissions(request.user)
+        # admin 的 get_effective_permissions 返回 None，代表全部放行
+        def can(*codes):
+            return perms is None or any(c in perms for c in codes)
+
+        can_contract = can('contract_list')
+        can_collection = can('collection_list')
+        can_invoice = can('invoice_list')
+        can_plan = can('plan_list')
+        can_customer = can('customer_list')
+        can_service = can('service_list')
+        can_servicedetail = can('servicedetail_list')
+        can_return_product = can('return_product_list')
+        can_delivery = can('delivery_list')
+        can_chart = can('chart_list', 'chart_bar', 'chart_bar2',
+                        'chart_pie', 'chart_line', 'highcharts')
+
         today = datetime.date.today()
         month_start = today.replace(day=1)
         next_month = (
@@ -37,84 +56,93 @@ class HomeView(APIView):
         next_year = datetime.date(today.year + 1, 1, 1)
 
         # 指标
-        year_contract = models.Contract.objects.filter(
-            is_delete=False,
-            date__gte=year_start, date__lt=next_year,
-        ).aggregate(total_count=Count('id'), total_amount=Sum('total_price'))
+        year_contract = (
+            models.Contract.objects.filter(
+                is_delete=False,
+                date__gte=year_start, date__lt=next_year,
+            ).aggregate(total_count=Count('id'), total_amount=Sum('total_price'))
+            if can_contract else {'total_count': 0, 'total_amount': 0}
+        )
         month_collections = models.Collection.objects.filter(
             is_delete=False,
             date__gte=month_start, date__lt=next_month,
-        )
+        ) if can_collection else models.Collection.objects.none()
         quarter_collections = models.Collection.objects.filter(
             is_delete=False,
             date__gte=quarter_start, date__lt=quarter_end,
-        )
+        ) if can_collection else models.Collection.objects.none()
         month_invoices = models.Invoice.objects.filter(
             is_delete=False,
             date__gte=month_start, date__lt=next_month,
-        )
+        ) if can_invoice else models.Invoice.objects.none()
         month_deliveries = models.ProductDelivery.objects.filter(
             is_delete=False,
             date__gte=month_start, date__lt=next_month,
-        )
+        ) if can_delivery else models.ProductDelivery.objects.none()
         pending_plans = models.Plan.objects.filter(
             is_delete=False, completed=False,
-        ).count()
-        customer_count = models.Customer.objects.filter(is_delete=False).count()
+        ).count() if can_plan else 0
+        customer_count = models.Customer.objects.filter(
+            is_delete=False,
+        ).count() if can_customer else 0
 
         # 最近列表
         recent_contracts = models.Contract.objects.filter(
             is_delete=False,
-        ).select_related('customer', 'customer__saler').order_by('-date', '-id')[:6]
+        ).select_related('customer', 'customer__saler').order_by('-date', '-id')[:6] if can_contract else []
         recent_collections = models.Collection.objects.filter(
             is_delete=False,
-        ).select_related('customer', 'contract').order_by('-date', '-id')[:6]
+        ).select_related('customer', 'contract').order_by('-date', '-id')[:6] if can_collection else []
         recent_invoices = models.Invoice.objects.filter(
             is_delete=False,
         ).select_related(
             'customer', 'contract',
-        ).order_by('-date', '-id')[:6]
+        ).order_by('-date', '-id')[:6] if can_invoice else []
         upcoming_plans = models.Plan.objects.filter(
             is_delete=False, completed=False,
             delivery_date__gte=today,
             delivery_date__lt=today + datetime.timedelta(days=60),
         ).select_related('contract', 'productcategory', 'product').order_by(
-            'delivery_date', 'id')[:6]
+            'delivery_date', 'id')[:6] if can_plan else []
         recent_services = models.Service.objects.filter(
             is_delete=False,
-        ).select_related('customer', 'productcategory', 'product').order_by('-date', '-id')[:6]
+        ).select_related('customer', 'productcategory', 'product').order_by('-date', '-id')[:6] if can_service else []
         recent_servicedetails = models.ServiceDetail.objects.filter(
             is_delete=False,
         ).select_related(
             'customer', 'service', 'product', 'repairman',
-        ).order_by('-repair_date', '-id')[:6]
+        ).order_by('-repair_date', '-id')[:6] if can_servicedetail else []
         recent_return_products = models.ReturnProduct.objects.filter(
             is_delete=False,
-        ).select_related('customer', 'service', 'user').order_by('-date', '-id')[:6]
+        ).select_related('customer', 'service', 'user').order_by('-date', '-id')[:6] if can_return_product else []
 
         # 图表：年度合同业绩柱状图 + 客户销售占比饼图
-        year_labels = [str(y) for y in range(2013, today.year + 1)]
-        year_amounts = []
-        for year_label in year_labels:
-            total = models.Contract.objects.filter(
-                is_delete=False,
-                date__year=int(year_label),
-            ).aggregate(total=Sum('total_price'))['total'] or 0
-            year_amounts.append(float(total))
+        if can_chart:
+            year_labels = [str(y) for y in range(2013, today.year + 1)]
+            year_amounts = []
+            for year_label in year_labels:
+                total = models.Contract.objects.filter(
+                    is_delete=False,
+                    date__year=int(year_label),
+                ).aggregate(total=Sum('total_price'))['total'] or 0
+                year_amounts.append(float(total))
 
-        customer_sales = models.Contract.objects.filter(
-            is_delete=False,
-            date__gte=year_start, date__lt=next_year,
-        ).values('customer__company_name').annotate(
-            total=Sum('total_price')).order_by('-total')
-        top_sales = list(customer_sales[:5])
-        total_amount = sum(float(item['total'] or 0) for item in customer_sales)
-        top_amount = sum(float(item['total'] or 0) for item in top_sales)
-        pie_labels = [item['customer__company_name'] for item in top_sales]
-        pie_values = [float(item['total'] or 0) for item in top_sales]
-        if total_amount - top_amount > 0:
-            pie_labels.append('其他')
-            pie_values.append(round(total_amount - top_amount, 2))
+            customer_sales = models.Contract.objects.filter(
+                is_delete=False,
+                date__gte=year_start, date__lt=next_year,
+            ).values('customer__company_name').annotate(
+                total=Sum('total_price')).order_by('-total')
+            top_sales = list(customer_sales[:5])
+            total_amount = sum(float(item['total'] or 0) for item in customer_sales)
+            top_amount = sum(float(item['total'] or 0) for item in top_sales)
+            pie_labels = [item['customer__company_name'] for item in top_sales]
+            pie_values = [float(item['total'] or 0) for item in top_sales]
+            if total_amount - top_amount > 0:
+                pie_labels.append('其他')
+                pie_values.append(round(total_amount - top_amount, 2))
+        else:
+            year_labels, year_amounts = [], []
+            pie_labels, pie_values = [], []
 
         def _fmt(d):
             return d.strftime('%Y-%m-%d') if d else ''
@@ -122,6 +150,19 @@ class HomeView(APIView):
         return Response({
             'today': today.strftime('%Y-%m-%d'),
             'year': today.year,
+            # 前端据此隐藏无权限的卡片/图表/表格，避免出现空区块或点了报无权限
+            'visible': {
+                'contract': can_contract,
+                'collection': can_collection,
+                'invoice': can_invoice,
+                'plan': can_plan,
+                'customer': can_customer,
+                'service': can_service,
+                'servicedetail': can_servicedetail,
+                'return_product': can_return_product,
+                'delivery': can_delivery,
+                'chart': can_chart,
+            },
             'metrics': {
                 'year_contract_count': year_contract['total_count'] or 0,
                 'year_contract_amount': float(year_contract['total_amount'] or 0),

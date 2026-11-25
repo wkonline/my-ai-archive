@@ -6,15 +6,15 @@
       <div class="hero-glow glow-2"></div>
       <span class="hero-label"><el-icon><Monitor /></el-icon>业务工作台</span>
       <h3>欢迎回来，{{ user?.name || user?.username }}</h3>
-      <p class="hero-sub">今天是 {{ todayText }} · 合同、回款、发票和生产计划数据已实时汇总</p>
+      <p class="hero-sub">今天是 {{ todayText }} · {{ heroSub }}</p>
       <div class="hero-actions">
-        <el-button type="primary" @click="router.push('/contract')" class="btn-cyber">
+        <el-button v-if="canSee('contract')" type="primary" @click="router.push('/contract')" class="btn-cyber">
           <el-icon><Document /></el-icon>&nbsp;合同管理
         </el-button>
-        <el-button type="primary" @click="router.push('/collection')" class="btn-cyber">
+        <el-button v-if="canSee('collection')" type="primary" @click="router.push('/collection')" class="btn-cyber">
           <el-icon><Money /></el-icon>&nbsp;回款登记
         </el-button>
-        <el-button type="primary" @click="router.push('/plan')" class="btn-cyber">
+        <el-button v-if="canSee('plan')" type="primary" @click="router.push('/plan')" class="btn-cyber">
           <el-icon><Calendar /></el-icon>&nbsp;生产计划
         </el-button>
       </div>
@@ -36,7 +36,7 @@
     </div>
 
     <!-- 图表 -->
-    <div class="charts-row">
+    <div class="charts-row" v-if="canSee('chart')">
       <div class="panel">
         <div class="panel-heading">
           <el-icon><TrendCharts /></el-icon>
@@ -64,7 +64,7 @@
       <h4><el-icon><Grid /></el-icon>常用功能</h4>
     </div>
     <div class="quick-grid">
-      <a class="quick-card" v-for="menu in quickMenus" :key="menu.title" :href="menu.url">
+      <a class="quick-card" v-for="menu in visibleQuickMenus" :key="menu.title" :href="menu.url">
         <span class="quick-icon"><el-icon><component :is="menu.icon" /></el-icon></span>
         <span class="quick-name">{{ menu.title }}</span>
       </a>
@@ -72,7 +72,7 @@
 
     <!-- 数据列表：最新合同 / 最新回款 / 最新发票 / 最新生产计划 / 最新售后 / 最新维修 / 最新返件 -->
     <div class="home-lists">
-      <div class="panel home-table">
+      <div class="panel home-table" v-if="canSee('contract')">
         <div class="panel-heading"><el-icon><Document /></el-icon><span>最新合同</span><router-link to="/contract" class="see-all">查看全部</router-link></div>
         <table class="table">
           <thead><tr><th class="col-index">#</th><th class="col-contract">合同号</th><th class="col-customer">客户</th><th>业务员</th><th class="col-date">日期</th><th class="col-amount">金额</th></tr></thead>
@@ -90,7 +90,7 @@
         </table>
       </div>
 
-      <div class="panel home-table">
+      <div class="panel home-table" v-if="canSee('collection')">
         <div class="panel-heading"><el-icon><Money /></el-icon><span>最新回款</span><router-link to="/collection" class="see-all">查看全部</router-link></div>
         <table class="table">
           <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-contract">合同</th><th class="col-date">日期</th><th class="col-amount">金额</th></tr></thead>
@@ -107,7 +107,7 @@
         </table>
       </div>
 
-      <div class="panel home-table">
+      <div class="panel home-table" v-if="canSee('invoice')">
         <div class="panel-heading"><el-icon><List /></el-icon><span>最新发票</span><router-link to="/invoice" class="see-all">查看全部</router-link></div>
         <table class="table">
           <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-contract">合同</th><th class="col-date">日期</th><th class="col-amount">金额</th></tr></thead>
@@ -124,7 +124,7 @@
         </table>
       </div>
 
-      <div class="panel home-table">
+      <div class="panel home-table" v-if="canSee('plan')">
         <div class="panel-heading"><el-icon><Calendar /></el-icon><span>最新生产计划</span><router-link to="/plan" class="see-all">查看全部</router-link></div>
         <table class="table">
           <thead><tr><th class="col-index">#</th><th class="col-contract">合同</th><th class="col-code">产品</th><th class="col-code">型号</th><th class="col-date">交货日期</th><th class="col-status">状态</th></tr></thead>
@@ -142,7 +142,7 @@
         </table>
       </div>
 
-      <div class="panel home-table">
+      <div class="panel home-table" v-if="canSee('service')">
         <div class="panel-heading"><el-icon><PhoneFilled /></el-icon><span>最新售后服务</span><router-link to="/service" class="see-all">查看全部</router-link></div>
         <table class="table">
           <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-code">维修编号</th><th class="col-code">型号</th><th class="col-date">接收日期</th><th class="col-status">状态</th></tr></thead>
@@ -160,7 +160,7 @@
         </table>
       </div>
 
-      <div class="panel home-table">
+      <div class="panel home-table" v-if="canSee('servicedetail')">
         <div class="panel-heading"><el-icon><Setting /></el-icon><span>最新维修记录</span><router-link to="/servicedetail" class="see-all">查看全部</router-link></div>
         <table class="table">
           <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-code">维修编号</th><th class="col-code">型号</th><th>维修人</th><th class="col-date">完成时间</th></tr></thead>
@@ -178,7 +178,7 @@
         </table>
       </div>
 
-      <div class="panel home-table">
+      <div class="panel home-table" v-if="canSee('return_product')">
         <div class="panel-heading"><el-icon><RefreshLeft /></el-icon><span>最新售后返件</span><router-link to="/return-product" class="see-all">查看全部</router-link></div>
         <table class="table">
           <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-code">维修编号</th><th>发货人</th><th class="col-date">发货时间</th></tr></thead>
@@ -224,27 +224,43 @@ const recentServices = ref([])
 const recentServiceDetails = ref([])
 const recentReturnProducts = ref([])
 const charts = ref({ year_labels: [], year_values: [], pie_labels: [], pie_values: [] })
+const visible = ref({})
+
+// 无权限的模块既不显示卡片也不显示表格，与后端门控保持一致
+const canSee = (key) => visible.value[key] !== false
 
 const quickMenus = [
-  { title: '合同管理', url: '/contract', icon: Document },
-  { title: '回款登记', url: '/collection', icon: Money },
-  { title: '发票登记', url: '/invoice', icon: List },
-  { title: '生产计划', url: '/plan', icon: Calendar },
-  { title: '客户管理', url: '/customer', icon: User },
-  { title: '应收应付', url: '/accounts', icon: TrendCharts },
-  { title: '售后服务', url: '/service', icon: Tools },
-  { title: '维修服务', url: '/servicedetail', icon: Setting },
+  { title: '合同管理', url: '/contract', icon: Document, perm: 'contract' },
+  { title: '回款登记', url: '/collection', icon: Money, perm: 'collection' },
+  { title: '发票登记', url: '/invoice', icon: List, perm: 'invoice' },
+  { title: '生产计划', url: '/plan', icon: Calendar, perm: 'plan' },
+  { title: '客户管理', url: '/customer', icon: User, perm: 'customer' },
+  { title: '应收应付', url: '/accounts', icon: TrendCharts, perm: 'chart' },
+  { title: '售后服务', url: '/service', icon: Tools, perm: 'service' },
+  { title: '维修服务', url: '/servicedetail', icon: Setting, perm: 'servicedetail' },
 ]
+
+const visibleQuickMenus = computed(() => quickMenus.filter(m => canSee(m.perm)))
+
+const heroSub = computed(() => {
+  const names = [
+    ['contract', '合同'], ['collection', '回款'], ['invoice', '发票'],
+    ['plan', '生产计划'], ['delivery', '发货'],
+  ].filter(([k]) => canSee(k)).map(([, n]) => n)
+  return names.length ? `${names.join('、')}数据已实时汇总` : '暂无业务数据权限，请联系管理员'
+})
 
 const fmt = (v) => Number(v || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-const metricCards = computed(() => [
-  { label: '本年度合同', formatted: '¥' + fmt(metrics.value.year_contract_amount), note: metrics.value.year_contract_count + ' 份', icon: Document, color: 0 },
-  { label: '本季度回款', formatted: '¥' + fmt(metrics.value.quarter_collection_amount), note: metrics.value.quarter_collection_count + ' 笔记录', icon: TrendCharts, color: 1 },
-  { label: '本月发票', formatted: '¥' + fmt(metrics.value.month_invoice_amount), note: metrics.value.month_invoice_count + ' 张登记', icon: List, color: 2 },
-  { label: '待完工计划', formatted: metrics.value.pending_plans + ' 条', note: '', icon: Calendar, color: 3 },
-  { label: '本月发货', formatted: metrics.value.month_delivery_qty + ' 件', note: metrics.value.month_delivery_count + ' 笔发货', icon: Money, color: 4 },
-])
+const metricCards = computed(() => {
+  const cards = []
+  if (canSee('contract')) cards.push({ label: '本年度合同', formatted: '¥' + fmt(metrics.value.year_contract_amount), note: metrics.value.year_contract_count + ' 份', icon: Document })
+  if (canSee('collection')) cards.push({ label: '本季度回款', formatted: '¥' + fmt(metrics.value.quarter_collection_amount), note: metrics.value.quarter_collection_count + ' 笔记录', icon: TrendCharts })
+  if (canSee('invoice')) cards.push({ label: '本月发票', formatted: '¥' + fmt(metrics.value.month_invoice_amount), note: metrics.value.month_invoice_count + ' 张登记', icon: List })
+  if (canSee('plan')) cards.push({ label: '待完工计划', formatted: metrics.value.pending_plans + ' 条', note: '', icon: Calendar })
+  if (canSee('delivery')) cards.push({ label: '本月发货', formatted: metrics.value.month_delivery_qty + ' 件', note: metrics.value.month_delivery_count + ' 笔发货', icon: Money })
+  return cards.map((c, i) => ({ ...c, color: i }))
+})
 
 const statusClass = (val) => val === 2 ? 'warning' : val === 3 ? 'success' : ''
 const warrantyClass = (val) => val === 1 ? 'danger' : val === 2 ? 'warning' : 'success'
@@ -300,6 +316,7 @@ const load = async () => {
   try {
     const data = await request.get('/home/')
     todayText.value = data.today
+    visible.value = data.visible || {}
     metrics.value = data.metrics || {}
     recentContracts.value = data.recent_contracts || []
     upcomingPlans.value = data.upcoming_plans || []

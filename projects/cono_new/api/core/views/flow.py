@@ -28,6 +28,14 @@ from api.core.views.base import BaseModelViewSet, DROPDOWN_SEARCH_LIMIT
 
 FLOW_NUMBER_PREFIX = 'CN'
 
+# 这些动作必须能访问已停用的档案：停用只影响「新单据还能不能选它」，
+# 已发生的历史仍要能查，否则档案一停用流转记录就看不到了。
+INACTIVE_VISIBLE_ACTIONS = {
+    'retrieve', 'logs', 'transitions', 'update', 'partial_update',
+    # 重新启用一个已停用的档案时，get_object 也得能拿到它
+    'toggle_active',
+}
+
 
 def _current_operator(request):
     user = getattr(request, 'user', None)
@@ -79,9 +87,16 @@ class ProductArchiveViewSet(BaseModelViewSet):
         status_value = self.request.query_params.get('status')
         if status_value:
             qs = qs.filter(status=status_value)
-        if self.request.query_params.get('include_inactive') not in ('1', 'true'):
+        # 停用档案仍要能查详情和历史，否则停用后流转记录就断了
+        if not self._include_inactive():
             qs = qs.filter(is_active=True)
         return qs.order_by('-id')
+
+    def _include_inactive(self):
+        """列表默认只看启用档案；详情类动作和显式请求可以带上已停用的。"""
+        if self.request.query_params.get('include_inactive') in ('1', 'true'):
+            return True
+        return getattr(self, 'action', None) in INACTIVE_VISIBLE_ACTIONS
 
     def destroy(self, request, *args, **kwargs):
         return Response({'detail': '产品档案不支持删除，请使用停用'}, status=status.HTTP_400_BAD_REQUEST)
