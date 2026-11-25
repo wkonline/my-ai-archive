@@ -757,6 +757,8 @@ class ProductArchive(ModelBase):
         (1, "公司库存"),
         (2, "客户试用中"),
         (3, "维修中"),
+        # 换板后旧板留在客户手里：客户退回的是另一块板，原板并未回公司
+        (4, "客户留用"),
     )
     status = models.IntegerField(verbose_name="当前状态", choices=STATUS_CHOICES, default=1)
     LOCATION_CHOICES = (

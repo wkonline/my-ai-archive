@@ -51,6 +51,7 @@
                 <el-option label="公司库存" :value="1" />
                 <el-option label="客户试用中" :value="2" />
                 <el-option label="维修中" :value="3" />
+                <el-option label="客户留用" :value="4" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -123,7 +124,8 @@ const customers = ref([])
 const needCustomer = computed(() => form.status === 2 || form.location_type === 2)
 
 const onStatusChange = (v) => {
-  form.location_type = v === 2 ? 2 : 1
+  // 客户试用中 / 客户留用 的板都在客户手上
+  form.location_type = (v === 2 || v === 4) ? 2 : 1
   if (v === 1) form.customer = null
 }
 

@@ -422,19 +422,20 @@ class FlowReturnViewSet(BaseModelViewSet):
 
         if swapped:
             old_archive = flow.archive
-            # 旧板已经回到公司手上，必须同时解除客户绑定，否则它会一直挂在客户名下
+            # 换板 = 客户退回的是另一块板，原板留在客户手里，没有回公司。
+            # 所以旧档案是「客户留用」，位置仍在客户处，客户记最后寄出的那家。
             old_status = old_archive.status
             old_archive.is_superseded = True
             old_archive.superseded_by = new_archive
             old_archive.is_active = False
-            old_archive.status = 1
-            old_archive.location_type = 1
-            old_archive.customer = None
+            old_archive.status = 4
+            old_archive.location_type = 2
+            old_archive.customer = flow.customer
             old_archive.save(update_fields=[
                 'is_superseded', 'superseded_by', 'is_active',
                 'status', 'location_type', 'customer'])
-            _write_status_log(old_archive, old_status, 1, operator,
-                              '换板退役，由 {} 接替，原序列号停用'.format(new_archive.serial_number))
+            _write_status_log(old_archive, old_status, 4, operator,
+                              '换板退役，由 {} 接替，原板客户留用'.format(new_archive.serial_number))
             models.SerialTransition.objects.create(
                 old_archive=old_archive,
                 new_archive=new_archive,
@@ -490,6 +491,7 @@ class FlowReturnViewSet(BaseModelViewSet):
                     archive=new_archive, is_delete=False).exclude(pk=flow.pk).exists():
                 raise ValidationError({'detail': '换板后的新档案已参与后续流转，无法撤销该返回登记'})
             old_archive = flow.archive
+            restore_from = old_archive.status
             old_archive.is_superseded = False
             old_archive.superseded_by = None
             old_archive.is_active = True
@@ -499,7 +501,7 @@ class FlowReturnViewSet(BaseModelViewSet):
             old_archive.save(update_fields=[
                 'is_superseded', 'superseded_by', 'is_active',
                 'status', 'location_type', 'customer'])
-            _write_status_log(old_archive, 1, 2, operator,
+            _write_status_log(old_archive, restore_from, 2, operator,
                               '撤销换板返回，恢复在客户处：{}'.format(flow.flow_number))
             models.SerialTransition.objects.filter(flow_return=instance).update(is_delete=True)
             new_archive.is_delete = True

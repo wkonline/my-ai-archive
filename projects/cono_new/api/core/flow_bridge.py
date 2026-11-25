@@ -69,8 +69,11 @@ def sync_return_result(archive, flow_return=None):
     返回登记落库后档案还会继续变（售后返件登记、产品档案页标记维修完成），
     返回后状态如果一直停在登记那一刻，列表看起来就像没修过。
     档案又被寄给客户（客户试用中）时不改：那一次的返回后状态是历史事实。
+    换板退役的旧板（客户留用）同理，它的去向由换板那次登记决定。
     """
-    if archive is None or archive.pk is None or archive.status == 2:
+    if archive is None or archive.pk is None:
+        return None
+    if archive.status == 2 or archive.is_superseded:
         return None
     if flow_return is None:
         flow_return = models.FlowReturn.objects.filter(is_delete=False).filter(

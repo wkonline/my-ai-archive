@@ -34,6 +34,7 @@
               <el-option label="公司库存" :value="1" />
               <el-option label="客户试用中" :value="2" />
               <el-option label="维修中" :value="3" />
+              <el-option label="客户留用" :value="4" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -144,7 +145,8 @@ const detailRow = ref(null)
 const logs = ref([])
 const transitions = ref([])
 
-const statusType = (s) => ({ 1: 'success', 2: 'warning', 3: 'danger' }[s] || 'info')
+// 客户留用是换板后的终态：板在客户手里、不再回公司，用中性色区别于「维修中」
+const statusType = (s) => ({ 1: 'success', 2: 'warning', 3: 'danger', 4: 'info' }[s] || 'info')
 // 已换板/已停用的档案置灰：不再参与寄出，但历史必须保留可见
 const rowClass = ({ row }) => (row.is_superseded || !row.is_active ? 'row-muted' : '')
 

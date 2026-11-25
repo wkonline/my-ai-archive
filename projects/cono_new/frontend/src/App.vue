@@ -65,6 +65,12 @@
 .el-table .row-muted > td.el-table__cell { color: var(--text-dim) !important; }
 .el-table .row-muted > td.el-table__cell .el-link { color: var(--text-dim) !important; }
 .el-table .row-muted > td.el-table__cell .el-link:hover { color: var(--navy-500) !important; }
+/* 停用/换板行的标签也跟着褪色，否则整行发灰只有一个亮蓝标签跳出来 */
+.el-table .row-muted > td.el-table__cell .el-tag {
+  color: var(--text-dim) !important;
+  background-color: var(--bg-subtle) !important;
+  border-color: var(--border) !important;
+}
 
 /* ── 输入框 / 选择器：柔和对焦光环 ── */
 .el-input__wrapper,

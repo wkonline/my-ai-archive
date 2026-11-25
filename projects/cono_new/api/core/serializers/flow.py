@@ -7,10 +7,18 @@ class ProductArchiveSerializer(serializers.ModelSerializer):
     productcategory_name = serializers.CharField(source='productcategory.name', read_only=True)
     product_model = serializers.CharField(source='product.model', read_only=True)
     handler_name = serializers.CharField(source='handler.username', read_only=True)
-    customer_name = serializers.CharField(source='customer.company_name', read_only=True)
+    # 用 SerializerMethodField：CharField(source='customer.company_name') 在 customer
+    # 为空时会被 DRF 跳过，字段整个消失，前端「所在位置」就只能显示"客户"看不到是谁
+    customer_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     location_type_display = serializers.CharField(source='get_location_type_display', read_only=True)
-    superseded_by_serial = serializers.CharField(source='superseded_by.serial_number', read_only=True)
+    superseded_by_serial = serializers.SerializerMethodField()
+
+    def get_customer_name(self, obj):
+        return obj.customer.company_name if obj.customer_id else None
+
+    def get_superseded_by_serial(self, obj):
+        return obj.superseded_by.serial_number if obj.superseded_by_id else None
 
     class Meta:
         model = models.ProductArchive
@@ -32,9 +40,15 @@ class ProductArchiveSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         status = attrs.get('status', getattr(self.instance, 'status', 1))
         location = attrs.get('location_type', getattr(self.instance, 'location_type', 1))
+        # 留用的板一定在客户手上，位置不允许落回公司
+        if status == 4:
+            location = 2
+            attrs['location_type'] = 2
         customer = attrs.get('customer', getattr(self.instance, 'customer', None))
         if status == 2 and not customer:
             raise serializers.ValidationError({'customer': '状态为「客户试用中」时必须选择客户'})
+        if status == 4 and not customer:
+            raise serializers.ValidationError({'customer': '状态为「客户留用」时必须选择客户'})
         if location == 2 and not customer:
             raise serializers.ValidationError({'customer': '位置为「客户」时必须选择客户'})
         if location == 1:
