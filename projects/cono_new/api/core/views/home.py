@@ -37,6 +37,8 @@ class HomeView(APIView):
         can_servicedetail = can('servicedetail_list')
         can_return_product = can('return_product_list')
         can_delivery = can('delivery_list')
+        can_flow_out = can('flow_out_list')
+        can_flow_return = can('flow_return_list')
         can_chart = can('chart_list', 'chart_bar', 'chart_bar2',
                         'chart_pie', 'chart_line', 'highcharts')
 
@@ -115,6 +117,16 @@ class HomeView(APIView):
         recent_return_products = models.ReturnProduct.objects.filter(
             is_delete=False,
         ).select_related('customer', 'service', 'user').order_by('-date', '-id')[:6] if can_return_product else []
+        recent_flow_outs = models.FlowOut.objects.filter(
+            is_delete=False,
+        ).select_related(
+            'archive', 'archive__productcategory', 'customer',
+        ).order_by('-ship_date', '-id')[:6] if can_flow_out else []
+        recent_flow_returns = models.FlowReturn.objects.filter(
+            is_delete=False,
+        ).select_related(
+            'flow_out', 'flow_out__customer', 'flow_out__archive',
+        ).order_by('-actual_return_date', '-id')[:6] if can_flow_return else []
 
         # 图表：年度合同业绩柱状图 + 客户销售占比饼图
         if can_chart:
@@ -161,6 +173,8 @@ class HomeView(APIView):
                 'servicedetail': can_servicedetail,
                 'return_product': can_return_product,
                 'delivery': can_delivery,
+                'flow_out': can_flow_out,
+                'flow_return': can_flow_return,
                 'chart': can_chart,
             },
             'metrics': {
@@ -235,6 +249,36 @@ class HomeView(APIView):
                 'user_name': r.user.username if r.user else '',
                 'date': _fmt(r.date),
             } for r in recent_return_products],
+            'recent_flow_outs': [{
+                'id': f.id,
+                'flow_number': f.flow_number,
+                'archive_serial': f.archive.serial_number if f.archive else '',
+                'productcategory_name': (
+                    f.archive.productcategory.name if f.archive and f.archive.productcategory else ''
+                ),
+                'product_model': (
+                    f.archive.product.model if f.archive and f.archive.product else ''
+                ),
+                'customer_name': f.customer.company_name if f.customer else '',
+                'ship_date': _fmt(f.ship_date),
+                'status': f.status,
+                'status_display': f.get_status_display(),
+            } for f in recent_flow_outs],
+            'recent_flow_returns': [{
+                'id': r.id,
+                'flow_number': r.flow_out.flow_number if r.flow_out else '',
+                'archive_serial': r.snapshot_serial,
+                'productcategory_name': (
+                    r.flow_out.archive.productcategory.name
+                    if r.flow_out and r.flow_out.archive and r.flow_out.archive.productcategory else ''
+                ),
+                'customer_name': (
+                    r.flow_out.customer.company_name if r.flow_out and r.flow_out.customer else ''
+                ),
+                'actual_return_date': _fmt(r.actual_return_date),
+                'is_board_swapped': r.is_board_swapped,
+                'result_status_display': r.get_result_status_display(),
+            } for r in recent_flow_returns],
             'charts': {
                 'year_labels': year_labels,
                 'year_values': year_amounts,

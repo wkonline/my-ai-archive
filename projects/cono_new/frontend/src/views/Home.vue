@@ -194,6 +194,41 @@
           </tbody>
         </table>
       </div>
+      <div class="panel home-table" v-if="canSee('flow_out')">
+        <div class="panel-heading"><el-icon><Van /></el-icon><span>最新寄给客户</span><router-link to="/flow/out" class="see-all">查看全部</router-link></div>
+        <table class="table">
+          <thead><tr><th class="col-index">#</th><th class="col-code">流转编号</th><th class="col-customer">客户</th><th class="col-code">产品序列号</th><th class="col-date">寄出日期</th><th class="col-status">状态</th></tr></thead>
+          <tbody>
+            <tr v-for="(row, i) in recentFlowOuts" :key="row.id">
+              <td class="col-index">{{ i + 1 }}</td>
+              <td><router-link to="/flow/out">{{ row.flow_number }}</router-link></td>
+              <td :title="row.customer_name">{{ row.customer_name }}</td>
+              <td :title="row.archive_serial">{{ row.archive_serial }}</td>
+              <td>{{ row.ship_date }}</td>
+              <td><span class="status-pill" :class="row.status === 1 ? 'warning' : 'success'">{{ row.status_display }}</span></td>
+            </tr>
+            <tr v-if="!recentFlowOuts.length"><td colspan="6" class="empty">暂无寄出记录</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel home-table" v-if="canSee('flow_return')">
+        <div class="panel-heading"><el-icon><RefreshLeft /></el-icon><span>最新客户返回</span><router-link to="/flow/return" class="see-all">查看全部</router-link></div>
+        <table class="table">
+          <thead><tr><th class="col-index">#</th><th class="col-code">流转编号</th><th class="col-customer">客户</th><th class="col-code">产品序列号</th><th class="col-date">返回日期</th><th class="col-status">返回后状态</th></tr></thead>
+          <tbody>
+            <tr v-for="(row, i) in recentFlowReturns" :key="row.id">
+              <td class="col-index">{{ i + 1 }}</td>
+              <td><router-link to="/flow/return">{{ row.flow_number }}</router-link></td>
+              <td :title="row.customer_name">{{ row.customer_name }}</td>
+              <td :title="row.archive_serial">{{ row.archive_serial }}</td>
+              <td>{{ row.actual_return_date }}</td>
+              <td><span class="status-pill" :class="row.result_status_display === '维修中' ? 'warning' : 'success'">{{ row.result_status_display }}</span></td>
+            </tr>
+            <tr v-if="!recentFlowReturns.length"><td colspan="6" class="empty">暂无返回记录</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
@@ -207,7 +242,7 @@ import BaseChart from '../components/BaseChart.vue'
 import { pickColors } from '../components/chartColors'
 import {
   Monitor, Document, Money, Calendar, Briefcase, TrendCharts, List, User,
-  PieChart, Grid, PhoneFilled, Tools, RefreshLeft, Setting,
+  PieChart, Grid, PhoneFilled, Tools, RefreshLeft, Setting, Van,
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -223,6 +258,8 @@ const recentInvoices = ref([])
 const recentServices = ref([])
 const recentServiceDetails = ref([])
 const recentReturnProducts = ref([])
+const recentFlowOuts = ref([])
+const recentFlowReturns = ref([])
 const charts = ref({ year_labels: [], year_values: [], pie_labels: [], pie_values: [] })
 const visible = ref({})
 
@@ -325,6 +362,8 @@ const load = async () => {
     recentServices.value = data.recent_services || []
     recentServiceDetails.value = data.recent_servicedetails || []
     recentReturnProducts.value = data.recent_return_products || []
+    recentFlowOuts.value = data.recent_flow_outs || []
+    recentFlowReturns.value = data.recent_flow_returns || []
     charts.value = data.charts || {}
   } catch (e) {}
 }
