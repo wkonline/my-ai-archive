@@ -59,6 +59,13 @@
 .el-table--border .el-table__cell { border-right: 1px solid var(--border-soft) !important; }
 .el-table__inner-wrapper::before { background-color: transparent !important; }
 
+/* 失效行（已停用/已换板）整行置灰。必须写在全局并带 !important：
+   上面的 .el-table td.el-table__cell 也会给单元格上色，且特异性更高。
+   序列号链接仍要能点开历史，所以只降饱和度，悬停时恢复主色。 */
+.el-table .row-muted > td.el-table__cell { color: var(--text-dim) !important; }
+.el-table .row-muted > td.el-table__cell .el-link { color: var(--text-dim) !important; }
+.el-table .row-muted > td.el-table__cell .el-link:hover { color: var(--navy-500) !important; }
+
 /* ── 输入框 / 选择器：柔和对焦光环 ── */
 .el-input__wrapper,
 .el-textarea__inner {

@@ -73,7 +73,7 @@
         <el-table-column label="操作" class-name="op-cell" width="230" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button>
-            <el-button v-if="row.status === 3" class="op-btn" size="small" type="success" @click="markStocked(row)">
+            <el-button v-if="row.status === 3" class="op-btn op-success" size="small" @click="markStocked(row)">
               <el-icon><CircleCheck /></el-icon>&nbsp;维修完成
             </el-button>
             <el-button class="op-btn" size="small" @click="toggleActive(row)">
@@ -247,5 +247,4 @@ onMounted(fetchList)
 .detail-head { display: flex; align-items: center; gap: 12px; }
 .detail-serial { font-size: 16px; font-weight: 700; color: var(--text-main); }
 .detail-meta { color: #4a5a6a; font-size: 13px; }
-:deep(.row-muted) { color: #a8b0ba; }
 </style>
