@@ -311,9 +311,6 @@ html, body, #app {
   }
   .stat-card .stat-value { font-size: 21px; }
 
-  .el-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .el-table__header-wrapper, .el-table__body-wrapper { overflow-x: auto; }
-
   .el-form .el-row { flex-wrap: wrap !important; }
   .el-form .el-col { flex: 0 0 100% !important; max-width: 100% !important; }
 

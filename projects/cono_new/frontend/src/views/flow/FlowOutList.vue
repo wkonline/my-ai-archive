@@ -67,7 +67,7 @@
             <el-tag :type="row.status === 1 ? 'warning' : 'success'" size="small">{{ row.status_display }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" class-name="op-cell" width="190" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="220" fixed="right">
           <template #default="{ row }">
             <el-button v-if="row.status === 1" class="op-btn op-edit" size="small" @click="openEdit(row)">
               <el-icon><Edit /></el-icon>&nbsp;编辑
