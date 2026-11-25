@@ -97,7 +97,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Van, Goods } from '@element-plus/icons-vue'
 import request from '../../api/request'
-import { applyCustomerResults } from '../../utils/customerOptions'
+import { applySearchResults } from '../../utils/dropdownOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -139,7 +139,7 @@ const searchCustomers = async (q = '') => {
   customerLoading.value = true
   try {
     const data = await request.get('/customer/', { params: { keyword: q, page_size: 200 }, silent: true })
-    customers.value = applyCustomerResults(data.results || data, form.customer, customers.value)
+    customers.value = applySearchResults(data.results || data, form.customer, customers.value)
   } catch {
     // 搜索失败不清空候选：已选客户必须留在列表里，否则下拉会退化成显示 id
   } finally {

@@ -122,7 +122,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Box, User, Van } from '@element-plus/icons-vue'
 import request from '../../api/request'
-import { applyCustomerResults, mergeSelectedCustomer } from '../../utils/customerOptions'
+import { applySearchResults, mergeSelectedOption } from '../../utils/dropdownOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -152,14 +152,15 @@ const currentArchive = computed(() => archives.value.find(a => a.id === form.arc
 
 const searchArchives = async (q) => {
   try {
-    archives.value = await request.get('/flow-archive/available/', { params: { q: q || '' } })
+    const data = await request.get('/flow-archive/available/', { params: { q: q || '' } })
+    archives.value = applySearchResults(data, form.archive, archives.value, 'serial_number')
   } catch { /* 保留上次结果 */ }
 }
 
 const searchCustomers = async (q) => {
   try {
     const data = await request.get('/customer/', { params: { keyword: q || '', page_size: 200 }, silent: true })
-    customers.value = applyCustomerResults(data.results || data, form.customer, customers.value)
+    customers.value = applySearchResults(data.results || data, form.customer, customers.value)
   } catch { /* 保留上次结果 */ }
 }
 
@@ -205,13 +206,14 @@ const loadData = async () => {
         express_company: data.express_company || '',
         express_number: data.express_number || '',
       })
-      archives.value = [{
+      const archiveOption = {
         id: data.archive,
         serial_number: data.archive_serial,
         productcategory_name: data.productcategory_name,
         product_model: data.product_model,
-      }]
-      customers.value = mergeSelectedCustomer(customers.value, data.customer, data.customer_name)
+      }
+      archives.value = [archiveOption, ...archives.value.filter(a => a.id !== data.archive)]
+      customers.value = mergeSelectedOption(customers.value, data.customer, data.customer_name)
       return
     }
     await refreshNumber()

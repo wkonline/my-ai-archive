@@ -136,6 +136,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Van, Switch, Tools } from '@element-plus/icons-vue'
 import request from '../../api/request'
+import { applySearchResults } from '../../utils/dropdownOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -170,7 +171,8 @@ const serviceBoardSerial = computed(() =>
 
 const searchPending = async (q) => {
   try {
-    pendingList.value = await request.get('/flow-out/pending/', { params: { q: q || '' }, silent: true })
+    const data = await request.get('/flow-out/pending/', { params: { q: q || '' }, silent: true })
+    pendingList.value = applySearchResults(data, form.flow_out, pendingList.value, 'flow_number')
   } catch { /* 保留上次结果 */ }
 }
 
@@ -206,9 +208,19 @@ const loadOptions = async () => {
 const loadData = async () => {
   loading.value = true
   try {
-    await Promise.all([searchPending(''), loadOptions()])
+    // 先落 query 预置的单据，searchPending 才能把它并进候选列表
     const preset = route.query.flow_out
     if (preset) form.flow_out = Number(preset)
+    await Promise.all([searchPending(''), loadOptions()])
+    if (form.flow_out && !pendingList.value.some(f => f.id === form.flow_out)) {
+      const data = await request.get(`/flow-out/${form.flow_out}/`, { silent: true })
+      pendingList.value = [{
+        id: data.id,
+        flow_number: data.flow_number,
+        serial_number: data.archive_serial,
+        customer_name: data.customer_name,
+      }, ...pendingList.value]
+    }
   } finally {
     loading.value = false
   }

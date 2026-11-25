@@ -24,7 +24,7 @@ from api.core.serializers.flow import (
     ProductArchiveSerializer, FlowOutSerializer, FlowReturnSerializer,
     SerialTransitionSerializer, FlowStatusLogSerializer,
 )
-from api.core.views.base import BaseModelViewSet
+from api.core.views.base import BaseModelViewSet, DROPDOWN_SEARCH_LIMIT
 
 FLOW_NUMBER_PREFIX = 'CN'
 
@@ -173,7 +173,7 @@ class ProductArchiveViewSet(BaseModelViewSet):
         if keyword:
             qs = qs.filter(Q(serial_number__icontains=keyword) |
                            Q(product__model__icontains=keyword))
-        qs = qs.order_by('serial_number')[:30]
+        qs = qs.order_by('serial_number')[:DROPDOWN_SEARCH_LIMIT]
         return Response([{
             'id': a.id,
             'serial_number': a.serial_number,
@@ -310,7 +310,7 @@ class FlowOutViewSet(BaseModelViewSet):
             qs = qs.filter(Q(flow_number__icontains=keyword) |
                            Q(archive__serial_number__icontains=keyword) |
                            Q(customer__company_name__icontains=keyword))
-        qs = qs.order_by('-id')[:30]
+        qs = qs.order_by('-id')[:DROPDOWN_SEARCH_LIMIT]
         return Response([{
             'id': f.id,
             'flow_number': f.flow_number,

@@ -76,7 +76,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Tools } from '@element-plus/icons-vue'
 import request from '../../api/request'
-import { applyCustomerResults, mergeSelectedCustomer } from '../../utils/customerOptions'
+import { applySearchResults, mergeSelectedOption } from '../../utils/dropdownOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -110,7 +110,7 @@ const loadProductOptions = async (categoryId) => {
 const searchCustomers = async (q) => {
   try {
     const data = await request.get('/service/customers/', { params: { q: q || '' } })
-    customers.value = applyCustomerResults(data, form.customer, customers.value)
+    customers.value = applySearchResults(data, form.customer, customers.value)
   } catch {}
 }
 
@@ -130,7 +130,7 @@ const loadData = async () => {
         product_number: data.product_number || '', warranty: data.warranty ?? 1,
         date: data.date || '', description: data.description || '',
       })
-      if (data.customer_name) customers.value = mergeSelectedCustomer(customers.value, data.customer, data.customer_name)
+      if (data.customer_name) customers.value = mergeSelectedOption(customers.value, data.customer, data.customer_name)
     } catch {}
     return
   }
@@ -152,7 +152,7 @@ const loadData = async () => {
         product_number: data.product_number || '', warranty: data.warranty ?? 1,
         date: new Date().toISOString().slice(0, 10), description: data.description || '',
       })
-      if (data.customer_name) customers.value = mergeSelectedCustomer(customers.value, data.customer, data.customer_name)
+      if (data.customer_name) customers.value = mergeSelectedOption(customers.value, data.customer, data.customer_name)
     } catch {}
   }
 }

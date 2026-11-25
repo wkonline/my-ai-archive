@@ -13,9 +13,9 @@ class StandardPagination(PageNumberPagination):
     max_page_size = 200
 
 
-# 表单里客户下拉的最大返回条数。前端是 remote 搜索（输入即查），这个值只做防爆
-# 保护，不能设成 20 这类小值——客户一次拉不全，用户就会以为客户数据缺失。
-CUSTOMER_SEARCH_LIMIT = 500
+# 表单里 remote 搜索下拉（客户、产品档案等）的最大返回条数。前端输入即查，这个值
+# 只做防爆保护，不能设成 20/30 这类小值——一次拉不全，用户就会以为数据缺失。
+DROPDOWN_SEARCH_LIMIT = 500
 
 
 class BaseModelViewSet(ModelViewSet):

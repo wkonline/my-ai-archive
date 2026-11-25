@@ -12,7 +12,7 @@ from api.core.flow_bridge import complete_archive_repair, reopen_archive_repair
 from api.core.serializers.common import (
     ServiceSerializer, ServiceDetailSerializer, ReturnProductSerializer,
 )
-from api.core.views.base import BaseModelViewSet, CUSTOMER_SEARCH_LIMIT
+from api.core.views.base import BaseModelViewSet, DROPDOWN_SEARCH_LIMIT
 
 
 class ServiceViewSet(BaseModelViewSet):
@@ -130,7 +130,7 @@ class ServiceViewSet(BaseModelViewSet):
         customers = models.Customer.objects.filter(is_delete=False)
         if query:
             customers = customers.filter(company_name__icontains=query)
-        customers = customers.order_by('company_name')[:CUSTOMER_SEARCH_LIMIT]
+        customers = customers.order_by('company_name')[:DROPDOWN_SEARCH_LIMIT]
         return Response([{'id': c.id, 'company_name': c.company_name} for c in customers])
 
     def create(self, request, *args, **kwargs):
@@ -253,7 +253,7 @@ class ServiceDetailViewSet(BaseModelViewSet):
                 customer=OuterRef('pk'), is_delete=False, warranty_end=1)))
         if query:
             customers = customers.filter(company_name__icontains=query)
-        customers = customers.order_by('company_name')[:CUSTOMER_SEARCH_LIMIT]
+        customers = customers.order_by('company_name')[:DROPDOWN_SEARCH_LIMIT]
         return Response([{'id': c.id, 'company_name': c.company_name} for c in customers])
 
     @action(detail=False, methods=['get'], url_path='services')
@@ -517,7 +517,7 @@ class ReturnProductViewSet(BaseModelViewSet):
                 customer=OuterRef('pk'), is_delete=False, warranty_end=2, return_status=1)))
         if query:
             customers = customers.filter(company_name__icontains=query)
-        customers = customers.order_by('company_name')[:CUSTOMER_SEARCH_LIMIT]
+        customers = customers.order_by('company_name')[:DROPDOWN_SEARCH_LIMIT]
         return Response([{'id': c.id, 'company_name': c.company_name} for c in customers])
 
     @action(detail=False, methods=['get'], url_path='services')

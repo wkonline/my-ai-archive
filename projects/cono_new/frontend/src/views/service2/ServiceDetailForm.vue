@@ -154,7 +154,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Tools, Search, Document, Delete } from '@element-plus/icons-vue'
 import request from '../../api/request'
-import { applyCustomerResults, mergeSelectedCustomer } from '../../utils/customerOptions'
+import { applySearchResults, mergeSelectedOption } from '../../utils/dropdownOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -196,7 +196,7 @@ const kbData = ref({})
 const searchCustomers = async (q) => {
   try {
     const data = await request.get('/servicedetail/customers/', { params: { q: q || '' } })
-    customers.value = applyCustomerResults(data, form.customer, customers.value)
+    customers.value = applySearchResults(data, form.customer, customers.value)
   } catch {}
 }
 
@@ -234,7 +234,7 @@ const loadData = async () => {
       fault_text: data.fault_text || '', fault_reason: data.fault_reason || '',
       repair_method: data.repair_method || '', repair_date: data.repair_date || '',
     })
-    customers.value = mergeSelectedCustomer(customers.value, data.customer, data.customer_name)
+    customers.value = mergeSelectedOption(customers.value, data.customer, data.customer_name)
     services.value = [{
       id: data.service, service_number: data.service_number,
       productcategory_id: data.productcategory || null, product_id: data.product || null,

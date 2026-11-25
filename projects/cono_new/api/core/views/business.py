@@ -18,7 +18,7 @@ from api.core.serializers.common import (
     ContractSerializer, ContractProductSerializer,
     CollectionSerializer, InvoiceSerializer,
 )
-from api.core.views.base import BaseModelViewSet, CUSTOMER_SEARCH_LIMIT
+from api.core.views.base import BaseModelViewSet, DROPDOWN_SEARCH_LIMIT
 
 
 class ContractViewSet(BaseModelViewSet):
@@ -795,7 +795,7 @@ class CollectionViewSet(BaseModelViewSet):
         ).filter(balance__gt=0)
         if query:
             contracts = contracts.filter(customer__company_name__icontains=query)
-        result = list(contracts.values('customer_id', 'customer__company_name').distinct()[:CUSTOMER_SEARCH_LIMIT])
+        result = list(contracts.values('customer_id', 'customer__company_name').distinct()[:DROPDOWN_SEARCH_LIMIT])
         return Response([
             {'id': r['customer_id'], 'company_name': r['customer__company_name']}
             for r in result
@@ -935,7 +935,7 @@ class InvoiceViewSet(BaseModelViewSet):
                 customer=OuterRef('pk'), is_delete=False, invoice_completed=False)))
         if query:
             customers = customers.filter(company_name__icontains=query)
-        customers = customers.order_by('company_name')[:CUSTOMER_SEARCH_LIMIT]
+        customers = customers.order_by('company_name')[:DROPDOWN_SEARCH_LIMIT]
         return Response([
             {'id': c.id, 'company_name': c.company_name} for c in customers
         ])

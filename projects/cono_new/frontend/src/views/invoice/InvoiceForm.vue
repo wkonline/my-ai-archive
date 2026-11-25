@@ -63,7 +63,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Ticket } from '@element-plus/icons-vue'
 import request from '../../api/request'
-import { applyCustomerResults, mergeSelectedCustomer } from '../../utils/customerOptions'
+import { applySearchResults, mergeSelectedOption } from '../../utils/dropdownOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -89,7 +89,7 @@ const contractOptions = ref([])
 const searchCustomers = async (q) => {
   try {
     const data = await request.get('/invoice/customers/', { params: { q: q || '' } })
-    customerOptions.value = applyCustomerResults(data, form.customer, customerOptions.value)
+    customerOptions.value = applySearchResults(data, form.customer, customerOptions.value)
   } catch {}
 }
 
@@ -119,7 +119,7 @@ const loadData = async () => {
       invoice_number: data.invoice_number,
       invoice_man_name: data.invoice_man_name || '',
     })
-    customerOptions.value = mergeSelectedCustomer(customerOptions.value, data.customer, data.customer_name)
+    customerOptions.value = mergeSelectedOption(customerOptions.value, data.customer, data.customer_name)
     contractOptions.value = [{ id: data.contract, contract_number: data.contract_number }]
   } catch {}
 }

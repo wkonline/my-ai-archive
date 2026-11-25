@@ -93,7 +93,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Box, Location } from '@element-plus/icons-vue'
 import request from '../../api/request'
-import { applyCustomerResults, mergeSelectedCustomer } from '../../utils/customerOptions'
+import { applySearchResults, mergeSelectedOption } from '../../utils/dropdownOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -135,7 +135,7 @@ const onCategoryChange = () => {
 const searchCustomers = async (q) => {
   try {
     const data = await request.get('/customer/', { params: { keyword: q || '', page_size: 200 }, silent: true })
-    customers.value = applyCustomerResults(data.results || data, form.customer, customers.value)
+    customers.value = applySearchResults(data.results || data, form.customer, customers.value)
   } catch { /* 保留上次结果 */ }
 }
 
@@ -171,7 +171,7 @@ const loadData = async () => {
     })
     onCategoryChange()
     form.product = data.product
-    if (data.customer) customers.value = mergeSelectedCustomer(customers.value, data.customer, data.customer_name)
+    if (data.customer) customers.value = mergeSelectedOption(customers.value, data.customer, data.customer_name)
   } finally {
     loading.value = false
   }
