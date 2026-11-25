@@ -47,7 +47,7 @@
       <template #header>
         <span class="card-title"><el-icon><Van /></el-icon> 寄给客户登记</span>
       </template>
-      <el-table :data="list" stripe border v-loading="loading">
+      <el-table ref="tableRef" :data="list" stripe border v-loading="loading" @scroll="syncHeader">
         <el-table-column prop="order_number" label="序号" width="60" align="center" fixed />
         <el-table-column prop="flow_number" label="流转编号" width="170" fixed>
           <template #default="{ row }">
@@ -57,7 +57,6 @@
         <el-table-column prop="productcategory_name" label="产品名称" min-width="110" show-overflow-tooltip />
         <el-table-column prop="product_model" label="产品型号" min-width="110" show-overflow-tooltip />
         <el-table-column prop="archive_serial" label="产品序列号" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="express_number" label="快递单号" min-width="140" show-overflow-tooltip />
         <el-table-column prop="customer_name" label="客户名称" min-width="140" show-overflow-tooltip />
         <el-table-column prop="contact_name" label="联系人" width="90" />
         <el-table-column prop="ship_date" label="寄出日期" width="105" align="center" />
@@ -67,7 +66,7 @@
             <el-tag :type="row.status === 1 ? 'warning' : 'success'" size="small">{{ row.status_display }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" class-name="op-cell" width="220" fixed="right">
+        <el-table-column label="操作" class-name="op-cell" width="280" fixed="right">
           <template #default="{ row }">
             <el-button v-if="row.status === 1" class="op-btn op-edit" size="small" @click="openEdit(row)">
               <el-icon><Edit /></el-icon>&nbsp;编辑
@@ -111,6 +110,20 @@ const total = ref(0)
 const page = ref(1)
 const page_size = ref(50)
 const loading = ref(false)
+const tableRef = ref(null)
+
+// Element Plus 的表头同步依赖内部 scroll 事件与 rAF 时序，某些浏览器/版本下
+// 表头会停在原位。这里在 scroll 事件里显式把表体的横向偏移同步给表头。
+const syncHeader = () => {
+  const root = tableRef.value?.$el
+  if (!root) return
+  const bodyWrap = root.querySelector('.el-table__body-wrapper .el-scrollbar__wrap')
+  const headerWrap = root.querySelector('.el-table__header-wrapper')
+  if (!bodyWrap || !headerWrap) return
+  if (headerWrap.scrollLeft !== bodyWrap.scrollLeft) {
+    headerWrap.scrollLeft = bodyWrap.scrollLeft
+  }
+}
 const filters = reactive({
   start_date: null, end_date: null, flow_number: '', customer_name: '', status: null,
 })
