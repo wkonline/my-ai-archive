@@ -59,6 +59,22 @@
 .el-table--border .el-table__cell { border-right: 1px solid var(--border-soft) !important; }
 .el-table__inner-wrapper::before { background-color: transparent !important; }
 
+/* 固定列是 sticky 浮层，横向滚动时压在滚动内容之上，必须有不透明背景，
+   否则下层文字会透出来（表现为「隔行透明」：普通行透明、条纹行有底色）。
+   底色沿用卡片白，条纹行保持 #fafafa，hover 用浅蓝，与滚动区视觉一致。 */
+.el-table td.el-table-fixed-column--left,
+.el-table td.el-table-fixed-column--right {
+  background-color: var(--bg-card) !important;
+}
+.el-table .el-table__row--striped > td.el-table-fixed-column--left,
+.el-table .el-table__row--striped > td.el-table-fixed-column--right {
+  background-color: #fafafa !important;
+}
+.el-table .el-table__row:hover > td.el-table-fixed-column--left,
+.el-table .el-table__row:hover > td.el-table-fixed-column--right {
+  background-color: var(--navy-50) !important;
+}
+
 /* 失效行（已停用/已换板）整行置灰。必须写在全局并带 !important：
    上面的 .el-table td.el-table__cell 也会给单元格上色，且特异性更高。
    序列号链接仍要能点开历史，所以只降饱和度，悬停时恢复主色。 */
