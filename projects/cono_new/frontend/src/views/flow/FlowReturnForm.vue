@@ -42,6 +42,9 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-form-item v-if="currentFlow?.situation" label="情况描述">
+          <el-input :model-value="currentFlow.situation" type="textarea" :rows="2" readonly />
+        </el-form-item>
 
         <el-divider content-position="left"><el-icon><Switch /></el-icon> 是否换板</el-divider>
         <el-radio-group v-model="form.is_board_swapped" @change="onSwapChange">
@@ -219,6 +222,9 @@ const loadData = async () => {
         flow_number: data.flow_number,
         serial_number: data.archive_serial,
         customer_name: data.customer_name,
+        product_model: data.product_model,
+        productcategory_name: data.productcategory_name,
+        situation: data.situation,
       }, ...pendingList.value]
     }
   } finally {

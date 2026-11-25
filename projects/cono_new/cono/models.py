@@ -796,6 +796,8 @@ class FlowOut(ModelBase):
     express_company = models.CharField(verbose_name="快递公司", max_length=64, blank=True, null=True)
     express_number = models.CharField(verbose_name="快递单号", max_length=64, blank=True, null=True)
     expected_return_date = models.DateField(verbose_name="预计返回日期", blank=True, null=True)
+    # 寄板缘由与判断，供后续追溯这次为什么寄出
+    situation = models.CharField(verbose_name="情况描述", max_length=255, blank=True, null=True)
     STATUS_CHOICES = (
         (1, "在客户处"),
         (2, "已返回"),

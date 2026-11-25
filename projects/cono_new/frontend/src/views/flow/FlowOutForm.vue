@@ -106,6 +106,18 @@
             </el-form-item>
           </el-col>
         </el-row>
+
+        <el-divider content-position="left"><el-icon><Document /></el-icon> 情况描述</el-divider>
+        <el-form-item label="寄板缘由">
+          <el-input
+            v-model="form.situation"
+            type="textarea"
+            :rows="3"
+            maxlength="255"
+            show-word-limit
+            placeholder="简单写明寄板的缘由和判断，例如：客户反馈屏体闪烁，初步判断为电源板故障，寄新板替换"
+          />
+        </el-form-item>
       </el-form>
 
       <div class="footer-actions">
@@ -120,7 +132,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Box, User, Van } from '@element-plus/icons-vue'
+import { Box, User, Van, Document } from '@element-plus/icons-vue'
 import request from '../../api/request'
 import { applySearchResults, mergeSelectedOption } from '../../utils/dropdownOptions'
 
@@ -142,6 +154,7 @@ const form = reactive({
   expected_return_date: null,
   express_company: '',
   express_number: '',
+  situation: '',
 })
 
 const archives = ref([])
@@ -205,6 +218,7 @@ const loadData = async () => {
         expected_return_date: data.expected_return_date || null,
         express_company: data.express_company || '',
         express_number: data.express_number || '',
+        situation: data.situation || '',
       })
       const archiveOption = {
         id: data.archive,

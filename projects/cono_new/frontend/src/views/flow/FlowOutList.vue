@@ -61,6 +61,7 @@
         <el-table-column prop="contact_name" label="联系人" width="100" />
         <el-table-column prop="ship_date" label="寄出日期" width="110" align="center" />
         <el-table-column prop="express_number" label="快递单号" width="150" show-overflow-tooltip />
+        <el-table-column prop="situation" label="情况描述" min-width="200" show-overflow-tooltip />
         <el-table-column label="流转状态" width="110" align="center">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'warning' : 'success'" size="small">{{ row.status_display }}</el-tag>

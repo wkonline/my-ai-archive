@@ -301,6 +301,7 @@ class FlowOutViewSet(BaseModelViewSet):
             '快递公司': f.express_company or '',
             '快递单号': f.express_number or '',
             '预计返回日期': f.expected_return_date or '',
+            '情况描述': f.situation or '',
             '流转状态': f.get_status_display(),
         } for f in qs]
         df = pd.DataFrame(data)
@@ -337,6 +338,7 @@ class FlowOutViewSet(BaseModelViewSet):
                                      if f.archive and f.archive.productcategory else ''),
             'ship_date': f.ship_date,
             'express_number': f.express_number or '',
+            'situation': f.situation or '',
         } for f in qs])
 
 
