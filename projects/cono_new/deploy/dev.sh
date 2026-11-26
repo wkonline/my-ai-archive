@@ -34,10 +34,33 @@ port_alive() {
     fi
 }
 
-# 老系统与新系统读同一套环境变量决定用 MySQL 还是 SQLite
+# 老系统与新系统读同一套环境变量决定用 MySQL 还是 SQLite。
+# 密码哈希是 md5(盐 + 明文)：老系统取 SECRET_KEY，新 API 取 LEGACY_SECRET_KEY，
+# 两者必须相同且等于生产容器 cono_web 的 DJANGO_SECRET_KEY，否则连生产库时
+# 算出的哈希与库里存的完全对不上，登录一律提示“用户名或密码错误”。
+export DJANGO_SECRET_KEY="${DJANGO_SECRET_KEY:-nas-cono-deploy-key-2026}"
+export LEGACY_SECRET_KEY="${LEGACY_SECRET_KEY:-nas-cono-deploy-key-2026}"
+
 if [ "${USE_SQLITE:-}" = "1" ]; then
     export CONO_LOCAL_DB_PATH="${CONO_LOCAL_DB_PATH:-$ROOT/local_cono.sqlite3}"
     echo "使用本地 SQLite: $CONO_LOCAL_DB_PATH"
+    echo "==> 准备本地测试库（迁移 + 默认账号）"
+    "$PY" "$ROOT/manage.py" migrate --noinput --settings=local_test_settings >/dev/null
+    "$PY" "$ROOT/manage.py" ensure_dev_user --settings=local_test_settings
+else
+    # 库不可达时老系统会启动失败。提前探一次，避免只看到“8000 未监听”还要翻日志。
+    if ! "$PY" - <<'PROBE' >/dev/null 2>&1
+import os, socket
+host = os.environ.get('DJANGO_DB_HOST', '192.168.1.201')
+port = int(os.environ.get('DJANGO_DB_PORT', '3306'))
+socket.create_connection((host, port), timeout=3).close()
+PROBE
+    then
+        echo "!! 连不上数据库 ${DJANGO_DB_HOST:-192.168.1.201}:${DJANGO_DB_PORT:-3306}"
+        echo "   生产库只在内网可达；不在局域网时请改用本地测试库：USE_SQLITE=1 ./deploy/dev.sh"
+        exit 1
+    fi
+    echo "数据库: ${DJANGO_DB_HOST:-192.168.1.201}:${DJANGO_DB_PORT:-3306}（生产库，登录账号与生产一致）"
 fi
 
 if port_alive 8000; then
@@ -88,4 +111,8 @@ echo ""
 echo "老版系统: http://localhost:8000/"
 echo "新版前端: http://localhost:5173/"
 echo "新版 API : http://localhost:8001/"
-echo "登录: admin / 123456"
+if [ "${USE_SQLITE:-}" = "1" ]; then
+    echo "本地账号: admin / admin123（SQLite 测试库，新建的）"
+else
+    echo "账号    : 与生产库 192.168.1.201 一致"
+fi

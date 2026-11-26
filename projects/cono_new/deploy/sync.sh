@@ -136,6 +136,7 @@ sync_new() {
     sudo -n $DOCKER run -d --name cono_api --restart unless-stopped --network host \
       -w /app/api \
       -e DJANGO_SECRET_KEY=nas-cono-new-api-key-2026 \
+      -e LEGACY_SECRET_KEY=nas-cono-deploy-key-2026 \
       -e DJANGO_DEBUG=false \
       -e USE_MYSQL=1 \
       -e DJANGO_DB_NAME=cono \

@@ -31,8 +31,21 @@ USE_SQLITE=1 ./deploy/dev.sh # 生产库不可达时用本地 SQLite
 首次运行会自动创建 `api/.venv` 并安装 Python 与前端依赖（需要联网，约 3-5 分钟）。
 之后重复执行会跳过已运行的端口。
 
+`USE_SQLITE=1` 时会自动迁移本地库并建一个测试账号 **admin / admin123**（已有则跳过）。
+不带该变量时连 192.168.1.201 的生产库，账号与生产一致；库连不上会直接报错退出，
+不会静默换库——空库没有 `user` 表，登录只会看到“用户名或密码错误”，很难排查。
+
+### 密码盐必须与生产一致
+老密码哈希是 `md5(盐 + 明文)`：老系统取 `SECRET_KEY`，新 API 取 `LEGACY_SECRET_KEY`，
+生产容器 `cono_web` 用的是 `nas-cono-deploy-key-2026`。`dev.sh` 已默认导出这两个变量；
+手动启动时必须自己设置，否则连生产库登录会一律提示“用户名或密码错误”。
+
 等价的手动方式：
 ```bash
+# 密码盐必须与生产一致，否则连生产库登录会提示“用户名或密码错误”
+export DJANGO_SECRET_KEY=nas-cono-deploy-key-2026
+export LEGACY_SECRET_KEY=nas-cono-deploy-key-2026
+
 # 1. 后端 API（端口 8001）
 cd api
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
@@ -54,12 +67,13 @@ npm run dev
 ```
 
 ## 测试账号
-- 用户名：admin
-- 密码：admin123
+`USE_SQLITE=1 ./deploy/dev.sh` 会建本地测试账号 **admin / admin123**。
+连生产库时用生产账号，密码与 192.168.1.201 的 cono 库一致。
 
 ## 说明
-- 本地开发使用 SQLite（api/db.sqlite3），不连线上 MySQL，不影响老版。
-- 上线时通过 USE_MYSQL=1 环境变量切换到老版 cono 库。
+- 本地默认连 192.168.1.201 的生产库（与线上账号一致）；`USE_SQLITE=1` 时改用
+  `local_cono.sqlite3`，不碰线上数据。
+- 上线时新版 API 通过 `USE_MYSQL=1` 连同一个 cono 库，与老系统共用 user 表。
 - 老版代码（`cono/`、`cono_new/`、`manage.py`）由老系统维护，新系统只读复用其模型与 settings。
 
 ## 迁移规则（重要）

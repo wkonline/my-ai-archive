@@ -97,6 +97,13 @@ if _local_db_path:
         }
     }
 else:
+    # 本地 venv 装的是 PyMySQL（mysqlclient 需要编译 MySQL 头文件），
+    # 注册后 Django 的 mysql backend 就能用它连库。
+    try:
+        import MySQLdb  # noqa: F401
+    except ImportError:
+        import pymysql
+        pymysql.install_as_MySQLdb()
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',

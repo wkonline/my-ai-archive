@@ -1,5 +1,6 @@
 # 运行时产物：不入库，各环境自行生成
 api/db.sqlite3
+local_cono.sqlite3
 media/
 backups/
 staticfiles/

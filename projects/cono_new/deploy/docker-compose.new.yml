@@ -16,6 +16,8 @@ services:
     command: gunicorn cono_api.wsgi:application --bind 0.0.0.0:8002 --workers 2 --timeout 120
     environment:
       DJANGO_SECRET_KEY: nas-cono-new-api-key-2026
+      # 老密码哈希 = md5(cono_web 的 SECRET_KEY + 明文)，必须与老系统容器一致
+      LEGACY_SECRET_KEY: nas-cono-deploy-key-2026
       DJANGO_DEBUG: "false"
       USE_MYSQL: "1"
       DJANGO_DB_NAME: cono
