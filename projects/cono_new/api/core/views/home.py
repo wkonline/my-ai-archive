@@ -14,6 +14,15 @@ def _amount(queryset, field='amount'):
     return queryset.aggregate(total=Sum(field))['total'] or 0
 
 
+# 2013–2022 年度电源装配数量：早年数据未进生产计划系统，按历史台账硬编码。
+# 2023 年起系统内有完整计划记录，改从 Plan.quantity 汇总，不再维护这张表。
+ASSEMBLY_HISTORY = {
+    2013: 42, 2014: 43, 2015: 44, 2016: 71, 2017: 81,
+    2018: 53, 2019: 62, 2020: 44, 2021: 93, 2022: 122,
+}
+ASSEMBLY_PLAN_FROM_YEAR = 2023
+
+
 class HomeView(APIView):
     """参照老版 cono/views/index.py home() 实现，返回首页数据。
 
@@ -156,6 +165,22 @@ class HomeView(APIView):
             year_labels, year_amounts = [], []
             pie_labels, pie_values = [], []
 
+        # 电源装配数量：早年取历史台账，2023 年起按生效日期从生产计划汇总。
+        # 口径与生产计划列表的年度数量一致（Plan.quantity + effective_date + 未删除）。
+        assembly_labels = [str(y) for y in range(2013, today.year + 1)]
+        assembly_values = []
+        for label in assembly_labels:
+            year = int(label)
+            if year < ASSEMBLY_PLAN_FROM_YEAR:
+                assembly_values.append(ASSEMBLY_HISTORY.get(year, 0))
+            else:
+                total = models.Plan.objects.filter(
+                    is_delete=False,
+                    effective_date__gte=datetime.date(year, 1, 1),
+                    effective_date__lt=datetime.date(year + 1, 1, 1),
+                ).aggregate(total=Sum('quantity'))['total'] or 0
+                assembly_values.append(total)
+
         def _fmt(d):
             return d.strftime('%Y-%m-%d') if d else ''
 
@@ -284,5 +309,8 @@ class HomeView(APIView):
                 'year_values': year_amounts,
                 'pie_labels': pie_labels,
                 'pie_values': pie_values,
+                'assembly_labels': assembly_labels,
+                'assembly_values': assembly_values,
+                'assembly_plan_from_year': ASSEMBLY_PLAN_FROM_YEAR,
             },
         })

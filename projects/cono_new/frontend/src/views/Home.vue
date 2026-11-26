@@ -59,6 +59,22 @@
       </div>
     </div>
 
+    <!-- 电源装配数量（年度） -->
+    <div class="charts-row" v-if="canSee('chart') && charts.assembly_labels?.length">
+      <div class="panel">
+        <div class="panel-heading">
+          <el-icon><Box /></el-icon>
+          <span>企业年度电源装配数量</span>
+          <span class="panel-hint">
+            2013–{{ charts.assembly_labels.at(-1) }}（{{ charts.assembly_plan_from_year }} 年起取自生产计划）
+          </span>
+        </div>
+        <div class="panel-body">
+          <BaseChart :option="assemblyChartOption" height="300px" />
+        </div>
+      </div>
+    </div>
+
     <!-- 常用功能 -->
     <div class="section-title">
       <h4><el-icon><Grid /></el-icon>常用功能</h4>
@@ -242,7 +258,7 @@ import BaseChart from '../components/BaseChart.vue'
 import { pickColors } from '../components/chartColors'
 import {
   Monitor, Document, Money, Calendar, Briefcase, TrendCharts, List, User,
-  PieChart, Grid, PhoneFilled, Tools, RefreshLeft, Setting, Van,
+  PieChart, Grid, PhoneFilled, Tools, RefreshLeft, Setting, Van, Box,
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -260,7 +276,7 @@ const recentServiceDetails = ref([])
 const recentReturnProducts = ref([])
 const recentFlowOuts = ref([])
 const recentFlowReturns = ref([])
-const charts = ref({ year_labels: [], year_values: [], pie_labels: [], pie_values: [] })
+const charts = ref({ year_labels: [], year_values: [], pie_labels: [], pie_values: [], assembly_labels: [], assembly_values: [] })
 const visible = ref({})
 
 // 无权限的模块既不显示卡片也不显示表格，与后端门控保持一致
@@ -325,6 +341,54 @@ const yearChartOption = computed(() => {
           const c = colors[params.dataIndex % colors.length]
           return { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [{ offset: 0, color: c }, { offset: 1, color: c }] }
+        },
+      },
+      emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,120,224,0.35)' } },
+    }],
+  }
+})
+
+// 电源装配数量：历史段（2013–2022）与计划段（2023 起）用两种深浅区分数据来源，
+// 单一色相避免十几根柱子互相抢眼；tooltip 里标明该年数据出处。
+const assemblyChartOption = computed(() => {
+  const labels = charts.value.assembly_labels || []
+  const values = charts.value.assembly_values || []
+  const planFrom = charts.value.assembly_plan_from_year || 2023
+  return {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: (params) => {
+        const p = params[0]
+        const year = Number(p.name)
+        const source = year < planFrom ? '历史台账' : '生产计划'
+        return `${p.name} 年<br/>电源装配：<b>${p.value}</b> 台<br/><span style="color:#909399;font-size:11px">数据来源：${source}</span>`
+      },
+    },
+    grid: { left: 18, right: 18, top: 34, bottom: 28, containLabel: true },
+    xAxis: {
+      type: 'category', data: labels,
+      axisLine: { lineStyle: { color: 'rgba(0,120,224,0.2)' } },
+      axisLabel: { color: '#4a5a6a', fontSize: 11 },
+    },
+    yAxis: {
+      type: 'value',
+      name: '台',
+      nameTextStyle: { color: '#909399', fontSize: 11 },
+      axisLabel: { color: '#4a5a6a', fontSize: 11 },
+      splitLine: { lineStyle: { color: 'rgba(0,120,224,0.06)' } },
+    },
+    series: [{
+      name: '电源装配数量', type: 'bar', data: values, barMaxWidth: 44,
+      label: { show: true, position: 'top', color: '#4a5a6a', fontSize: 11 },
+      itemStyle: {
+        borderRadius: [6, 6, 0, 0],
+        color: (params) => {
+          const isPlan = Number(params.name) >= planFrom
+          const from = isPlan ? '#0078e0' : '#8fc4ef'
+          const to = isPlan ? '#1a8ce8' : '#b8d9f5'
+          return { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [{ offset: 0, color: from }, { offset: 1, color: to }] }
         },
       },
       emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,120,224,0.35)' } },
