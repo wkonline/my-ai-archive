@@ -89,26 +89,18 @@ class Command(BaseCommand):
                 matched = label
             self.stdout.write(f'  {"✓" if hit else " "} {label}: {h}')
 
-        # 新 API 用 LEGACY_SECRET_KEY 校验老密码，老系统用 SECRET_KEY
-        active_salt = legacy or settings.SECRET_KEY
-        active_label = 'LEGACY_SECRET_KEY' if legacy else 'SECRET_KEY'
-
         self.stdout.write('')
-        active_matches = (md5(active_salt, password) == stored)
-        if active_matches:
+        # 登录侧按候选盐列表逐个比对（cono/tools/password.py），命中任一即可登录
+        if matched:
             self.stdout.write(self.style.SUCCESS(
-                f'当前 {active_label} 与库中哈希一致，配置正确。'
-                '若仍登录失败，说明该端口跑的是用旧盐启动的残留进程，重启即可。'))
-        elif matched:
-            self.stdout.write(self.style.ERROR(
-                f'库中哈希是用「{matched}」生成的，但当前 {active_label} 是'
-                f'「{active_salt[:16]}...」。\n'
-                f'请设置该盐值后重启对应服务。'))
+                f'库中哈希由「{matched}」生成，已包含在候选盐列表中，可以正常登录。\n'
+                '若该端口仍登录失败，说明它跑的是旧代码或旧盐的残留进程，重启即可。'))
         elif len(stored) == 32:
             self.stdout.write(self.style.ERROR(
-                '所有候选盐都对不上，库中哈希由未知盐值生成。'))
+                '所有候选盐都对不上，库中哈希由未知盐值生成。\n'
+                '可把该盐值加入 cono/tools/password.py 的 candidate_salts()，'
+                '或用修改密码功能重设。'))
         else:
-            self.stdout.write(self.style.ERROR(
-                '库里是明文密码，老系统永远无法登录。\n'
-                '修复：把该用户 password 改成 md5(生产盐+明文)，'
-                '或用老系统的修改密码功能重设。'))
+            self.stdout.write(self.style.WARNING(
+                '库里是明文密码。登录侧已按明文兜底比对，可以登录；\n'
+                '但建议用修改密码功能重设为 md5 格式。'))

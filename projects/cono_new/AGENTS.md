@@ -24,11 +24,22 @@ cono_new/
 - 新系统部署：`./deploy/sync.sh new`（重建 API 镜像与容器 + 迁移 + 重载 Nginx）
 - 只同步前端产物：`./deploy/sync.sh vue [文件]`
 
-### 密码盐必须三处一致（踩过坑）
-老密码哈希是 `md5(盐 + 明文)`。老系统用 `SECRET_KEY`，新 API 用 `LEGACY_SECRET_KEY`，
-生产容器 `cono_web` 用的是 `nas-cono-deploy-key-2026`。任何一处不一致都会让登录
-一律提示"用户名或密码错误"（页面上看不出是盐错了）。
-`dev.sh`、`docker-compose.new.yml`、`sync.sh` 都已显式传值，改动时不要漏。
+### 密码盐：校验用多候选，写入用共享盐
+老密码哈希是 `md5(盐 + 明文)`。历史遗留导致同一个 `user` 表里的账号可能由不同盐值
+生成：早期账号用 `settings.SECRET_KEY` 的默认值，后来部署脚本又注入
+`nas-cono-deploy-key-2026`。**盐值不一致会表现为"用户名或密码错误"，页面上看不出原因。**
+
+现在由 `cono/tools/password.py` 统一处理，不要在各处手写 `md5(...)` 比对：
+- `verify_password(stored, 明文)`：按 `candidate_salts()` 逐个尝试，命中任一即通过；
+  非 32 位十六进制时按明文兜底比对。登录、改密码校验旧密码都必须用它。
+- `hash_password(明文)`：写入用 `shared_salt()`，即 `LEGACY_SECRET_KEY or SECRET_KEY`。
+  不能用新 API 自己的 `SECRET_KEY`——那是新系统独有的值，老系统不认识，
+  写进去的密码在老系统永远登不上。
+
+`dev.sh` 不再强推某个盐值（只在用户显式设置 `DJANGO_SECRET_KEY` 时才注入），
+避免把一批历史账号锁死。`docker-compose.new.yml` / `sync.sh` 的 `LEGACY_SECRET_KEY`
+仍需与老系统 `SECRET_KEY` 一致，那是写入时用的共享盐。
+
 另外 `local_test_settings.py` 不设默认 SQLite 路径：空库没有 `user` 表，同样表现为密码错误。
 
 ### 登录失败先跑诊断
@@ -36,13 +47,11 @@ cono_new/
 # 在仓库根目录，用你的真实账号
 api/.venv/bin/python manage.py diagnose_login <用户名> <密码> --settings=local_test_settings
 ```
-它会打印：连的是哪个库、`password` 字段存的是明文还是 md5、各候选盐算出的哈希、
-当前 `SECRET_KEY` 是否匹配。三种常见结论：
-- `库里是明文密码` → 老系统只认 md5，永远登不上；新 API 有明文兜底才能登。
-  用老系统的修改密码功能重设，或把该字段改成 `md5(生产盐+明文)`。
-- `库中哈希是用「生产盐」生成，但当前 SECRET_KEY 是...` → 环境变量没生效。
-- `当前 SECRET_KEY 与库中哈希一致` → 配置没问题，8000 端口跑的是旧盐的残留进程，
-  重启即可（`dev.sh` 现在会检测配置变化自动重启）。
+它会打印：连的是哪个库、`password` 字段存的是明文还是 md5、各候选盐算出的哈希。
+结论含义：
+- `库中哈希由「X」生成，已包含在候选盐列表中` → 能正常登录；若仍失败是残留进程或旧代码。
+- `所有候选盐都对不上` → 哈希由未知盐生成，把该盐加入 `candidate_salts()` 或重设密码。
+- `库里是明文密码` → 登录侧有明文兜底能登，但建议用修改密码功能重设为 md5。
 
 ## 本地验证环境
 

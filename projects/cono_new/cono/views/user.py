@@ -7,6 +7,7 @@ from cono.tools.pagination import Pagination
 from cono.tools.form import UserModelForm, UserResetModelForm, ProfileEditModelForm, ChangePasswordForm
 from cono.tools.encrypt import md5
 from cono.tools.auth_profile import default_role_key
+from cono.tools.password import verify_password
 
 def user_list(request):
     """ 用户管理 """
@@ -146,9 +147,8 @@ def user_change_password(request):
         old_password = form.cleaned_data.get('old_password')
         new_password = form.cleaned_data.get('new_password')
 
-        # 验证旧密码
-        old_pwd_md5 = md5(old_password)
-        if user.password != old_pwd_md5:
+        # 验证旧密码（库里可能由历史盐值生成，需逐个候选盐比对）
+        if not verify_password(user.password, old_password):
             form.add_error('old_password', '旧密码不正确')
             return render(request, 'user/password_change.html', {'form': form, 'title': '修改密码'})
 

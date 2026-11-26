@@ -47,12 +47,9 @@ class RefreshToken(BaseRefreshToken):
 
 
 def _hash_password(password: str) -> str:
-    """统一密码哈希：md5(LEGACY_SECRET_KEY + password)"""
-    from django.conf import settings
-    import hashlib
-    obj = hashlib.md5(settings.LEGACY_SECRET_KEY.encode('utf-8'))
-    obj.update(password.encode('utf-8'))
-    return obj.hexdigest()
+    """统一密码哈希：md5(老系统 SECRET_KEY + password)，见 cono.tools.password。"""
+    from cono.tools.password import hash_password
+    return hash_password(password)
 
 
 class LoginView(APIView):
@@ -83,10 +80,12 @@ class LoginView(APIView):
         if not str(password).strip():
             return Response({'detail': '用户名或密码错误'}, status=401)
 
-        hashed = _hash_password(password)
         from django.db.models import Q
+        from cono.tools.password import candidate_salts, md5_hash
+        # 库中哈希可能由不同盐值生成（历史账号），逐个候选盐比对
+        candidates = [md5_hash(salt, password) for salt in candidate_salts()]
         user = User.objects.filter(username=username).filter(
-            Q(password=hashed) | Q(password=password)
+            Q(password__in=candidates) | Q(password=password)
         ).first()
         if not user:
             return Response({'detail': '用户名或密码错误'}, status=401)
@@ -257,8 +256,8 @@ class ChangePasswordView(APIView):
         if not user or not user.is_authenticated:
             return Response({'detail': '请先登录'}, status=401)
 
-        hashed_old = _hash_password(old_password)
-        if user.password != hashed_old and user.password != old_password:
+        from cono.tools.password import verify_password
+        if not verify_password(user.password, old_password):
             return Response({'detail': '当前密码不正确'}, status=400)
 
         user.password = _hash_password(new_password)

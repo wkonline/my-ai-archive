@@ -110,13 +110,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _hash(password):
-        # 必须与老系统一致：md5(LEGACY_SECRET_KEY + 明文)，否则新系统建/改的账号
-        # 在老系统登录不了，反之亦然（两边共用 user 表）。
-        from django.conf import settings
-        import hashlib
-        obj = hashlib.md5(settings.LEGACY_SECRET_KEY.encode('utf-8'))
-        obj.update(str(password).encode('utf-8'))
-        return obj.hexdigest()
+        # 必须与老系统一致：md5(老系统 SECRET_KEY + 明文)，否则新系统建/改的账号
+        # 在老系统登录不了，反之亦然（两边共用 user 表）。见 cono.tools.password。
+        from cono.tools.password import hash_password
+        return hash_password(password)
 
 
 class CustomerContactSerializer(serializers.ModelSerializer):

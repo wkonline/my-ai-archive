@@ -35,18 +35,14 @@ port_alive() {
 }
 
 # 老系统与新系统读同一套环境变量决定用 MySQL 还是 SQLite。
-# 密码哈希是 md5(盐 + 明文)：老系统取 SECRET_KEY，新 API 取 LEGACY_SECRET_KEY，
-# 两者必须相同且等于生产容器 cono_web 的 DJANGO_SECRET_KEY，否则连生产库时
-# 算出的哈希与库里存的完全对不上，登录一律提示“用户名或密码错误”。
-SALT_DEFAULT='nas-cono-deploy-key-2026'
-# shell 里残留的 DJANGO_SECRET_KEY 会覆盖默认值，这是登录失败最常见的坑
-if [ -n "${DJANGO_SECRET_KEY:-}" ] && [ "$DJANGO_SECRET_KEY" != "$SALT_DEFAULT" ]; then
-    echo "!! 环境里已有 DJANGO_SECRET_KEY，将覆盖默认盐，老系统登录可能失败"
-    echo "   当前值: ${DJANGO_SECRET_KEY:0:12}...  期望: $SALT_DEFAULT"
-    echo "   如非本意请先执行: unset DJANGO_SECRET_KEY"
+# 密码哈希是 md5(盐 + 明文)：老系统取 SECRET_KEY，新 API 取 LEGACY_SECRET_KEY。
+# 不要在这里强推某个盐值：库里历史账号的哈希可能由不同盐值生成，
+# 强行注入会让这批账号全部登录失败。登录侧已按候选盐列表逐个比对
+# （cono/tools/password.py），这里只在用户显式指定时才注入。
+if [ -n "${DJANGO_SECRET_KEY:-}" ]; then
+    export DJANGO_SECRET_KEY
+    export LEGACY_SECRET_KEY="${LEGACY_SECRET_KEY:-$DJANGO_SECRET_KEY}"
 fi
-export DJANGO_SECRET_KEY="${DJANGO_SECRET_KEY:-$SALT_DEFAULT}"
-export LEGACY_SECRET_KEY="${LEGACY_SECRET_KEY:-$SALT_DEFAULT}"
 
 if [ "${USE_SQLITE:-}" = "1" ]; then
     export CONO_LOCAL_DB_PATH="${CONO_LOCAL_DB_PATH:-$ROOT/local_cono.sqlite3}"
@@ -129,7 +125,9 @@ fi
 if [ "${SKIP_API:-}" != "1" ]; then
     echo "启动新版 API (gunicorn)..."
     cd "$ROOT/api"
-    nohup "$PY" -m gunicorn cono_api.wsgi:application \
+    # 显式钉住 settings：shell 里残留的 DJANGO_SETTINGS_MODULE（比如跑过老系统命令）
+    # 会让 wsgi 的 setdefault 失效，直接 ModuleNotFoundError 起不来
+    DJANGO_SETTINGS_MODULE=cono_api.settings nohup "$PY" -m gunicorn cono_api.wsgi:application \
         --bind 127.0.0.1:8001 --workers 2 --timeout 120 \
         > /tmp/gunicorn.log 2>&1 &
     echo "API PID: $!"

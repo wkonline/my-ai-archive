@@ -106,8 +106,9 @@ report_port_salt 8001 LEGACY_SECRET_KEY cono_api.settings "${ROOT}/api" LEGACY_S
 echo
 
 echo "== 结论 =="
-echo "   库里的哈希由 ${PROD_FP} 生成。老系统若与之不符，登录必定失败。"
-echo "   修复: lsof -ti:8000 | xargs kill -9; unset DJANGO_SECRET_KEY; ./deploy/dev.sh"
+echo "   登录侧按候选盐列表逐个比对，库里哈希命中任一候选盐即可登录，"
+echo "   因此老系统与新 API 的盐值不同也不会导致登录失败。"
+echo "   只有账号密码本身不对时才会提示“用户名或密码错误”。"
 if [ -n "${USERNAME}" ]; then
     echo
     echo "== 账号 ${USERNAME} 的详细诊断 =="

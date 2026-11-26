@@ -10,6 +10,7 @@ from cono.tools.bootstrap import BootStrapForm
 from cono.tools.form import RegisterUserModelForm
 from cono.tools.encrypt import md5
 from cono.tools.auth_profile import default_role_key
+from cono.tools.password import verify_password
 import hashlib
 import logging
 
@@ -21,7 +22,7 @@ def salt_fingerprint(salt):
     return hashlib.md5(salt.encode('utf-8')).hexdigest()[:8]
 
 
-def _log_login_failure(username, hashed_password):
+def _log_login_failure(username, password):
     """登录失败时把关键信息写进日志，避免只能看到“用户名或密码错误”。
 
     只记录哈希、格式与盐指纹，不记录明文。仅在 DEBUG 下输出。
@@ -38,11 +39,10 @@ def _log_login_failure(username, hashed_password):
     # 非 md5 时库里可能就是明文密码，不能原样写进日志
     shown = stored if looks_hashed else f'{stored[:3]}…（长度 {len(stored)}）'
     logger.warning(
-        '[login] 用户 %r 密码不匹配 | 库中格式: %s | 库中值: %s | 本次算得: %s | 盐指纹: %s',
+        '[login] 用户 %r 密码不匹配 | 库中格式: %s | 库中值: %s | 候选盐均未命中 | 盐指纹: %s',
         username,
         'md5' if looks_hashed else '非 md5（可能是明文或其它格式）',
         shown,
-        hashed_password,
         fp,
     )
 
@@ -67,7 +67,8 @@ class LoginForm(BootStrapForm):
         pwd = self.cleaned_data.get("password")
         if not pwd:
             raise forms.ValidationError("密码不能为空")
-        return md5(pwd)
+        # 保留明文：库里可能由不同盐值生成，需在视图里逐个候选盐比对
+        return pwd
 def login(request):
     """ 登录 """
     title = "登录"
@@ -89,8 +90,8 @@ def login(request):
     if code.upper() != user_input_code.upper():
         form.add_error("code", "验证码错误")
         return render(request, 'login.html', {'form': form})
-    user_object = models.User.objects.filter(**form.cleaned_data).first()
-    if not user_object:
+    user_object = models.User.objects.filter(username=form.cleaned_data.get('username')).first()
+    if not user_object or not verify_password(user_object.password, form.cleaned_data.get('password')):
         _log_login_failure(form.cleaned_data.get('username'), form.cleaned_data.get('password'))
         return render(request, 'login.html', {'form': form, 'error': "用户名或密码错误"})
 
