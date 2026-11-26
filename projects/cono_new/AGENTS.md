@@ -31,6 +31,19 @@ cono_new/
 `dev.sh`、`docker-compose.new.yml`、`sync.sh` 都已显式传值，改动时不要漏。
 另外 `local_test_settings.py` 不设默认 SQLite 路径：空库没有 `user` 表，同样表现为密码错误。
 
+### 登录失败先跑诊断
+```bash
+# 在仓库根目录，用你的真实账号
+api/.venv/bin/python manage.py diagnose_login <用户名> <密码> --settings=local_test_settings
+```
+它会打印：连的是哪个库、`password` 字段存的是明文还是 md5、各候选盐算出的哈希、
+当前 `SECRET_KEY` 是否匹配。三种常见结论：
+- `库里是明文密码` → 老系统只认 md5，永远登不上；新 API 有明文兜底才能登。
+  用老系统的修改密码功能重设，或把该字段改成 `md5(生产盐+明文)`。
+- `库中哈希是用「生产盐」生成，但当前 SECRET_KEY 是...` → 环境变量没生效。
+- `当前 SECRET_KEY 与库中哈希一致` → 配置没问题，8000 端口跑的是旧盐的残留进程，
+  重启即可（`dev.sh` 现在会检测配置变化自动重启）。
+
 ## 本地验证环境
 
 - 前端 dev server：`cd frontend && npm run dev`（5173）

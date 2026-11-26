@@ -63,26 +63,55 @@ PROBE
     echo "数据库: ${DJANGO_DB_HOST:-192.168.1.201}:${DJANGO_DB_PORT:-3306}（生产库，登录账号与生产一致）"
 fi
 
-if port_alive 8000; then
+# 端口占用就跳过会让改过盐值/库路径的老进程继续跑旧配置，登录会莫名失败。
+# 记录启动时的配置指纹，变化则重启对应服务。
+STATE_DIR="${TMPDIR:-/tmp}/cono-dev-state"
+mkdir -p "$STATE_DIR"
+DB_KEY="${CONO_LOCAL_DB_PATH:-mysql:${DJANGO_DB_HOST:-192.168.1.201}/${DJANGO_DB_NAME:-cono}}"
+CONFIG_FP="$(printf '%s|%s|%s' "$DJANGO_SECRET_KEY" "$LEGACY_SECRET_KEY" "$DB_KEY" | cksum | cut -d' ' -f1)"
+
+# 配置指纹变了就杀掉旧进程，$1=端口 $2=服务名 $3=匹配用的命令行片段
+restart_if_stale() {
+    local port="$1" name="$2" pattern="$3" fpfile="$STATE_DIR/$1.fp"
+    port_alive "$port" || return 0
+    if [ -f "$fpfile" ] && [ "$(cat "$fpfile")" = "$CONFIG_FP" ]; then
+        return 1
+    fi
+    echo "配置已变更，重启 $name (端口 $port)..."
+    ps aux | grep -F "$pattern" | grep -v grep | awk '{print $2}' | while read -r pid; do
+        [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+    done
+    sleep 2
+    port_alive "$port" && { echo "!! $name 未能停止，请手动结束占用 $port 的进程"; exit 1; }
+    return 0
+}
+
+if restart_if_stale 8000 "老版系统" "runserver 0.0.0.0:8000"; then :; else
     echo "老版系统已在运行 (8000)，跳过"
-else
+    SKIP_OLD=1
+fi
+if [ "${SKIP_OLD:-}" != "1" ]; then
     echo "启动老版系统 (runserver)..."
     cd "$ROOT"
     # api/.venv 没有 whitenoise/mysqlclient，用 local_test_settings 把它们去掉
     nohup "$PY" manage.py runserver 0.0.0.0:8000 --noreload \
         --settings=local_test_settings > /tmp/cono-old.log 2>&1 &
     echo "老版 PID: $!"
+    echo "$CONFIG_FP" > "$STATE_DIR/8000.fp"
 fi
 
-if port_alive 8001; then
+if restart_if_stale 8001 "新版 API" "gunicorn cono_api.wsgi"; then :; else
     echo "新版 API 已在运行 (8001)，跳过"
-else
+    SKIP_API=1
+fi
+if [ "${SKIP_API:-}" != "1" ]; then
     echo "启动新版 API (gunicorn)..."
     cd "$ROOT/api"
     nohup "$PY" -m gunicorn cono_api.wsgi:application \
         --bind 127.0.0.1:8001 --workers 2 --timeout 120 \
         > /tmp/gunicorn.log 2>&1 &
     echo "API PID: $!"
+    echo "$CONFIG_FP" > "$STATE_DIR/8001.fp"
 fi
 
 if port_alive 5173; then
