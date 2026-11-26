@@ -220,11 +220,13 @@ class PlanViewSet(BaseModelViewSet):
         year_start = datetime.date(year, 1, 1)
         next_year = datetime.date(year + 1, 1, 1)
         year_qs = qs.filter(effective_date__gte=year_start, effective_date__lt=next_year)
+        # 四张卡片都按"电源台数"统计，统一用 Sum('quantity')。
+        # 用 Count('id') 数的是计划行数，一行可能对应多台，卡片之间对不上总数。
         data = year_qs.aggregate(
             total_qty=Sum('quantity'),
-            in_production=Count('id', filter=Q(completed_status=2)),
-            completed=Count('id', filter=Q(completed_status=3)),
-            pending=Count('id', filter=Q(completed_status=1)),
+            in_production=Sum('quantity', filter=Q(completed_status=2)),
+            completed=Sum('quantity', filter=Q(completed_status=3)),
+            pending=Sum('quantity', filter=Q(completed_status=1)),
         )
         return Response({
             'year': year,

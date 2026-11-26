@@ -43,10 +43,10 @@
     </el-card>
 
     <el-row :gutter="12" class="stats-row">
-      <el-col :span="6"><el-card shadow="hover" class="stat-card"><div class="stat-value">{{ stats.total_qty || 0 }}</div><div class="stat-label">{{ stats.year || new Date().getFullYear() }} 年度数量</div></el-card></el-col>
-      <el-col :span="6"><el-card shadow="hover" class="stat-card"><div class="stat-value" style="color:#f56c6c">{{ stats.pending || 0 }}</div><div class="stat-label">待生产</div></el-card></el-col>
-      <el-col :span="6"><el-card shadow="hover" class="stat-card"><div class="stat-value" style="color:#e6a23c">{{ stats.in_production || 0 }}</div><div class="stat-label">生产中</div></el-card></el-col>
-      <el-col :span="6"><el-card shadow="hover" class="stat-card"><div class="stat-value" style="color:#67c23a">{{ stats.completed || 0 }}</div><div class="stat-label">已完成</div></el-card></el-col>
+      <el-col :span="6"><el-card shadow="hover" class="stat-card"><div class="stat-value">{{ stats.total_qty || 0 }}</div><div class="stat-label">{{ stats.year || new Date().getFullYear() }} 年度电源总数量</div></el-card></el-col>
+      <el-col :span="6"><el-card shadow="hover" class="stat-card"><div class="stat-value" style="color:#f56c6c">{{ stats.pending || 0 }}</div><div class="stat-label">待生产数量</div></el-card></el-col>
+      <el-col :span="6"><el-card shadow="hover" class="stat-card"><div class="stat-value" style="color:#e6a23c">{{ stats.in_production || 0 }}</div><div class="stat-label">生产中数量</div></el-card></el-col>
+      <el-col :span="6"><el-card shadow="hover" class="stat-card"><div class="stat-value" style="color:#67c23a">{{ stats.completed || 0 }}</div><div class="stat-label">已完成数量</div></el-card></el-col>
     </el-row>
 
     <template v-for="(group, gi) in groups" :key="gi">
