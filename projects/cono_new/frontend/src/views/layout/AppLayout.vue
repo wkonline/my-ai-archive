@@ -41,9 +41,6 @@
             <el-menu-item index="/">
               <el-icon><HomeFilled /></el-icon><span>首页</span>
             </el-menu-item>
-            <el-menu-item v-for="p in PINNED_ITEMS" :key="p.path" :index="p.path">
-              <el-icon><component :is="p.icon" /></el-icon><span>{{ p.title }}</span>
-            </el-menu-item>
             <template v-for="m in visibleMenus" :key="m.path">
               <el-menu-item :index="m.path">
                 <el-icon><component :is="m.icon" /></el-icon><span>{{ m.title }}</span>
@@ -71,7 +68,7 @@ import { legacyAppUrl } from '../../utils/legacyApp'
 import {
   HomeFilled, ArrowDown, Switch, Menu,
 } from '@element-plus/icons-vue'
-import { SIDEBAR_ITEMS, MENU_PERM as menuPerm, PINNED_ITEMS } from '../../config/menu'
+import { SIDEBAR_ITEMS, MENU_PERM as menuPerm } from '../../config/menu'
 
 const router = useRouter()
 const userStore = useUserStore()
