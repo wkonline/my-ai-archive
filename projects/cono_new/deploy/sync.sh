@@ -7,6 +7,10 @@
 #   ./deploy/sync.sh vue [文件]  只同步前端产物（可选指定单个组件）
 #   ./deploy/sync.sh all         先 old 再 new
 #
+# 环境变量：
+#   DRY_RUN=1   只打印将要从 NAS 删除的文件，不实际删除
+#   PRUNE=0     不同步删除，保留 NAS 上多余的文件
+#
 # 线上架构：
 #   8000  cono_web      老版 Django（容器，代码 bind mount）
 #   8001  cono_web_new  Nginx：静态前端 + /api/ 反代到 127.0.0.1:8002
@@ -35,19 +39,124 @@ EXCLUDES=(
   --exclude='.chrome-profile'
   --exclude='.vite'
   --exclude='db.sqlite3'
+  --exclude='local_cono.sqlite3'
   --exclude='media'
   --exclude='staticfiles'
   --exclude='backups'
   --exclude='frontend/dist'
+  --exclude='.venv'
 )
 
 # NAS 上的 /usr/bin/rsync 是群晖 setuid 特制版，不支持 --server 模式
 # （报 "rsync service is no running"），所以统一用 tar over ssh。
+#
+# tar 解包只覆盖同名文件、从不删除，因此本地删掉的文件会一直留在 NAS 上。
+# 同步后再对比两端文件清单，删掉远端独有的文件（prune_remote）。
+# 只存在于远端的用户数据与运行时产物不参与比对，见 PRUNE_FIND 的排除项。
+PRUNE_FIND=(
+  -type f
+  -not -path './.git/*'
+  -not -path './api/.venv/*'
+  -not -path './frontend/node_modules/*'
+  -not -path '*/__pycache__/*'
+  -not -path './media/*'
+  -not -path './backups/*'
+  -not -path './staticfiles/*'
+  -not -path './frontend/dist/*'
+  -not -path './.idea/*'
+  -not -path './.vscode/*'
+  -not -path './.chrome-profile/*'
+  -not -path './.vite/*'
+  -not -name '*.pyc'
+  -not -name '.DS_Store'
+  -not -name '._*'
+  -not -name 'db.sqlite3'
+  -not -name 'local_cono.sqlite3'
+)
+
 upload_repo() {
   echo "==> 整仓同步到 $HOST:$DEST ..."
   COPYFILE_DISABLE=1 tar -czf - "${EXCLUDES[@]}" -C "$ROOT" . \
     | ssh "${SSH_OPTS[@]}" "$HOST" "mkdir -p $DEST && tar -xzf - -C $DEST"
+  if [ "${PRUNE:-1}" = "0" ]; then
+    echo "    (PRUNE=0，保留远端多余文件)"
+    return 0
+  fi
+  prune_remote
 }
+
+# 删除远端独有的文件，让 NAS 与本地保持一致。
+# 任何一步异常都直接放弃删除——留下多余文件远比误删线上数据安全。
+prune_remote() {
+  local tmp_local tmp_remote tmp_del remote_find e
+  tmp_local=$(mktemp); tmp_remote=$(mktemp); tmp_del=$(mktemp)
+
+  if ! ( cd "$ROOT" && find . "${PRUNE_FIND[@]}" ) | LC_ALL=C sort > "$tmp_local"; then
+    rm -f "$tmp_local" "$tmp_remote" "$tmp_del"
+    echo "!! 无法生成本地文件清单，跳过删除步骤"
+    return 0
+  fi
+  if [ ! -s "$tmp_local" ]; then
+    rm -f "$tmp_local" "$tmp_remote" "$tmp_del"
+    echo "!! 本地文件清单为空，跳过删除步骤"
+    return 0
+  fi
+
+  # 远端执行同一个 find 表达式，逐项加单引号以免 * 被远端 shell 展开
+  remote_find=""
+  for e in "${PRUNE_FIND[@]}"; do remote_find+=" '$e'"; done
+
+  if ! ssh "${SSH_OPTS[@]}" "$HOST" "cd '$DEST' && find . $remote_find" 2>/dev/null \
+      | LC_ALL=C sort > "$tmp_remote"; then
+    rm -f "$tmp_local" "$tmp_remote" "$tmp_del"
+    echo "!! 无法获取远端文件清单，跳过删除步骤"
+    return 0
+  fi
+  # 清单为空说明 cd/find 出了问题，此时做差集会把远端文件全部当成多余
+  if [ ! -s "$tmp_remote" ]; then
+    rm -f "$tmp_local" "$tmp_remote" "$tmp_del"
+    echo "!! 远端文件清单为空（$DEST 可能不存在），跳过删除步骤"
+    return 0
+  fi
+
+  LC_ALL=C comm -13 "$tmp_local" "$tmp_remote" > "$tmp_del"
+  rm -f "$tmp_local" "$tmp_remote"
+
+  if [ ! -s "$tmp_del" ]; then
+    rm -f "$tmp_del"
+    echo "    远端无多余文件"
+    return 0
+  fi
+
+  echo "==> 清理远端多余文件 $(wc -l < "$tmp_del" | tr -d ' ') 个 ..."
+  sed 's|^\./||' "$tmp_del" | head -10 | sed 's/^/      /'
+  if [ "$(wc -l < "$tmp_del")" -gt 10 ]; then
+    echo "      ..."
+  fi
+
+  if [ "${DRY_RUN:-}" = "1" ]; then
+    rm -f "$tmp_del"
+    echo "    (DRY_RUN=1，未实际删除)"
+    return 0
+  fi
+
+  # 清单走 stdin 逐行 rm；文件名不拼进命令，避免引号与空格问题
+  if ! ssh "${SSH_OPTS[@]}" "$HOST" "cd '$DEST' && while IFS= read -r f; do rm -f -- \"\$f\"; done" \
+      < "$tmp_del"; then
+    rm -f "$tmp_del"
+    echo "!! 删除远端文件失败"
+    return 0
+  fi
+  rm -f "$tmp_del"
+
+  # 删空的目录一并清掉；受保护目录即使为空也不动
+  ssh "${SSH_OPTS[@]}" "$HOST" "cd '$DEST' && find . -mindepth 1 -type d -empty \
+      -not -path './media*' -not -path './backups*' -not -path './staticfiles*' \
+      -not -path './frontend/dist*' -not -path './api/.venv*' \
+      -not -path './frontend/node_modules*' -not -path './.git*' \
+      -delete 2>/dev/null || true"
+}
+
 
 sync_old() {
   echo "==> [old] 上传老版代码 ..."
@@ -273,7 +382,7 @@ case "${1:-}" in
   vue)  shift; sync_vue "${1:-}" ;;
   all)  sync_old; sync_new ;;
   *)
-    sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
     exit 1
     ;;
 esac

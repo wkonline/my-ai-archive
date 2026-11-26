@@ -66,6 +66,14 @@ npm run dev
 ./deploy/sync.sh all          # 先 old 再 new
 ```
 
+同步会删除 NAS 上本地已经不存在的文件，让两端保持一致。
+`media/`、`backups/`、`staticfiles/`、`frontend/dist/` 等只存在于远端的目录不参与删除。
+先看会删哪些文件用 `DRY_RUN=1`，完全不删用 `PRUNE=0`：
+```bash
+DRY_RUN=1 ./deploy/sync.sh old    # 只打印将要删除的文件
+PRUNE=0   ./deploy/sync.sh old    # 保留远端多余文件
+```
+
 ## 测试账号
 `USE_SQLITE=1 ./deploy/dev.sh` 会建本地测试账号 **admin / admin123**。
 连生产库时用生产账号，密码与 192.168.1.201 的 cono 库一致。
