@@ -127,8 +127,11 @@ if [ "${SKIP_API:-}" != "1" ]; then
     cd "$ROOT/api"
     # 显式钉住 settings：shell 里残留的 DJANGO_SETTINGS_MODULE（比如跑过老系统命令）
     # 会让 wsgi 的 setdefault 失效，直接 ModuleNotFoundError 起不来
+    # --reload：改了 api/ 下的代码浏览器刷新就生效。不加的话 gunicorn 会一直跑旧代码，
+    # 表现为"改了没反应"，而 restart_if_stale 只比对数据库/盐值指纹，不会因此重启。
+    # --reload 下 gunicorn 只用单 worker（多 worker 无法热重载）。
     DJANGO_SETTINGS_MODULE=cono_api.settings nohup "$PY" -m gunicorn cono_api.wsgi:application \
-        --bind 127.0.0.1:8001 --workers 2 --timeout 120 \
+        --bind 127.0.0.1:8001 --workers 1 --timeout 120 --reload \
         > /tmp/gunicorn.log 2>&1 &
     echo "API PID: $!"
     echo "$CONFIG_FP" > "$STATE_DIR/8001.fp"
