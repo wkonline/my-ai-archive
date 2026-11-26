@@ -23,6 +23,16 @@ def _delivered_quantity(plan):
     ).aggregate(total=Sum('quantity'))['total'] or 0
 
 
+def _parse_year(raw, today=None):
+    """解析统计年份，非法或缺失时回落到当前年份。"""
+    today = today or datetime.date.today()
+    try:
+        year = int(raw)
+    except (TypeError, ValueError):
+        return today.year
+    return year if 1970 <= year <= 2999 else today.year
+
+
 def _derive_plan_status(plan):
     """按发货量与任务单推导计划应处的 (completed_status, completed)。
 
@@ -203,13 +213,21 @@ class PlanViewSet(BaseModelViewSet):
     @action(detail=False, methods=['get'])
     def stats(self, request):
         qs = self.get_queryset()
-        data = qs.aggregate(
+        # 年度统计固定按生效日期取当年 1/1 起，不受列表的日期/关键词筛选影响：
+        # 卡片展示的是"今年排产了多少"，跟着列表筛选变化会让人误读成筛选结果合计。
+        # 状态筛选仍然生效，待生产/生产中/已完成三张卡片要和年度总量口径一致。
+        year = _parse_year(request.query_params.get('year'))
+        year_start = datetime.date(year, 1, 1)
+        next_year = datetime.date(year + 1, 1, 1)
+        year_qs = qs.filter(effective_date__gte=year_start, effective_date__lt=next_year)
+        data = year_qs.aggregate(
             total_qty=Sum('quantity'),
             in_production=Count('id', filter=Q(completed_status=2)),
             completed=Count('id', filter=Q(completed_status=3)),
             pending=Count('id', filter=Q(completed_status=1)),
         )
         return Response({
+            'year': year,
             'total_qty': data['total_qty'] or 0,
             'in_production': data['in_production'] or 0,
             'completed': data['completed'] or 0,
