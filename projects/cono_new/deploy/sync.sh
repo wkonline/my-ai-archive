@@ -62,7 +62,7 @@ need = ['xlrd', 'pandas', 'openpyxl', 'django']
 print(','.join(m for m in need if u.find_spec(m) is None))
 \"")
   if [ -n "$missing" ]; then
-    echo "==> [old] 容器缺少依赖: $missing，正在安装 ..."
+    echo "==> [old] 容器缺少依赖: ${missing}，正在安装 ..."
     ssh "${SSH_OPTS[@]}" "$HOST" "sudo -n $DOCKER exec cono_web pip install --no-cache-dir $missing"
   else
     echo "==> [old] 依赖齐全"

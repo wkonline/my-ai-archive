@@ -16,8 +16,8 @@ PY="$VENV/bin/python"
 # api/.venv 在 .gitignore 里，新克隆的仓库没有它，首次运行自动创建并装依赖
 if [ ! -x "$PY" ] || ! "$PY" -c "import django" >/dev/null 2>&1; then
     PY3="${PYTHON:-python3}"
-    command -v "$PY3" >/dev/null 2>&1 || { echo "找不到 $PY3，请先安装 Python 3.11 及以上版本"; exit 1; }
-    echo "==> 初始化虚拟环境 $VENV（首次运行，需要联网下载依赖）"
+    command -v "$PY3" >/dev/null 2>&1 || { echo "找不到 ${PY3}，请先安装 Python 3.11 及以上版本"; exit 1; }
+    echo "==> 初始化虚拟环境 ${VENV}（首次运行，需要联网下载依赖）"
     "$PY3" -m venv "$VENV"
     "$PY" -m pip --version >/dev/null 2>&1 || "$PY" -m ensurepip --upgrade
     "$PY" -m pip install --upgrade pip
@@ -76,6 +76,12 @@ STATE_DIR="${TMPDIR:-/tmp}/cono-dev-state"
 mkdir -p "$STATE_DIR"
 DB_KEY="${CONO_LOCAL_DB_PATH:-mysql:${DJANGO_DB_HOST:-192.168.1.201}/${DJANGO_DB_NAME:-cono}}"
 CONFIG_FP="$(printf '%s|%s|%s' "$DJANGO_SECRET_KEY" "$LEGACY_SECRET_KEY" "$DB_KEY" | cksum | cut -d' ' -f1)"
+
+# 记下盐指纹（md5(盐) 前 8 位），供 check_login.sh 在无法读取进程环境变量时比对
+OLD_SALT_FP="$(printf '%s' "$DJANGO_SECRET_KEY" | "$PY" -c 'import hashlib,sys;print(hashlib.md5(sys.stdin.read().encode()).hexdigest()[:8])')"
+API_SALT_FP="$(printf '%s' "$LEGACY_SECRET_KEY" | "$PY" -c 'import hashlib,sys;print(hashlib.md5(sys.stdin.read().encode()).hexdigest()[:8])')"
+echo "$OLD_SALT_FP" > "$STATE_DIR/8000.fp8"
+echo "$API_SALT_FP" > "$STATE_DIR/8001.fp8"
 
 # 配置指纹变了就杀掉旧进程，$1=端口 $2=服务名 $3=匹配用的命令行片段
 # 按端口杀而不是按命令行匹配：gunicorn 会改写进程名，命令行匹配不到。
