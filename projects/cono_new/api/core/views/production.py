@@ -17,38 +17,58 @@ from api.core.views.base import BaseModelViewSet
 from cono.tools.helper import save_receiver_as_contact
 
 
-def _refresh_plan_delivery_status(plan):
-    """按累计发货数量刷新生产计划的完结状态。
-
-    与老系统发货逻辑保持一致：发满计划量标记已完成，否则置为生产中。
-    """
-    delivered = models.ProductDelivery.objects.filter(
+def _delivered_quantity(plan):
+    return models.ProductDelivery.objects.filter(
         contract=plan, is_delete=False,
     ).aggregate(total=Sum('quantity'))['total'] or 0
-    if delivered >= plan.quantity:
-        plan.completed_status = 3
-        plan.completed = True
-    else:
-        plan.completed_status = 2
-        plan.completed = False
-    plan.save(update_fields=['completed_status', 'completed', 'update_time'])
+
+
+def _derive_plan_status(plan):
+    """按发货量与任务单推导计划应处的 (completed_status, completed)。
+
+    只依据现存记录判断，无任何生产记录时返回 None 表示「无从判断」，
+    由各调用方按自己的业务约定决定，避免把不同场景揉进一条规则：
+    - 发货量达到计划量：已完成(3)
+    - 有发货或有任务单：生产中(2)
+    """
+    delivered = _delivered_quantity(plan)
+    if plan.quantity and delivered >= plan.quantity:
+        return 3, True
+    if delivered > 0:
+        return 2, False
+    if models.ProductionTask.objects.filter(
+            contract=plan, is_delete=False).exists():
+        return 2, False
+    return None
+
+
+def _apply_plan_status(plan, status, completed):
+    if (plan.completed_status, plan.completed) != (status, completed):
+        plan.completed_status = status
+        plan.completed = completed
+        plan.save(update_fields=['completed_status', 'completed', 'update_time'])
+
+
+def _refresh_plan_delivery_status(plan):
+    """发货增删后刷新状态，与老系统 cono/views/delivery.py 保持一致。
+
+    发满计划量即已完成，否则回到生产中。发货记录被删除不代表生产没开始过，
+    所以无记录时也保持生产中，不能退回待生产。
+    """
+    if plan is None:
+        return
+    _apply_plan_status(plan, *(_derive_plan_status(plan) or (2, False)))
 
 
 def _refresh_plan_task_status(plan):
-    """按该计划是否还有任务单刷新「生产状态」。
+    """派单/改单/删单后刷新生产状态。
 
-    老系统约定：派了任务单即进入生产中；任务单全部删除后退回待生产。
-    已完成的计划不回退，否则发货完结的记录会被改回生产中。
+    已完成的计划不回退：发货完结的记录不应因为删任务单被改回生产中。
+    任务单和发货都清空时退回待生产，与老系统派单逻辑一致。
     """
     if plan is None or plan.completed_status == 3:
         return
-    has_task = models.ProductionTask.objects.filter(
-        contract=plan, is_delete=False,
-    ).exists()
-    status = 2 if has_task else 1
-    if plan.completed_status != status:
-        plan.completed_status = status
-        plan.save(update_fields=['completed_status', 'update_time'])
+    _apply_plan_status(plan, *(_derive_plan_status(plan) or (1, False)))
 
 
 def _truthy(value):
@@ -149,11 +169,8 @@ class ProductionTaskViewSet(BaseModelViewSet):
     permission_codes = 'task_list'
 
     def perform_create(self, serializer):
-        # 负责人默认取当前登录用户，与老系统一致；前端表单不传该字段
-        if 'production_man' not in serializer.validated_data:
-            serializer.save(production_man=self.request.user)
-        else:
-            serializer.save()
+        # 负责人由 ProductionTaskSerializer 统一取当前登录用户
+        serializer.save()
         _refresh_plan_task_status(serializer.instance.contract)
 
     def perform_update(self, serializer):
@@ -340,8 +357,8 @@ class ProductDeliveryViewSet(BaseModelViewSet):
     }
 
     def perform_create(self, serializer):
-        # 发货人取当前登录用户，前端不必也不该传这个字段
-        delivery = serializer.save(delivery_man=self.request.user)
+        # 发货人由 ProductDeliverySerializer 统一取当前登录用户
+        delivery = serializer.save()
         _refresh_plan_delivery_status(delivery.contract)
 
     def _check_quantity(self, plan, quantity, exclude_id=None):

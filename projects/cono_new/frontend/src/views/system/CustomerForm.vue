@@ -189,7 +189,7 @@ const handleSave = async () => {
     bank_name: form.bank_name, bank_code: form.bank_code,
     contacts,
   }
-  // saler 不允许为 null，未选时不提交，交由模型默认值处理
+  // 未选业务员时后端会记为当前登录用户，这里不传即可
   if (form.saler) payload.saler = form.saler
   saving.value = true
   try {

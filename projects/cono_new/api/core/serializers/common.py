@@ -4,6 +4,36 @@ from rest_framework import serializers
 from api.core import models
 
 
+class OperatorFieldsMixin:
+    """创建时用当前登录用户填充操作人字段。
+
+    这些字段在模型上的 default=1 只是历史遗留，指向一个未必存在的用户：
+    前端不传时会把记录挂到 id=1 名下，或者直接外键失败。老系统一直是用
+    当前登录用户（request.info_dict_useid），这里恢复同样的行为。
+
+    force_fields: 操作人语义，一律取当前登录用户，忽略前端传值。
+    default_fields: 允许用户自己选（如业务员、经手人），没选才回退到当前用户。
+    """
+
+    force_fields = ()
+    default_fields = ()
+
+    def _current_user(self):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+        return user if getattr(user, 'pk', None) else None
+
+    def create(self, validated_data):
+        user = self._current_user()
+        if user is not None:
+            for field in self.force_fields:
+                validated_data[field] = user
+            for field in self.default_fields:
+                if not validated_data.get(field):
+                    validated_data[field] = user
+        return super().create(validated_data)
+
+
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Department
@@ -99,7 +129,8 @@ class CustomerContactSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'phone', 'title', 'is_primary', 'remark']
 
 
-class CustomerSerializer(serializers.ModelSerializer):
+class CustomerSerializer(OperatorFieldsMixin, serializers.ModelSerializer):
+    default_fields = ('saler',)
     saler_name = serializers.CharField(source='saler.username', read_only=True)
     contacts = CustomerContactSerializer(many=True, required=False)
 
@@ -291,7 +322,8 @@ class CollectionSerializer(serializers.ModelSerializer):
         return int(obj.contract.collection_ratio() or 0)
 
 
-class InvoiceSerializer(serializers.ModelSerializer):
+class InvoiceSerializer(OperatorFieldsMixin, serializers.ModelSerializer):
+    force_fields = ('invoice_man',)
     customer_name = serializers.CharField(source='customer.company_name', read_only=True)
     contract_number = serializers.CharField(source='contract.contract_number', read_only=True)
     invoice_man_name = serializers.CharField(source='invoice_man.username', read_only=True)
@@ -348,7 +380,8 @@ class InvoiceSerializer(serializers.ModelSerializer):
         return float(obj.contract.outstanding_balance() or 0)
 
 
-class ServiceSerializer(serializers.ModelSerializer):
+class ServiceSerializer(OperatorFieldsMixin, serializers.ModelSerializer):
+    force_fields = ('repairman',)
     customer_name = serializers.CharField(source='customer.company_name', read_only=True)
     productcategory_name = serializers.CharField(source='productcategory.name', read_only=True)
     product_model = serializers.CharField(source='product.model', read_only=True)
@@ -362,7 +395,8 @@ class ServiceSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ServiceDetailSerializer(serializers.ModelSerializer):
+class ServiceDetailSerializer(OperatorFieldsMixin, serializers.ModelSerializer):
+    force_fields = ('repairman',)
     customer_name = serializers.CharField(source='customer.company_name', read_only=True)
     service_number = serializers.CharField(source='service.service_number', read_only=True)
     productcategory_name = serializers.CharField(source='productcategory.name', read_only=True)
@@ -378,7 +412,8 @@ class ServiceDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ReturnProductSerializer(serializers.ModelSerializer):
+class ReturnProductSerializer(OperatorFieldsMixin, serializers.ModelSerializer):
+    force_fields = ('user',)
     customer_name = serializers.CharField(source='customer.company_name', read_only=True)
     service_number = serializers.CharField(source='service.service_number', read_only=True)
     user_name = serializers.CharField(source='user.username', read_only=True)
@@ -390,7 +425,8 @@ class ReturnProductSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class PlanSerializer(serializers.ModelSerializer):
+class PlanSerializer(OperatorFieldsMixin, serializers.ModelSerializer):
+    force_fields = ('production_man',)
     contract_number = serializers.CharField(source='contract.contract_number', read_only=True)
     customer_name = serializers.CharField(source='contract.customer.company_name', read_only=True)
     productcategory_name = serializers.CharField(source='productcategory.name', read_only=True)
@@ -408,7 +444,8 @@ class PlanSerializer(serializers.ModelSerializer):
         return obj.is_temp_plan
 
 
-class ProductionTaskSerializer(serializers.ModelSerializer):
+class ProductionTaskSerializer(OperatorFieldsMixin, serializers.ModelSerializer):
+    force_fields = ('production_man',)
     production_man_name = serializers.CharField(source='production_man.username', read_only=True)
     plan_number = serializers.SerializerMethodField()
     customer_name = serializers.SerializerMethodField()
@@ -493,7 +530,8 @@ class ProductLabelSerializer(serializers.ModelSerializer):
         return ''
 
 
-class ProductDeliverySerializer(serializers.ModelSerializer):
+class ProductDeliverySerializer(OperatorFieldsMixin, serializers.ModelSerializer):
+    force_fields = ('delivery_man',)
     customer_name = serializers.CharField(source='customer.company_name', read_only=True)
     delivery_man_name = serializers.CharField(source='delivery_man.username', read_only=True)
     contract_number = serializers.SerializerMethodField()
