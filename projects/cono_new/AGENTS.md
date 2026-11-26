@@ -14,14 +14,22 @@ cono_new/
 │   ├── sync.sh                   # NAS 部署：old | new | vue | all
 │   ├── nginx-new.conf
 │   └── docker-compose.new.yml
-└── local_test_settings.py        # 老系统本地设置（去 whitenoise + SQLite）
+└── local_test_settings.py        # 老系统本地设置（去 whitenoise，可选 SQLite）
 ```
 
 - 本地启动：`./deploy/dev.sh`（不可达生产库时加 `USE_SQLITE=1`）。
   `api/.venv` 与 `frontend/node_modules` 都不入库，首次运行脚本会自动创建并安装依赖。
+  `USE_SQLITE=1` 会自动 migrate 并建测试账号 `admin / admin123`。
 - 老系统部署：`./deploy/sync.sh old`（tar 上传 + `docker restart cono_web`，不重建镜像）
 - 新系统部署：`./deploy/sync.sh new`（重建 API 镜像与容器 + 迁移 + 重载 Nginx）
 - 只同步前端产物：`./deploy/sync.sh vue [文件]`
+
+### 密码盐必须三处一致（踩过坑）
+老密码哈希是 `md5(盐 + 明文)`。老系统用 `SECRET_KEY`，新 API 用 `LEGACY_SECRET_KEY`，
+生产容器 `cono_web` 用的是 `nas-cono-deploy-key-2026`。任何一处不一致都会让登录
+一律提示"用户名或密码错误"（页面上看不出是盐错了）。
+`dev.sh`、`docker-compose.new.yml`、`sync.sh` 都已显式传值，改动时不要漏。
+另外 `local_test_settings.py` 不设默认 SQLite 路径：空库没有 `user` 表，同样表现为密码错误。
 
 ## 本地验证环境
 
