@@ -86,6 +86,10 @@ class PlanViewSet(BaseModelViewSet):
     permission_codes = 'plan_list'
     filter_backends = [filters.SearchFilter]
     search_fields = ['contract__contract_number', 'product__model', 'productcategory__name', 'contract_reserve']
+    action_permission_codes = {
+        'pending_contracts': ['plan_list', 'task_list', 'task_add'],
+        'pending_products': ['plan_list', 'task_list', 'task_add'],
+    }
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -117,6 +121,84 @@ class PlanViewSet(BaseModelViewSet):
         # 默认按新增时间倒序，前端可通过 ?ordering= 覆盖
         ordering = self.request.query_params.get('ordering', '-id')
         return qs.order_by(ordering)
+
+    def _unassigned_pending_plans(self):
+        """待生产且尚未派任务单的计划。
+
+        派过任务单的计划不再出现在新派单下拉里，判断依据是老系统同一套约定：
+        任务单存在即视为已派工（软删除的不算）。
+        """
+        assigned = models.ProductionTask.objects.filter(
+            is_delete=False).values('contract_id')
+        return models.Plan.objects.filter(
+            completed_status=1, is_delete=False,
+        ).exclude(id__in=assigned)
+
+    @action(detail=False, methods=['get'], url_path='pending-contracts')
+    def pending_contracts(self, request):
+        """新派任务单的项目编号候选。
+
+        筛选必须在服务端完成：前端原先拉 /plan/?page_size=2000 再在浏览器里
+        过滤，但分页上限是 200，计划总数一超就截断，目标项目会整批消失。
+        """
+        qs = self._unassigned_pending_plans()
+        keyword = (request.query_params.get('keyword') or '').strip()
+        if keyword:
+            qs = qs.filter(
+                Q(contract__contract_number__icontains=keyword) |
+                Q(contract_reserve__icontains=keyword))
+
+        rows = qs.values(
+            'contract_id', 'contract__contract_number',
+            'contract__customer__company_name', 'contract_reserve',
+        ).annotate(plan_count=Count('id'))
+
+        contracts, reserves = {}, {}
+        for row in rows:
+            if (row['contract__contract_number'] or '') == models.TEMP_CONTRACT_NUMBER:
+                reserve = (row['contract_reserve'] or '').strip()
+                if not reserve:
+                    continue
+                reserves[reserve] = {
+                    'value': 'reserve:' + reserve,
+                    'label': reserve,
+                    'is_temp': True,
+                    'customer_name': '',
+                    'plan_count': row['plan_count'],
+                }
+            else:
+                contracts[row['contract_id']] = {
+                    'value': row['contract_id'],
+                    'label': row['contract__contract_number'] or '',
+                    'is_temp': False,
+                    'customer_name': row['contract__customer__company_name'] or '',
+                    'plan_count': row['plan_count'],
+                }
+
+        # 真实合同按编号倒序在前，临时计划（无合同）单独排在后面
+        data = sorted(contracts.values(), key=lambda e: str(e['label']), reverse=True)
+        data += sorted(reserves.values(), key=lambda e: str(e['label']), reverse=True)
+        return Response({'results': data, 'total': len(data)})
+
+    @action(detail=False, methods=['get'], url_path='pending-products')
+    def pending_products(self, request):
+        """选定项目编号后展开的可下单产品行（按计划行，一行一个产品）。"""
+        qs = self._unassigned_pending_plans().select_related('productcategory', 'product')
+        reserve = (request.query_params.get('reserve') or '').strip()
+        if reserve:
+            qs = qs.filter(contract_reserve=reserve)
+        else:
+            contract_id = request.query_params.get('contract')
+            if not contract_id:
+                return Response({'results': []})
+            qs = qs.filter(contract_id=contract_id)
+
+        return Response({'results': [{
+            'plan_id': plan.id,
+            'productcategory': plan.productcategory.name if plan.productcategory else '',
+            'product': plan.product.model if plan.product else '',
+            'plan_quantity': plan.quantity,
+        } for plan in qs.order_by('id')]})
 
     @action(detail=False, methods=['get'])
     def stats(self, request):

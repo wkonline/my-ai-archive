@@ -18,7 +18,7 @@
           <el-col :span="12">
             <el-form-item label="项目编号" required>
               <el-select v-model="form.contract" filterable style="width:100%" placeholder="请选择项目编号" @change="loadProducts">
-                <el-option v-for="c in contractOptions" :key="c.id" :label="c.contract_number" :value="c.id" />
+                <el-option v-for="c in contractOptions" :key="c.value" :label="c.label" :value="c.value" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -72,52 +72,44 @@ const isEdit = computed(() => !!route.params.id)
 const saving = ref(false)
 const formRef = ref()
 const form = reactive({ id: null, contract: null, date: '', rows: [] })
-const planOptions = ref([])
-const assignedPlanIds = ref(new Set())
+const contractOptions = ref([])
 
-// 合同选项：只显示待生产且未派任务的计划
-const contractOptions = computed(() => {
-  const seen = new Map()
-  for (const p of planOptions.value) {
-    // 只显示待生产状态
-    if (p.completed_status !== 1) continue
-    // 跳过已派任务单的计划
-    if (assignedPlanIds.value.has(p.id)) continue
-    const cid = p.contract
-    if (!cid || seen.has(cid)) continue
-    seen.set(cid, { id: cid, contract_number: p.contract_number || p.contract_reserve || String(cid) })
+// 候选项目由后端筛选（待生产且未派任务单），前端不再拉全量计划：
+// /plan/ 分页上限 200，计划一多就会截断，目标项目会整个消失。
+const loadContractOptions = async (keyword = '') => {
+  try {
+    const data = await request.get('/plan/pending-contracts/', { params: { keyword }, silent: true })
+    contractOptions.value = data.results || []
+  } catch {
+    contractOptions.value = []
   }
-  return Array.from(seen.values())
-})
+}
 
 // 选择项目编号后，列出该项目下所有产品项（计划数量自动填入下单数量）
-const loadProducts = (contractId) => {
+const loadProducts = async (value) => {
   form.rows = []
-  if (!contractId) return
-  const items = planOptions.value.filter(p => p.contract === contractId)
-  form.rows = items.map(p => ({
-    plan_id: p.id,
-    productcategory: p.productcategory_name || '',
-    product: p.product_model || '',
-    plan_quantity: p.quantity ?? null,
-    quantity: p.quantity ?? 1,
-  }))
+  if (!value) return
+  const params = String(value).startsWith('reserve:')
+    ? { reserve: String(value).slice('reserve:'.length) }
+    : { contract: value }
+  try {
+    const data = await request.get('/plan/pending-products/', { params, silent: true })
+    form.rows = (data.results || []).map(p => ({
+      plan_id: p.plan_id,
+      productcategory: p.productcategory || '',
+      product: p.product || '',
+      plan_quantity: p.plan_quantity ?? null,
+      quantity: p.plan_quantity ?? 1,
+    }))
+  } catch {
+    form.rows = []
+  }
 }
 
 const removeRow = (idx) => form.rows.splice(idx, 1)
 
 const loadData = async () => {
-  try {
-    const [planRes, taskRes] = await Promise.all([
-      request.get('/plan/?page_size=2000', { silent: true }),
-      request.get('/task/?page_size=2000'),
-    ])
-    planOptions.value = planRes.results || []
-    // 收集已派任务单的计划ID
-    assignedPlanIds.value = new Set(
-      (taskRes.results || []).map(t => t.contract).filter(Boolean)
-    )
-  } catch {}
+  await loadContractOptions()
   if (!isEdit.value) {
     Object.assign(form, { id: null, contract: null, date: new Date().toISOString().slice(0, 10), rows: [] })
     return
@@ -136,6 +128,12 @@ const loadData = async () => {
         quantity: data.quantity ?? 1,
       }],
     })
+    // 已派单的计划不会出现在候选里，编辑时必须补回当前项目，否则下拉只显示 id
+    const plan = data.contract
+    const planLabel = data.plan_number || String(plan ?? '')
+    if (plan && !contractOptions.value.some(c => c.value === plan)) {
+      contractOptions.value = [{ value: plan, label: planLabel, is_temp: false }, ...contractOptions.value]
+    }
   } catch {}
 }
 
