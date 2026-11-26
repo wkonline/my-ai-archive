@@ -11,7 +11,7 @@ cono_new/
 ├── frontend/                     # 新版前端（Vue3，5173 / Nginx 8001）
 ├── deploy/
 │   ├── dev.sh                    # 本地一键启动 8000/8001/5173
-│   ├── sync.sh                   # NAS 部署：old | new | vue | all
+│   ├── sync.sh                   # NAS 部署：old | new | vue | all（由 scripts/sync.sh nas 调用）
 │   ├── nginx-new.conf
 │   └── docker-compose.new.yml
 └── local_test_settings.py        # 老系统本地设置（去 whitenoise，可选 SQLite）
@@ -20,9 +20,24 @@ cono_new/
 - 本地启动：`./deploy/dev.sh`（不可达生产库时加 `USE_SQLITE=1`）。
   `api/.venv` 与 `frontend/node_modules` 都不入库，首次运行脚本会自动创建并安装依赖。
   `USE_SQLITE=1` 会自动 migrate 并建测试账号 `admin / admin123`。
-- 老系统部署：`./deploy/sync.sh old`（tar 上传 + `docker restart cono_web`，不重建镜像）
-- 新系统部署：`./deploy/sync.sh new`（重建 API 镜像与容器 + 迁移 + 重载 Nginx）
-- 只同步前端产物：`./deploy/sync.sh vue [文件]`
+
+### 同步入口：仓库根目录 `scripts/sync.sh`
+三个方向统一走这一个脚本，不要再用其它方式手工同步：
+```bash
+./scripts/sync.sh pull      # git → 本地（只快进，分叉时拒绝并提示）
+./scripts/sync.sh push      # 本地 → git（提交 + 自动变基 + 推送）
+./scripts/sync.sh nas all   # 本地 → NAS（默认 all）
+./scripts/sync.sh all       # pull → push → nas
+./scripts/sync.sh status    # 本地 / 远程 / NAS 状态
+```
+`nas` 的目标沿用 `deploy/sync.sh` 的 `old | new | vue | all`。
+不带参数运行进入交互菜单，macOS 双击 `Sync.command` 走的就是这条路径。
+
+底层部署细节：
+- 老系统：`deploy/sync.sh old`（tar 上传 + `docker restart cono_web`，不重建镜像）
+- 新系统：`deploy/sync.sh new`（重建 API 镜像与容器 + 迁移 + 重载 Nginx）
+- 只同步前端产物：`deploy/sync.sh vue [文件]`
+- 同步会删除 NAS 上本地已不存在的文件；`DRY_RUN=1` 只打印，`PRUNE=0` 关闭删除
 
 ### 密码盐：校验用多候选，写入用共享盐
 老密码哈希是 `md5(盐 + 明文)`。历史遗留导致同一个 `user` 表里的账号可能由不同盐值
