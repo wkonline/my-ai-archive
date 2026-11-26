@@ -1,9 +1,13 @@
 """诊断登录失败：确认连的是哪个库、库里密码是什么格式、当前盐能否匹配。
 
 用法：
-    python manage.py diagnose_login admin admin123 --settings=local_test_settings
+    python manage.py diagnose_login <用户名> [密码] --settings=local_test_settings
+
+省略密码时会交互输入（不回显），避免密码留在 shell 历史里。
+省略用户名时只列出库中现有用户。
 """
 import hashlib
+import getpass
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -21,12 +25,11 @@ class Command(BaseCommand):
     help = '诊断用户名密码错误：检查数据库、密码格式与盐值'
 
     def add_arguments(self, parser):
-        parser.add_argument('username')
-        parser.add_argument('password')
+        parser.add_argument('username', nargs='?')
+        parser.add_argument('password', nargs='?')
 
     def handle(self, *args, **options):
         username = options['username']
-        password = options['password']
         db = settings.DATABASES['default']
 
         self.stdout.write(f'数据库    : {db["ENGINE"]} / {db["NAME"]}')
@@ -34,6 +37,16 @@ class Command(BaseCommand):
         legacy = getattr(settings, 'LEGACY_SECRET_KEY', None)
         if legacy:
             self.stdout.write(f'LEGACY_SECRET_KEY: {legacy[:16]}...')
+
+        if not username:
+            users = list(models.User.objects.values_list('username', flat=True)[:50])
+            self.stdout.write(f'\n库中共 {len(users)} 个用户: ' + ', '.join(users))
+            self.stdout.write('用法: manage.py diagnose_login <用户名> [密码]')
+            return
+
+        password = options['password']
+        if not password:
+            password = getpass.getpass('请输入该账号的密码（不回显）: ')
 
         user = models.User.objects.filter(username=username).first()
         if not user:
