@@ -1,0 +1,18 @@
+# 运行时产物：不入库，各环境自行生成
+api/db.sqlite3
+media/
+backups/
+staticfiles/
+frontend/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+api/.venv/
+.venv/
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+._*

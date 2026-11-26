@@ -1,7 +1,8 @@
-.venv
-__pycache__
+**/.venv
+**/__pycache__
 *.pyc
 .idea
+.vscode
 .git
 .DS_Store
 backup
@@ -11,4 +12,7 @@ staticfiles
 *.sql
 *.rar
 *.zip
+
+# 新版前端依赖不参与老系统镜像构建
+**/node_modules
 

@@ -1,0 +1,5 @@
+# 构建上下文是 api/，本地虚拟环境与缓存不能进镜像
+.venv
+__pycache__
+*.pyc
+db.sqlite3

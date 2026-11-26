@@ -1,6 +1,26 @@
 # cono_new 项目说明
 
-Django DRF（`api/`）+ Vue3/Element Plus（`frontend/`）。部署到 NAS 192.168.1.202，部署脚本 `start.sh`。
+Django DRF（`api/`）+ Vue3/Element Plus（`frontend/`），老系统在 `cono/`。部署到 NAS 192.168.1.202。
+
+## 目录与脚本
+
+```
+cono_new/
+├── cono/  cono_new/  manage.py   # 老系统（前后端不分离，8000）
+├── api/                          # 新版 API（DRF，8001/8002）
+├── frontend/                     # 新版前端（Vue3，5173 / Nginx 8001）
+├── deploy/
+│   ├── dev.sh                    # 本地一键启动 8000/8001/5173
+│   ├── sync.sh                   # NAS 部署：old | new | vue | all
+│   ├── nginx-new.conf
+│   └── docker-compose.new.yml
+└── local_test_settings.py        # 老系统本地设置（去 whitenoise + SQLite）
+```
+
+- 本地启动：`./deploy/dev.sh`（不可达生产库时加 `USE_SQLITE=1`）
+- 老系统部署：`./deploy/sync.sh old`（tar 上传 + `docker restart cono_web`，不重建镜像）
+- 新系统部署：`./deploy/sync.sh new`（重建 API 镜像与容器 + 迁移 + 重载 Nginx）
+- 只同步前端产物：`./deploy/sync.sh vue [文件]`
 
 ## 本地验证环境
 
@@ -50,14 +70,14 @@ Django DRF（`api/`）+ Vue3/Element Plus（`frontend/`）。部署到 NAS 192.1
 
 导出接口需要鉴权，前端下载必须带 token；后端各 `export` action 需调用 `filter_queryset`。
 
-## 老系统本地调试（cono_new/）
+## 老系统本地调试
 
-- `api/.venv` 没有 pip、也没装 `whitenoise`，直接用 `cono_new.settings` 会 `ModuleNotFoundError`。
-  临时做法：写一个 `/tmp/local_test_settings.py` 里 `from cono_new.settings import *` 后把
-  whitenoise 从 `MIDDLEWARE` 过滤掉，用 `--settings=local_test_settings` 启动。
+- `api/.venv` 没装 `whitenoise`/`mysqlclient`，直接用 `cono_new.settings` 会 `ModuleNotFoundError`。
+  用仓库根目录的 `local_test_settings.py`：它去掉 whitenoise，并在未设置
+  `CONO_LOCAL_DB_PATH` 时退回 SQLite。启动加 `--settings=local_test_settings`。
 - `DEBUG=False` 时 Django 用 `cached.Loader`，改模板后**必须重启进程**才生效，
   `--noreload` 下尤其容易误判「代码没改对」。
 - 登录有图形验证码，浏览器测试可直接造 session 绕过：
   `SessionStore()` 写 `session['info']={'id','username','role'}` 后 `create()`，把 key 作为 `sessionid` cookie。
-- 老系统部署走 `sync_to_nas.sh`（tar 上传 + `docker restart cono_web`），不重建镜像；
-  新系统部署走 `deploy/sync_new_to_nas.sh`。
+- 老系统部署走 `./deploy/sync.sh old`（tar 上传 + `docker restart cono_web`，不重建镜像）；
+  新系统部署走 `./deploy/sync.sh new`。

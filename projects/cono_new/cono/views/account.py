@@ -4,7 +4,7 @@ from django import forms
 from django.contrib import messages
 from io import BytesIO
 from datetime import date
-from cono.tools.code import check_code
+from cono.tools.helper import check_code
 from cono import models
 from cono.tools.bootstrap import BootStrapForm
 from cono.tools.form import RegisterUserModelForm
