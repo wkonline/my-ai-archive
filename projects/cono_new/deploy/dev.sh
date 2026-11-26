@@ -78,18 +78,27 @@ DB_KEY="${CONO_LOCAL_DB_PATH:-mysql:${DJANGO_DB_HOST:-192.168.1.201}/${DJANGO_DB
 CONFIG_FP="$(printf '%s|%s|%s' "$DJANGO_SECRET_KEY" "$LEGACY_SECRET_KEY" "$DB_KEY" | cksum | cut -d' ' -f1)"
 
 # 配置指纹变了就杀掉旧进程，$1=端口 $2=服务名 $3=匹配用的命令行片段
+# 按端口杀而不是按命令行匹配：gunicorn 会改写进程名，命令行匹配不到。
 restart_if_stale() {
-    local port="$1" name="$2" pattern="$3" fpfile="$STATE_DIR/$1.fp"
+    local port="$1" name="$2" pattern="$3" fpfile="$STATE_DIR/$1.fp" pid
     port_alive "$port" || return 0
     if [ -f "$fpfile" ] && [ "$(cat "$fpfile")" = "$CONFIG_FP" ]; then
         return 1
     fi
     echo "配置已变更，重启 $name (端口 $port)..."
-    ps aux | grep -F "$pattern" | grep -v grep | awk '{print $2}' | while read -r pid; do
-        [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
-    done
+    if command -v lsof >/dev/null 2>&1; then
+        pids="$(lsof -nP -ti:"$port" 2>/dev/null)"
+    else
+        pids="$(ps aux | grep -F "$pattern" | grep -v grep | awk '{print $2}')"
+    fi
+    for pid in $pids; do kill "$pid" 2>/dev/null || true; done
     sleep 2
-    port_alive "$port" && { echo "!! $name 未能停止，请手动结束占用 $port 的进程"; exit 1; }
+    if port_alive "$port"; then
+        # 还活着就强杀，仍失败才报错
+        for pid in $(lsof -nP -ti:"$port" 2>/dev/null); do kill -9 "$pid" 2>/dev/null || true; done
+        sleep 1
+        port_alive "$port" && { echo "!! $name 未能停止，请手动结束占用 $port 的进程"; exit 1; }
+    fi
     return 0
 }
 
