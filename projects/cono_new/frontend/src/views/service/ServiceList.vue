@@ -67,8 +67,8 @@
         <el-table-column prop="order_number" label="序号" width="50" align="center" fixed />
         <el-table-column prop="customer_name" label="客户名称" width="200" show-overflow-tooltip fixed />
         <el-table-column prop="productcategory_name" label="产品名称" width="120" show-overflow-tooltip />
-        <el-table-column prop="product_model" label="型号" width="120" show-overflow-tooltip />
-        <el-table-column prop="service_number" label="维修编号" width="120">
+        <el-table-column prop="product_model" label="型号" width="140" show-overflow-tooltip />
+        <el-table-column prop="service_number" label="维修编号" width="135">
           <template #default="{ row }">
             <el-link type="primary" @click="openDetail(row)">{{ row.service_number }}</el-link>
           </template>
@@ -86,7 +86,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="date" label="接收时间" width="105" align="center" />
-        <el-table-column prop="description" label="备注"  show-overflow-tooltip />
+        <el-table-column prop="description" label="备注" show-overflow-tooltip />
         <el-table-column label="操作" class-name="op-cell" width="250" fixed="right">
           <template #default="{ row }">
             <el-button class="op-btn op-edit" size="small" @click="openEdit(row)"><el-icon><Edit /></el-icon>&nbsp;编辑</el-button><el-button class="op-btn op-delete" size="small" @click="handleDelete(row)"><el-icon><Delete /></el-icon>&nbsp;删除</el-button>
