@@ -8,7 +8,7 @@ cono_new/
 ├── manage.py        # 老版入口
 ├── local_test_settings.py  # 老版本地设置（去 whitenoise + SQLite）
 ├── api/             # 新版后端（DRF）
-│   ├── .venv/       # 独立虚拟环境
+│   ├── .venv/       # 独立虚拟环境（不入库，dev.sh 首次运行自动创建）
 │   ├── cono_api/    # settings/urls/wsgi
 │   ├── core/        # 模型/序列化器/视图
 │   └── manage.py
@@ -28,14 +28,19 @@ cono_new/
 ./deploy/dev.sh              # 一键启动三个服务（已在运行的会跳过）
 USE_SQLITE=1 ./deploy/dev.sh # 生产库不可达时用本地 SQLite
 ```
+首次运行会自动创建 `api/.venv` 并安装 Python 与前端依赖（需要联网，约 3-5 分钟）。
+之后重复执行会跳过已运行的端口。
+
 等价的手动方式：
 ```bash
 # 1. 后端 API（端口 8001）
 cd api
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python manage.py runserver 8001
 
 # 2. 前端（端口 5173）
 cd frontend
+npm install
 npm run dev
 # 访问 http://localhost:5173
 ```

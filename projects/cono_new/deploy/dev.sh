@@ -13,9 +13,26 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VENV="$ROOT/api/.venv"
 PY="$VENV/bin/python"
 
-[ -x "$PY" ] || { echo "缺少虚拟环境 $VENV，请先在 api/ 下创建并安装依赖"; exit 1; }
+# api/.venv 在 .gitignore 里，新克隆的仓库没有它，首次运行自动创建并装依赖
+if [ ! -x "$PY" ] || ! "$PY" -c "import django" >/dev/null 2>&1; then
+    PY3="${PYTHON:-python3}"
+    command -v "$PY3" >/dev/null 2>&1 || { echo "找不到 $PY3，请先安装 Python 3.11 及以上版本"; exit 1; }
+    echo "==> 初始化虚拟环境 $VENV（首次运行，需要联网下载依赖）"
+    "$PY3" -m venv "$VENV"
+    "$PY" -m pip --version >/dev/null 2>&1 || "$PY" -m ensurepip --upgrade
+    "$PY" -m pip install --upgrade pip
+    "$PY" -m pip install -r "$ROOT/api/requirements.txt"
+    echo "==> 依赖安装完成"
+fi
 
-port_alive() { lsof -nP -i ":$1" >/dev/null 2>&1; }
+port_alive() {
+    if command -v lsof >/dev/null 2>&1; then
+        lsof -nP -i ":$1" >/dev/null 2>&1
+    else
+        # macOS 自带 lsof；精简 Linux 容器里可能没有，退回 /dev/tcp 探测
+        (exec 3<>"/dev/tcp/127.0.0.1/$1") >/dev/null 2>&1
+    fi
+}
 
 # 老系统与新系统读同一套环境变量决定用 MySQL 还是 SQLite
 if [ "${USE_SQLITE:-}" = "1" ]; then
@@ -50,6 +67,12 @@ if port_alive 5173; then
 else
     echo "启动新版前端 (vite)..."
     cd "$ROOT/frontend"
+    # node_modules 同样不入库，缺失时先装依赖
+    if [ ! -f node_modules/vite/bin/vite.js ]; then
+        command -v npm >/dev/null 2>&1 || { echo "找不到 npm，请先安装 Node.js 18 及以上版本"; exit 1; }
+        echo "==> 安装前端依赖（首次运行，需要联网）"
+        npm install
+    fi
     nohup node node_modules/vite/bin/vite.js --host 0.0.0.0 --port 5173 \
         > /tmp/vite.log 2>&1 &
     echo "前端 PID: $!"
@@ -58,9 +81,9 @@ fi
 sleep 4
 echo ""
 echo "=== 状态检查 ==="
-lsof -nP -i :8000 | head -2
-lsof -nP -i :8001 | head -2
-lsof -nP -i :5173 | head -2
+for p in 8000 8001 5173; do
+    if port_alive "$p"; then echo "  $p  已监听"; else echo "  $p  未监听（看 /tmp/cono-old.log、/tmp/gunicorn.log、/tmp/vite.log）"; fi
+done
 echo ""
 echo "老版系统: http://localhost:8000/"
 echo "新版前端: http://localhost:5173/"

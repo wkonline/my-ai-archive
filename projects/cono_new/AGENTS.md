@@ -17,7 +17,8 @@ cono_new/
 └── local_test_settings.py        # 老系统本地设置（去 whitenoise + SQLite）
 ```
 
-- 本地启动：`./deploy/dev.sh`（不可达生产库时加 `USE_SQLITE=1`）
+- 本地启动：`./deploy/dev.sh`（不可达生产库时加 `USE_SQLITE=1`）。
+  `api/.venv` 与 `frontend/node_modules` 都不入库，首次运行脚本会自动创建并安装依赖。
 - 老系统部署：`./deploy/sync.sh old`（tar 上传 + `docker restart cono_web`，不重建镜像）
 - 新系统部署：`./deploy/sync.sh new`（重建 API 镜像与容器 + 迁移 + 重载 Nginx）
 - 只同步前端产物：`./deploy/sync.sh vue [文件]`
