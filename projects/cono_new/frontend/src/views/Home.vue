@@ -348,12 +348,12 @@ const yearChartOption = computed(() => {
   }
 })
 
-// 电源装配数量：历史段（2013–2022）与计划段（2023 起）用两种深浅区分数据来源，
-// 单一色相避免十几根柱子互相抢眼；tooltip 里标明该年数据出处。
+// 柱色沿用首页业绩柱的取色方式：pickColors 随机打乱色环后逐柱分配。
 const assemblyChartOption = computed(() => {
   const labels = charts.value.assembly_labels || []
   const values = charts.value.assembly_values || []
   const planFrom = charts.value.assembly_plan_from_year || 2023
+  const colors = pickColors(values.length)
   return {
     tooltip: {
       trigger: 'axis',
@@ -384,11 +384,9 @@ const assemblyChartOption = computed(() => {
       itemStyle: {
         borderRadius: [6, 6, 0, 0],
         color: (params) => {
-          const isPlan = Number(params.name) >= planFrom
-          const from = isPlan ? '#0078e0' : '#8fc4ef'
-          const to = isPlan ? '#1a8ce8' : '#b8d9f5'
+          const c = colors[params.dataIndex % colors.length]
           return { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [{ offset: 0, color: from }, { offset: 1, color: to }] }
+            colorStops: [{ offset: 0, color: c }, { offset: 1, color: c }] }
         },
       },
       emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,120,224,0.35)' } },
