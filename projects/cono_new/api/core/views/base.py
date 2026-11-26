@@ -38,22 +38,26 @@ class BaseModelViewSet(ModelViewSet):
         return qs
 
     def destroy(self, request, *args, **kwargs):
-        """软删除：如果模型有 is_delete 字段则置 True，否则硬删除。
-
-        硬删除遇到外键保护（ProtectedError）时必须返回 400，不能让 Django 抛 500：
-        例如删除还有合同的客户、被产品引用的分类等。
-        """
         instance = self.get_object()
-        if hasattr(instance, 'is_delete'):
-            instance.is_delete = True
-            instance.save(update_fields=['is_delete'])
-            return Response(status=status.HTTP_204_NO_CONTENT)
         try:
-            instance.delete()
+            self.perform_destroy(instance)
         except ProtectedError as e:
+            # 硬删除遇到外键保护时必须返回 400，不能让 Django 抛 500：
+            # 例如删除还有合同的客户、被产品引用的分类等。
             names = sorted({
                 str(obj._meta.verbose_name) for obj in e.protected_objects})
             return Response(
                 {'detail': '该记录已被{}引用，无法删除。'.format('、'.join(names))},
                 status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def perform_destroy(self, instance):
+        """软删除：有 is_delete 字段则置 True，否则硬删除。
+
+        子类覆盖时必须调用 super()，否则删除会静默失效。
+        """
+        if hasattr(instance, 'is_delete'):
+            instance.is_delete = True
+            instance.save(update_fields=['is_delete'])
+            return
+        instance.delete()

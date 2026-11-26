@@ -34,6 +34,23 @@ def _refresh_plan_delivery_status(plan):
     plan.save(update_fields=['completed_status', 'completed', 'update_time'])
 
 
+def _refresh_plan_task_status(plan):
+    """按该计划是否还有任务单刷新「生产状态」。
+
+    老系统约定：派了任务单即进入生产中；任务单全部删除后退回待生产。
+    已完成的计划不回退，否则发货完结的记录会被改回生产中。
+    """
+    if plan is None or plan.completed_status == 3:
+        return
+    has_task = models.ProductionTask.objects.filter(
+        contract=plan, is_delete=False,
+    ).exists()
+    status = 2 if has_task else 1
+    if plan.completed_status != status:
+        plan.completed_status = status
+        plan.save(update_fields=['completed_status', 'update_time'])
+
+
 def _truthy(value):
     """前端可能传 true/'true'/'1'/1，统一归一化。"""
     if isinstance(value, bool):
@@ -130,6 +147,27 @@ class ProductionTaskViewSet(BaseModelViewSet):
         'contract', 'contract__contract', 'contract__contract__customer', 'production_man').all()
     serializer_class = ProductionTaskSerializer
     permission_codes = 'task_list'
+
+    def perform_create(self, serializer):
+        # 负责人默认取当前登录用户，与老系统一致；前端表单不传该字段
+        if 'production_man' not in serializer.validated_data:
+            serializer.save(production_man=self.request.user)
+        else:
+            serializer.save()
+        _refresh_plan_task_status(serializer.instance.contract)
+
+    def perform_update(self, serializer):
+        old_plan = serializer.instance.contract
+        task = serializer.save()
+        _refresh_plan_task_status(task.contract)
+        # 改挂到别的计划时，原计划也要重算
+        if old_plan and old_plan.pk != task.contract_id:
+            _refresh_plan_task_status(old_plan)
+
+    def perform_destroy(self, instance):
+        plan = instance.contract
+        super().perform_destroy(instance)
+        _refresh_plan_task_status(plan)
 
     def get_queryset(self):
         qs = super().get_queryset()
