@@ -21,6 +21,11 @@ def md5(salt, data):
     return h.hexdigest()
 
 
+def salt_fp(salt):
+    """盐的指纹，用于跨进程比较而不暴露盐本身。"""
+    return hashlib.md5(salt.encode('utf-8')).hexdigest()[:8]
+
+
 class Command(BaseCommand):
     help = '诊断用户名密码错误：检查数据库、密码格式与盐值'
 
@@ -34,9 +39,11 @@ class Command(BaseCommand):
 
         self.stdout.write(f'数据库    : {db["ENGINE"]} / {db["NAME"]}')
         self.stdout.write(f'当前 SECRET_KEY : {settings.SECRET_KEY[:16]}...')
+        self.stdout.write(f'当前 SECRET_KEY 指纹: {salt_fp(settings.SECRET_KEY)}')
         legacy = getattr(settings, 'LEGACY_SECRET_KEY', None)
         if legacy:
             self.stdout.write(f'LEGACY_SECRET_KEY: {legacy[:16]}...')
+            self.stdout.write(f'LEGACY_SECRET_KEY 指纹: {salt_fp(legacy)}')
 
         if not username:
             users = list(models.User.objects.values_list('username', flat=True)[:50])

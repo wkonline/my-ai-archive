@@ -38,8 +38,15 @@ port_alive() {
 # 密码哈希是 md5(盐 + 明文)：老系统取 SECRET_KEY，新 API 取 LEGACY_SECRET_KEY，
 # 两者必须相同且等于生产容器 cono_web 的 DJANGO_SECRET_KEY，否则连生产库时
 # 算出的哈希与库里存的完全对不上，登录一律提示“用户名或密码错误”。
-export DJANGO_SECRET_KEY="${DJANGO_SECRET_KEY:-nas-cono-deploy-key-2026}"
-export LEGACY_SECRET_KEY="${LEGACY_SECRET_KEY:-nas-cono-deploy-key-2026}"
+SALT_DEFAULT='nas-cono-deploy-key-2026'
+# shell 里残留的 DJANGO_SECRET_KEY 会覆盖默认值，这是登录失败最常见的坑
+if [ -n "${DJANGO_SECRET_KEY:-}" ] && [ "$DJANGO_SECRET_KEY" != "$SALT_DEFAULT" ]; then
+    echo "!! 环境里已有 DJANGO_SECRET_KEY，将覆盖默认盐，老系统登录可能失败"
+    echo "   当前值: ${DJANGO_SECRET_KEY:0:12}...  期望: $SALT_DEFAULT"
+    echo "   如非本意请先执行: unset DJANGO_SECRET_KEY"
+fi
+export DJANGO_SECRET_KEY="${DJANGO_SECRET_KEY:-$SALT_DEFAULT}"
+export LEGACY_SECRET_KEY="${LEGACY_SECRET_KEY:-$SALT_DEFAULT}"
 
 if [ "${USE_SQLITE:-}" = "1" ]; then
     export CONO_LOCAL_DB_PATH="${CONO_LOCAL_DB_PATH:-$ROOT/local_cono.sqlite3}"

@@ -10,32 +10,40 @@ from cono.tools.bootstrap import BootStrapForm
 from cono.tools.form import RegisterUserModelForm
 from cono.tools.encrypt import md5
 from cono.tools.auth_profile import default_role_key
+import hashlib
 import logging
 
 logger = logging.getLogger(__name__)
 
 
+def salt_fingerprint(salt):
+    """盐的指纹：用于跨进程比较盐是否一致，又不暴露盐本身。"""
+    return hashlib.md5(salt.encode('utf-8')).hexdigest()[:8]
+
+
 def _log_login_failure(username, hashed_password):
     """登录失败时把关键信息写进日志，避免只能看到“用户名或密码错误”。
 
-    只记录哈希与格式，不记录明文。仅在 DEBUG 下输出。
+    只记录哈希、格式与盐指纹，不记录明文。仅在 DEBUG 下输出。
     """
     if not settings.DEBUG:
         return
+    fp = salt_fingerprint(settings.SECRET_KEY)
     user = models.User.objects.filter(username=username).first()
     if not user:
-        logger.warning('[login] 用户不存在: %r', username)
+        logger.warning('[login] 用户不存在: %r | 盐指纹: %s', username, fp)
         return
     stored = user.password or ''
     looks_hashed = len(stored) == 32 and all(c in '0123456789abcdef' for c in stored)
     # 非 md5 时库里可能就是明文密码，不能原样写进日志
     shown = stored if looks_hashed else f'{stored[:3]}…（长度 {len(stored)}）'
     logger.warning(
-        '[login] 用户 %r 密码不匹配 | 库中格式: %s | 库中值: %s | 本次算得: %s',
+        '[login] 用户 %r 密码不匹配 | 库中格式: %s | 库中值: %s | 本次算得: %s | 盐指纹: %s',
         username,
         'md5' if looks_hashed else '非 md5（可能是明文或其它格式）',
         shown,
         hashed_password,
+        fp,
     )
 
 class LoginForm(BootStrapForm):
