@@ -41,6 +41,9 @@
             <el-menu-item index="/">
               <el-icon><HomeFilled /></el-icon><span>首页</span>
             </el-menu-item>
+            <el-menu-item v-for="p in PINNED_ITEMS" :key="p.path" :index="p.path">
+              <el-icon><component :is="p.icon" /></el-icon><span>{{ p.title }}</span>
+            </el-menu-item>
             <template v-for="m in visibleMenus" :key="m.path">
               <el-menu-item :index="m.path">
                 <el-icon><component :is="m.icon" /></el-icon><span>{{ m.title }}</span>
@@ -66,10 +69,9 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import { legacyAppUrl } from '../../utils/legacyApp'
 import {
-  HomeFilled, Document, Tools, Money, List, Calendar, Van, User, Files, Goods,
-  Box, RefreshLeft, Postcard, Upload, OfficeBuilding, UserFilled, TrendCharts,
-  FolderOpened, Clock, Lock, Key, ArrowDown, Switch, Setting, InfoFilled, Menu,
+  HomeFilled, ArrowDown, Switch, Menu,
 } from '@element-plus/icons-vue'
+import { SIDEBAR_ITEMS, MENU_PERM as menuPerm, PINNED_ITEMS } from '../../config/menu'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -79,61 +81,7 @@ const mobileMenuOpen = ref(false)
 const toggleMobileMenu = () => { mobileMenuOpen.value = !mobileMenuOpen.value }
 const closeMobileMenu = () => { mobileMenuOpen.value = false }
 
-// 菜单入口所需权限码（与老版 MENU_PERMISSIONS 一致）
-const menuPerm = {
-  '/contract': ['contract_list'],
-  '/service': ['service_list'],
-  '/collection': ['collection_list'],
-  '/invoice': ['invoice_list'],
-  '/plan': ['plan_list'],
-  '/delivery': ['delivery_list'],
-  '/customer': ['customer_list'],
-  '/product-category': ['productcategory_list'],
-  '/product': ['product_list'],
-  '/servicedetail': ['servicedetail_list'],
-  '/return-product': ['return_product_list'],
-  '/flow/archive': ['flow_archive_list', 'flow_out_list', 'flow_return_list'],
-  '/task': ['task_list'],
-  '/product-label': ['productlabel_list'],
-  '/contract-file': ['contract_file_list'],
-  '/warehouse': ['warehouse_list'],
-  '/department': ['department_list'],
-  '/user': ['user_list'],
-  '/accounts': ['chart_list', 'chart_bar', 'chart_bar2', 'chart_pie', 'chart_line', 'highcharts'],
-  '/backup': ['backup_database', 'restore_database'],
-  '/log': ['get_log'],
-  '/company': ['company_show'],
-  '/account-vault': ['account_vault_list'],
-  '/auth/role': ['auth_role_list', 'auth_user_permission'],
-}
 
-// 侧边栏菜单定义（标题与路由权限一一对应）
-const SIDEBAR_ITEMS = [
-  { path: '/contract', title: '合同管理', icon: Document },
-  { path: '/invoice', title: '发票登记', icon: List },
-  { path: '/collection', title: '回款登记', icon: Money },
-  { path: '/accounts', title: '应收应付', icon: TrendCharts },
-  { path: '/plan', title: '生产计划', icon: Calendar },
-  { path: '/contract-file', title: '资料上传', icon: Upload },
-  { path: '/task', title: '派任务单', icon: Calendar },
-  { path: '/product-label', title: '产品铭牌', icon: Postcard },
-  { path: '/delivery', title: '发货信息', icon: Van },
-  { path: '/service', title: '售后服务', icon: Tools },
-  { path: '/servicedetail', title: '维修服务', icon: Setting },
-  { path: '/return-product', title: '售后返件', icon: RefreshLeft },
-  { path: '/flow/archive', title: '售后流转', icon: Switch },
-  { path: '/product-category', title: '产品分类', icon: Files },
-  { path: '/product', title: '产品管理', icon: Goods, divider: true },
-  { path: '/department', title: '部门管理', icon: OfficeBuilding },
-  { path: '/warehouse', title: '仓库管理', icon: Box },
-  { path: '/customer', title: '客户管理', icon: User },
-  { path: '/company', title: '公司信息', icon: InfoFilled },
-  { path: '/log', title: '操作日志', icon: Clock },
-  { path: '/backup', title: '数据备份', icon: FolderOpened },
-  { path: '/account-vault', title: '账号密码', icon: Key },
-  { path: '/user', title: '用户管理', icon: User },
-  { path: '/auth/role', title: '权限管理', icon: Setting },
-]
 
 const allowedTitles = computed(() => {
   const s = new Set()

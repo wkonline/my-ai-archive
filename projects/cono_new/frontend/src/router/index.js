@@ -82,6 +82,7 @@ const routes = [
       { path: 'backup', name: 'Backup', component: () => import('../views/system/BackupView.vue'), meta: { title: '数据备份' } },
       { path: 'log', name: 'Log', component: () => import('../views/system/LogList.vue'), meta: { title: '操作日志' } },
       { path: 'company', name: 'Company', component: () => import('../views/system/CompanyView.vue'), meta: { title: '公司信息' } },
+      { path: 'sitemap', name: 'SiteMap', component: () => import('../views/system/SiteMap.vue'), meta: { title: '网站地图' } },
       { path: 'account-vault', name: 'AccountVault', component: () => import('../views/system/VaultList.vue'), meta: { title: '账号密码' } },
       { path: 'account-vault/new', name: 'AccountVaultNew', component: () => import('../views/system/VaultForm.vue'), meta: { title: '新增账号密码' } },
       { path: 'account-vault/edit/:id', name: 'AccountVaultEdit', component: () => import('../views/system/VaultForm.vue'), meta: { title: '编辑账号密码' } },
