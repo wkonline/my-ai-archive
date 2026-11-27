@@ -57,18 +57,6 @@
           <BaseChart :option="pieChartOption" height="300px" />
         </div>
       </div>
-      <div class="panel" v-if="charts.assembly_labels?.length">
-        <div class="panel-heading">
-          <el-icon><Box /></el-icon>
-          <span>企业年度电源装配数量</span>
-          <span class="panel-hint">
-            2013–{{ charts.assembly_labels.at(-1) }}（{{ charts.assembly_plan_from_year }} 年起取自生产计划）
-          </span>
-        </div>
-        <div class="panel-body">
-          <BaseChart :option="assemblyChartOption" height="300px" />
-        </div>
-      </div>
     </div>
 
     <!-- 常用功能 -->
@@ -254,7 +242,7 @@ import BaseChart from '../components/BaseChart.vue'
 import { pickColors } from '../components/chartColors'
 import {
   Monitor, Document, Money, Calendar, Briefcase, TrendCharts, List, User,
-  PieChart, Grid, PhoneFilled, Tools, RefreshLeft, Setting, Van, Box,
+  PieChart, Grid, PhoneFilled, Tools, RefreshLeft, Setting, Van,
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -344,6 +332,7 @@ const yearChartOption = computed(() => {
   }
 })
 
+// 电源装配图表当前未在首页展示（三图并排过挤），配置与接口数据保留，恢复时在模板加回 panel 即可。
 // 柱色沿用首页业绩柱的取色方式：pickColors 随机打乱色环后逐柱分配。
 const assemblyChartOption = computed(() => {
   const labels = charts.value.assembly_labels || []
@@ -511,8 +500,6 @@ onMounted(load)
   display: flex; align-items: center; gap: 8px; padding: 15px 20px;
   border-bottom: 1px solid var(--border-soft); color: var(--text-main);
   font-size: 14px; font-weight: 620;
-  /* 三图并排时标题栏变窄，长标题+提示需换行而不是撑破面板 */
-  flex-wrap: wrap;
 }
 .panel-heading .el-icon { color: var(--navy-500); }
 .panel-hint { margin-left: auto; color: var(--text-dim); font-size: 11px; font-weight: 400; }
