@@ -14,19 +14,19 @@
 
     <!-- 图表 -->
     <el-row :gutter="12" class="chart-row">
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="8">
         <el-card shadow="hover" class="chart-card">
           <template #header><span class="chart-title"><el-icon><TrendCharts /></el-icon> 本年度每月维修板子数量</span></template>
           <BaseChart :option="monthOption" height="220px" />
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="8">
         <el-card shadow="hover" class="chart-card">
           <template #header><span class="chart-title"><el-icon><Histogram /></el-icon> 近三年板子维修数量对比</span></template>
           <BaseChart :option="threeYearOption" height="220px" />
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="8">
         <el-card shadow="hover" class="chart-card">
           <template #header><span class="chart-title"><el-icon><PieChart /></el-icon> 本月维修人员数量占比</span></template>
           <BaseChart :option="pieOption" height="220px" />

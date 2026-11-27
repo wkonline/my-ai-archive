@@ -86,19 +86,19 @@
 
     <!-- 图表 -->
     <el-row :gutter="12" class="chart-row">
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="8">
         <el-card shadow="hover" class="chart-card">
           <template #header><span class="chart-title"><el-icon><TrendCharts /></el-icon> 本年度每月开票额</span></template>
           <BaseChart :option="monthChartOption" height="220px" />
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="8">
         <el-card shadow="hover" class="chart-card">
           <template #header><span class="chart-title"><el-icon><User /></el-icon> 本年度开票金额前五</span></template>
           <BaseChart :option="topCustomerChartOption" height="220px" />
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="8">
         <el-card shadow="hover" class="chart-card">
           <template #header><span class="chart-title"><el-icon><PieChart /></el-icon> 本月开票金额前五占比</span></template>
           <BaseChart :option="monthPieChartOption" height="220px" />

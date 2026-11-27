@@ -43,25 +43,25 @@
 
     <!-- 汇总卡片 -->
     <el-row :gutter="12" class="summary-row">
-      <el-col :span="6">
+      <el-col :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="summary-card">
           <div class="summary-title" style="color:#0078e0"><el-icon><Money /></el-icon> 已回款</div>
           <div class="summary-value" style="color:#31708f">¥{{ Number(contract.total_collection || 0).toLocaleString() }}</div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="summary-card">
           <div class="summary-title" style="color:#e6a23c"><el-icon><List /></el-icon> 已开票</div>
           <div class="summary-value" style="color:#8a6d3b">¥{{ Number(contract.total_invoice || 0).toLocaleString() }}</div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="summary-card">
           <div class="summary-title" style="color:#f56c6c"><el-icon><CircleClose /></el-icon> 未回款</div>
           <div class="summary-value" style="color:#a94442">¥{{ Number(contract.outstanding_balance || 0).toLocaleString() }}</div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="summary-card">
           <div class="summary-title" style="color:#909399"><el-icon><TrendCharts /></el-icon> 回款比例</div>
           <div class="summary-value" style="color:#333">{{ paymentRatio }}%</div>

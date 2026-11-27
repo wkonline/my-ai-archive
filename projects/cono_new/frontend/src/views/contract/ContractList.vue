@@ -2,25 +2,25 @@
   <div>
     <!-- 统计卡片 -->
     <el-row :gutter="12" class="stats-row">
-      <el-col :span="6">
+      <el-col :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card stat-count">
           <div class="stat-value">{{ stats.count }}</div>
           <div class="stat-label">合同总数</div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card stat-amount">
           <div class="stat-value">¥{{ (stats.total_amount / 10000).toFixed(1) }}万</div>
           <div class="stat-label">合同总额</div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card stat-pending">
           <div class="stat-value">{{ stats.pending_count || 0 }}</div>
           <div class="stat-label">未完结</div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="12" :sm="12" :md="6">
         <el-card shadow="hover" class="stat-card stat-done">
           <div class="stat-value">{{ stats.done_count || 0 }}</div>
           <div class="stat-label">已完结</div>
@@ -30,7 +30,7 @@
 
     <!-- 图表展示 -->
     <el-row :gutter="12" class="chart-row">
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="8">
         <el-card shadow="hover" class="chart-card">
           <template #header>
             <span class="chart-title"><el-icon><TrendCharts /></el-icon> {{ chartYear }}年度分月合同业绩</span>
@@ -38,7 +38,7 @@
           <BaseChart :option="monthlyChartOption" height="240px" />
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="8">
         <el-card shadow="hover" class="chart-card">
           <template #header>
             <span class="chart-title"><el-icon><User /></el-icon> {{ chartYear }}年度合同额前五</span>
@@ -46,7 +46,7 @@
           <BaseChart :option="topCustomerChartOption" height="240px" />
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :xs="24" :sm="24" :md="8">
         <el-card shadow="hover" class="chart-card">
           <template #header>
             <span class="chart-title"><el-icon><PieChart /></el-icon> {{ chartYear }}年度业务员销售业绩占比</span>

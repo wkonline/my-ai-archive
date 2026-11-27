@@ -12,7 +12,7 @@
 
     <!-- 图表 -->
     <el-row :gutter="12" class="chart-row">
-      <el-col :span="12">
+      <el-col :xs="24" :sm="12" :md="12">
         <el-card shadow="hover" class="chart-card">
           <template #header>
             <span class="chart-title"><el-icon><TrendCharts /></el-icon> 本年度月回款额</span>
@@ -20,7 +20,7 @@
           <BaseChart :option="monthChartOption" height="240px" />
         </el-card>
       </el-col>
-      <el-col :span="12">
+      <el-col :xs="24" :sm="12" :md="12">
         <el-card shadow="hover" class="chart-card">
           <template #header>
             <span class="chart-title"><el-icon><PieChart /></el-icon> 本季度业务员回款占比</span>
