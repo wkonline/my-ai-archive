@@ -88,6 +88,10 @@ def _truthy(value):
     return str(value).strip().lower() in ('1', 'true', 'yes', 'on')
 
 
+def _is_plan_completed(status):
+    """completed_status 为 3（已完成）时，冗余的 completed 布尔值才为 True。"""
+    return status == 3
+
 
 class PlanViewSet(BaseModelViewSet):
     queryset = models.Plan.objects.select_related(
@@ -100,6 +104,18 @@ class PlanViewSet(BaseModelViewSet):
         'pending_contracts': ['plan_list', 'task_list', 'task_add'],
         'pending_products': ['plan_list', 'task_list', 'task_add'],
     }
+
+    def perform_create(self, serializer):
+        # completed 是 completed_status 的冗余布尔值，老代码多处直接读它。
+        # 计划表单只提交 completed_status，不同步的话「已完成」的计划会带着
+        # completed=False 入库，统计口径就分叉了。
+        serializer.save(completed=_is_plan_completed(
+            serializer.validated_data.get('completed_status', 1)))
+
+    def perform_update(self, serializer):
+        serializer.save(completed=_is_plan_completed(
+            serializer.validated_data.get(
+                'completed_status', serializer.instance.completed_status)))
 
     def get_queryset(self):
         qs = super().get_queryset()

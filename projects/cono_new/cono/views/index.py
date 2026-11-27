@@ -116,13 +116,15 @@ def home(request):
         ).order_by('-date', '-id')[:6]
 
     if can_plan:
-        pending_plans = models.Plan.objects.filter(is_delete=False, completed=False).count()
-        upcoming_plans = models.Plan.objects.filter(
+        # 与新版 api/core/views/home.py 同一口径：以 completed_status 为准，
+        # 并排除合同已软删的计划。completed 布尔值不跟手，不能用来计数。
+        pending_plan_qs = models.Plan.objects.filter(
             is_delete=False,
-            completed=False,
-            delivery_date__gte=today,
-            delivery_date__lt=today + timedelta(days=60),
-        ).select_related(
+            completed_status__in=(1, 2),
+            contract__is_delete=False,
+        )
+        pending_plans = pending_plan_qs.count()
+        upcoming_plans = pending_plan_qs.select_related(
             'contract',
             'productcategory',
             'product',

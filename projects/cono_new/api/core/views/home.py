@@ -90,9 +90,16 @@ class HomeView(APIView):
             is_delete=False,
             date__gte=month_start, date__lt=next_month,
         ) if can_delivery else models.ProductDelivery.objects.none()
-        pending_plans = models.Plan.objects.filter(
-            is_delete=False, completed=False,
-        ).count() if can_plan else 0
+        # 待完工以 completed_status 为准：它是界面显示的状态，也是发货/派单流程
+        # 唯一维护的字段。completed 布尔值只在发货流程里一并写入，计划表单改状态
+        # 时不跟手，拿它计数会把「已完成」的计划算成待完工。
+        pending_plan_qs = models.Plan.objects.filter(
+            is_delete=False,
+            completed_status__in=(1, 2),
+            contract__is_delete=False,
+        ) if can_plan else models.Plan.objects.none()
+        pending_plans = pending_plan_qs.count()
+        overdue_plans = pending_plan_qs.filter(delivery_date__lt=today).count()
         customer_count = models.Customer.objects.filter(
             is_delete=False,
         ).count() if can_customer else 0
@@ -109,12 +116,12 @@ class HomeView(APIView):
         ).select_related(
             'customer', 'contract',
         ).order_by('-date', '-id')[:6] if can_invoice else []
-        upcoming_plans = models.Plan.objects.filter(
-            is_delete=False, completed=False,
-            delivery_date__gte=today,
-            delivery_date__lt=today + datetime.timedelta(days=60),
-        ).select_related('contract', 'productcategory', 'product').order_by(
-            'delivery_date', 'id')[:6] if can_plan else []
+        # 未完工计划按交货日期排序，逾期的排前面：它们最需要关注，
+        # 原先只取「今天起 60 天内」，逾期计划整批消失，卡片说有待完工、
+        # 表格却空着，看着像数据丢了。
+        upcoming_plans = pending_plan_qs.select_related(
+            'contract', 'productcategory', 'product',
+        ).order_by('delivery_date', 'id')[:6] if can_plan else []
         recent_services = models.Service.objects.filter(
             is_delete=False,
         ).select_related('customer', 'productcategory', 'product').order_by('-date', '-id')[:6] if can_service else []
@@ -214,6 +221,7 @@ class HomeView(APIView):
                 'month_delivery_count': month_deliveries.count(),
                 'month_delivery_qty': month_deliveries.aggregate(total=Sum('quantity'))['total'] or 0,
                 'pending_plans': pending_plans,
+                'overdue_plans': overdue_plans,
                 'customer_count': customer_count,
             },
             'recent_contracts': [{
@@ -231,6 +239,8 @@ class HomeView(APIView):
                 'productcategory_name': p.productcategory.name if p.productcategory else '',
                 'product_model': p.product.model if p.product else '',
                 'delivery_date': _fmt(p.delivery_date),
+                # 逾期未完工：交货日期已过，前端据此标红提示
+                'is_overdue': bool(p.delivery_date and p.delivery_date < today),
                 'completed_status': p.completed_status,
                 'completed_status_display': p.get_completed_status_display(),
             } for p in upcoming_plans],

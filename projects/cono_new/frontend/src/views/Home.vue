@@ -30,7 +30,7 @@
             <span>{{ item.label }}</span>
           </div>
           <div class="metric-value">{{ item.formatted }}</div>
-          <div class="metric-note">{{ item.note }}</div>
+          <div class="metric-note" :class="item.noteClass">{{ item.note }}</div>
         </div>
       </div>
     </div>
@@ -78,7 +78,7 @@
           <thead><tr><th class="col-index">#</th><th class="col-contract">合同号</th><th class="col-customer">客户</th><th>业务员</th><th class="col-date">日期</th><th class="col-amount">金额</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentContracts" :key="row.id">
-              <td class="col-index">{{ i + 1 }}</td>
+              <td class="col-index"><span class="rank">{{ i + 1 }}</span></td>
               <td><router-link :to="`/contract/${row.id}`">{{ row.contract_number }}</router-link></td>
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td>{{ row.saler_name }}</td>
@@ -96,7 +96,7 @@
           <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-contract">合同</th><th class="col-date">日期</th><th class="col-amount">金额</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentCollections" :key="row.id">
-              <td class="col-index">{{ i + 1 }}</td>
+              <td class="col-index"><span class="rank">{{ i + 1 }}</span></td>
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td><router-link :to="`/contract/${row.contract_id}`">{{ row.contract_number }}</router-link></td>
               <td>{{ row.date }}</td>
@@ -113,7 +113,7 @@
           <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-contract">合同</th><th class="col-date">日期</th><th class="col-amount">金额</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentInvoices" :key="row.id">
-              <td class="col-index">{{ i + 1 }}</td>
+              <td class="col-index"><span class="rank">{{ i + 1 }}</span></td>
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td><router-link :to="`/contract/${row.contract_id}`">{{ row.contract_number }}</router-link></td>
               <td>{{ row.date }}</td>
@@ -129,12 +129,12 @@
         <table class="table">
           <thead><tr><th class="col-index">#</th><th class="col-contract">合同</th><th class="col-code">产品</th><th class="col-code">型号</th><th class="col-date">交货日期</th><th class="col-status">状态</th></tr></thead>
           <tbody>
-            <tr v-for="(row, i) in upcomingPlans" :key="row.id">
-              <td class="col-index">{{ i + 1 }}</td>
+            <tr v-for="(row, i) in upcomingPlans" :key="row.id" :class="{ 'is-overdue': row.is_overdue }">
+              <td class="col-index"><span class="rank">{{ i + 1 }}</span></td>
               <td><router-link :to="`/contract/${row.contract_id}`">{{ row.contract_number }}</router-link></td>
               <td>{{ row.productcategory_name }}</td>
               <td :title="row.product_model">{{ row.product_model }}</td>
-              <td>{{ row.delivery_date }}</td>
+              <td :class="{ 'overdue-date': row.is_overdue }">{{ row.delivery_date }}</td>
               <td><span class="status-pill" :class="statusClass(row.completed_status)">{{ row.completed_status_display }}</span></td>
             </tr>
             <tr v-if="!upcomingPlans.length"><td colspan="6" class="empty">暂无生产计划</td></tr>
@@ -148,7 +148,7 @@
           <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-code">维修编号</th><th class="col-code">型号</th><th class="col-date">接收日期</th><th class="col-status">状态</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentServices" :key="row.id">
-              <td class="col-index">{{ i + 1 }}</td>
+              <td class="col-index"><span class="rank">{{ i + 1 }}</span></td>
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td><router-link :to="`/service`">{{ row.service_number }}</router-link></td>
               <td :title="row.product_model">{{ row.product_model }}</td>
@@ -166,7 +166,7 @@
           <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-code">维修编号</th><th class="col-code">型号</th><th>维修人</th><th class="col-date">完成时间</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentServiceDetails" :key="row.id">
-              <td class="col-index">{{ i + 1 }}</td>
+              <td class="col-index"><span class="rank">{{ i + 1 }}</span></td>
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td><router-link :to="`/servicedetail`">{{ row.service_number }}</router-link></td>
               <td :title="row.product_model">{{ row.product_model }}</td>
@@ -184,7 +184,7 @@
           <thead><tr><th class="col-index">#</th><th class="col-customer">客户</th><th class="col-code">维修编号</th><th>发货人</th><th class="col-date">发货时间</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentReturnProducts" :key="row.id">
-              <td class="col-index">{{ i + 1 }}</td>
+              <td class="col-index"><span class="rank">{{ i + 1 }}</span></td>
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td><router-link :to="`/return-product`">{{ row.service_number }}</router-link></td>
               <td>{{ row.user_name }}</td>
@@ -200,7 +200,7 @@
           <thead><tr><th class="col-index">#</th><th class="col-code">流转编号</th><th class="col-customer">客户</th><th class="col-code">产品序列号</th><th class="col-date">寄出日期</th><th class="col-status">状态</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentFlowOuts" :key="row.id">
-              <td class="col-index">{{ i + 1 }}</td>
+              <td class="col-index"><span class="rank">{{ i + 1 }}</span></td>
               <td><router-link to="/flow/out">{{ row.flow_number }}</router-link></td>
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td :title="row.archive_serial">{{ row.archive_serial }}</td>
@@ -218,7 +218,7 @@
           <thead><tr><th class="col-index">#</th><th class="col-code">流转编号</th><th class="col-customer">客户</th><th class="col-code">产品序列号</th><th class="col-date">返回日期</th><th class="col-status">返回后状态</th></tr></thead>
           <tbody>
             <tr v-for="(row, i) in recentFlowReturns" :key="row.id">
-              <td class="col-index">{{ i + 1 }}</td>
+              <td class="col-index"><span class="rank">{{ i + 1 }}</span></td>
               <td><router-link to="/flow/return">{{ row.flow_number }}</router-link></td>
               <td :title="row.customer_name">{{ row.customer_name }}</td>
               <td :title="row.archive_serial">{{ row.archive_serial }}</td>
@@ -294,7 +294,17 @@ const metricCards = computed(() => {
   if (canSee('contract')) cards.push({ label: '本年度合同', formatted: '¥' + fmt(metrics.value.year_contract_amount), note: metrics.value.year_contract_count + ' 份', icon: Document })
   if (canSee('collection')) cards.push({ label: '本季度回款', formatted: '¥' + fmt(metrics.value.quarter_collection_amount), note: metrics.value.quarter_collection_count + ' 笔记录', icon: TrendCharts })
   if (canSee('invoice')) cards.push({ label: '本月发票', formatted: '¥' + fmt(metrics.value.month_invoice_amount), note: metrics.value.month_invoice_count + ' 张登记', icon: List })
-  if (canSee('plan')) cards.push({ label: '待完工计划', formatted: metrics.value.pending_plans + ' 条', note: '', icon: Calendar })
+  if (canSee('plan')) {
+    // 逾期数单独提示：待完工里最该被看见的是已经拖过交货日的那批
+    const overdue = metrics.value.overdue_plans || 0
+    cards.push({
+      label: '待完工计划',
+      formatted: (metrics.value.pending_plans || 0) + ' 条',
+      note: overdue ? `${overdue} 条已逾期` : '全部在交期内',
+      noteClass: overdue ? 'note-danger' : '',
+      icon: Calendar,
+    })
+  }
   if (canSee('delivery')) cards.push({ label: '本月发货', formatted: metrics.value.month_delivery_qty + ' 件', note: metrics.value.month_delivery_count + ' 笔发货', icon: Money })
   return cards.map((c, i) => ({ ...c, color: i }))
 })
@@ -486,6 +496,7 @@ onMounted(load)
 .color-5 .metric-label .el-icon { color: var(--navy-500); }
 .metric-value { margin-top: 10px; font-size: 26px; font-weight: 700; color: var(--text-main); line-height: 1.1; letter-spacing: -0.5px; }
 .metric-note { margin-top: 5px; color: var(--text-dim); font-size: 11px; }
+.metric-note.note-danger { color: #c62828; font-weight: 600; }
 
 /* ── 图表行 ── */
 .charts-row { display: flex; gap: 18px; margin-bottom: 22px; }
@@ -497,13 +508,24 @@ onMounted(load)
 }
 .panel:hover { box-shadow: var(--shadow-md); border-color: var(--border-bright); }
 .panel-heading {
-  display: flex; align-items: center; gap: 8px; padding: 15px 20px;
+  display: flex; align-items: center; gap: 8px; padding: 11px 18px;
   border-bottom: 1px solid var(--border-soft); color: var(--text-main);
-  font-size: 14px; font-weight: 620;
+  font-size: 13.5px; font-weight: 620;
 }
-.panel-heading .el-icon { color: var(--navy-500); }
+.panel-heading .el-icon { color: var(--navy-500); font-size: 15px; }
 .panel-hint { margin-left: auto; color: var(--text-dim); font-size: 11px; font-weight: 400; }
 .panel-body { padding: 12px; }
+
+/* 列表行首的模块色点：比整列图标轻，又能在长表格里快速定位模块 */
+.home-table .panel-heading .el-icon {
+  padding: 4px; border-radius: 6px; background: var(--navy-50);
+  box-sizing: content-box;
+}
+.home-table .panel-heading .see-all {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 2px;
+  font-size: 11.5px;
+}
+.home-table .panel-heading .see-all::after { content: '›'; font-size: 14px; line-height: 1; }
 
 /* ── 常用功能 ── */
 .section-title { display: flex; align-items: center; justify-content: space-between; margin: 22px 0 12px; }
@@ -536,15 +558,18 @@ onMounted(load)
 .home-lists { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; margin-bottom: 18px; }
 .home-table { border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-sm); }
 .home-table .table { table-layout: fixed; width: 100%; border-collapse: collapse; margin-bottom: 0; }
+/* 项目没有全局 box-sizing 重置，单元格默认 content-box：
+   这里显式用 border-box，height 才是「整行」高度，不再被 padding 撑大。 */
 .home-table .table thead th {
-  background: var(--bg-subtle); padding: 11px 12px; font-size: 12.5px; font-weight: 620;
+  background: var(--bg-subtle); padding: 0 12px; height: 30px; box-sizing: border-box;
+  font-size: 11.5px; font-weight: 620;
   color: var(--text-sub); text-align: left; border-bottom: 1px solid var(--border-soft);
-  letter-spacing: .2px;
+  letter-spacing: .2px; vertical-align: middle;
 }
 .home-table .table tbody td {
-  height: 42px; padding: 6px 12px; vertical-align: middle;
+  height: 30px; padding: 0 12px; box-sizing: border-box; vertical-align: middle;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  border-bottom: 1px solid var(--border-soft); color: var(--text-main); font-size: 13px;
+  border-bottom: 1px solid var(--border-soft); color: var(--text-main); font-size: 12.5px;
   transition: background var(--dur) var(--ease);
 }
 .home-table .table tbody tr:last-child td { border-bottom: none; }
@@ -555,18 +580,40 @@ onMounted(load)
 .col-date { width: 86px; }
 .col-amount { width: 114px; }
 .col-status { width: 100px; }
-.col-index { width: 40px !important; text-align: center; color: var(--text-dim); font-variant-numeric: tabular-nums; font-size: 12px; }
+.col-index {
+  width: 34px !important; text-align: center; padding-left: 0 !important;
+  color: var(--text-dim); font-variant-numeric: tabular-nums; font-size: 11.5px;
+}
+/* 序号做成浅色小徽标，比纯数字更易扫读，又不喧宾夺主 */
+.col-index span.rank {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 5px;
+  background: var(--bg-subtle); color: var(--text-dim);
+  font-size: 11px; font-weight: 600; line-height: 1;
+}
+.home-table tbody tr:hover .col-index span.rank { background: #fff; color: var(--navy-600); }
 .text-right { text-align: right; }
 .amount-cell { font-variant-numeric: tabular-nums; color: var(--navy-600); font-weight: 600; }
 .empty { padding: 24px 0; text-align: center; color: var(--text-dim); white-space: normal; font-size: 13px; }
 .home-table a { color: var(--navy-500); text-decoration: none; }
 .home-table a:hover { text-decoration: underline; }
 
-.status-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
-.status-pill { background: var(--navy-50); color: var(--navy-600); }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 1px 9px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  background: var(--navy-50); color: var(--navy-600);
+}
+/* 状态点：颜色跟着状态语义走，比纯文字色块更容易在扫视时区分 */
+.status-pill::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor; opacity: .75; flex: none;
+}
 .status-pill.warning { background: #fff7ed; color: #b45309; }
 .status-pill.danger { background: #fef2f2; color: #b91c1c; }
 .status-pill.success { background: #eef3f8; color: var(--navy-700); }
+/* 逾期：交货日期已过还没完工，用红色左缘提示，不整行染色 */
+.home-table tbody tr.is-overdue td:first-child { box-shadow: inset 2px 0 0 #e57373; }
+.home-table tbody td.overdue-date { color: #c62828; font-weight: 600; }
 
 @media (max-width: 1200px) { .metric-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
 @media (max-width: 991px) {
