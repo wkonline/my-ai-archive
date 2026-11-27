@@ -20,7 +20,7 @@
         >全部已读</el-button>
       </div>
 
-      <el-scrollbar max-height="52vh" v-loading="loading">
+      <div class="ann-scroll" v-loading="loading">
         <el-empty v-if="!loading && items.length === 0" description="暂无公告" :image-size="80" />
         <ul class="ann-list">
           <li
@@ -48,7 +48,7 @@
             </div>
           </li>
         </ul>
-      </el-scrollbar>
+      </div>
     </el-dialog>
 
     <el-dialog v-model="detailVisible" :title="detail?.title || '公告详情'" width="560px" append-to-body>
@@ -63,6 +63,9 @@
         </div>
         <div class="ann-detail-content">{{ detail.content }}</div>
       </div>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -172,6 +175,15 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 .ann-summary { font-size: 13px; color: var(--el-text-color-secondary); }
 .ann-unread-count { color: var(--el-color-danger); }
 
+/* 列表区与详情正文共用：固定高度 + 滚动条常驻可见
+   （局域网里很多人不习惯隐藏式滚动条，看不到条就以为内容没了） */
+.ann-scroll {
+  max-height: 52vh;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
 .ann-list { list-style: none; margin: 0; padding: 0; }
 .ann-item {
   display: flex;
@@ -238,10 +250,32 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 }
 .ann-detail-content {
   padding-top: 14px;
+  max-height: 56vh;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  padding-right: 8px;
   font-size: 14px;
   line-height: 1.85;
   color: var(--el-text-color-primary);
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* 两个滚动容器统一滚动条外观 */
+.ann-scroll::-webkit-scrollbar,
+.ann-detail-content::-webkit-scrollbar { width: 8px; }
+.ann-scroll::-webkit-scrollbar-track,
+.ann-detail-content::-webkit-scrollbar-track {
+  background: var(--el-fill-color-lighter);
+  border-radius: 4px;
+}
+.ann-scroll::-webkit-scrollbar-thumb,
+.ann-detail-content::-webkit-scrollbar-thumb {
+  background: var(--el-border-color-darker);
+  border-radius: 4px;
+}
+.ann-scroll::-webkit-scrollbar-thumb:hover,
+.ann-detail-content::-webkit-scrollbar-thumb:hover { background: var(--el-text-color-placeholder); }
+.ann-scroll,
+.ann-detail-content { scrollbar-width: thin; scrollbar-color: var(--el-border-color-darker) var(--el-fill-color-lighter); }
 </style>
