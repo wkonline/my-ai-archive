@@ -38,16 +38,26 @@
     <el-container>
       <el-aside width="224px" class="aside" :class="{ 'aside-mobile-open': mobileMenuOpen }">
         <div class="aside-scroll">
+          <div class="menu-search">
+            <el-input
+              v-model="menuKeyword"
+              placeholder="搜索栏目"
+              size="small"
+              clearable
+              :prefix-icon="Search"
+            />
+          </div>
           <el-menu :default-active="$route.path" router class="menu" collapse-width="224" @select="closeMobileMenu">
-            <el-menu-item index="/">
+            <el-menu-item index="/" v-if="showHome">
               <el-icon><HomeFilled /></el-icon><span>首页</span>
             </el-menu-item>
             <template v-for="m in visibleMenus" :key="m.path">
               <el-menu-item :index="m.path">
                 <el-icon><component :is="m.icon" /></el-icon><span>{{ m.title }}</span>
               </el-menu-item>
-              <el-divider v-if="m.divider" class="menu-divider" />
+              <el-divider v-if="m.divider && !menuKeyword.trim()" class="menu-divider" />
             </template>
+            <div v-if="!visibleMenus.length && !showHome" class="menu-empty">没有匹配的栏目</div>
           </el-menu>
         </div>
       </el-aside>
@@ -67,7 +77,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import { legacyAppUrl } from '../../utils/legacyApp'
 import {
-  HomeFilled, ArrowDown, Switch, Menu,
+  HomeFilled, ArrowDown, Switch, Menu, Search,
 } from '@element-plus/icons-vue'
 import AnnouncementBell from '../../components/AnnouncementBell.vue'
 import { SIDEBAR_ITEMS, MENU_PERM as menuPerm } from '../../config/menu'
@@ -91,8 +101,21 @@ const allowedTitles = computed(() => {
   return s
 })
 
-const visibleMenus = computed(() => {
-  return SIDEBAR_ITEMS.filter(m => menuAllowed(m))
+const menuKeyword = ref('')
+const menuMatches = (m) => {
+  const kw = menuKeyword.value.trim().toLowerCase()
+  if (!kw) return true
+  return m.title.toLowerCase().includes(kw)
+}
+
+// 权限过滤与关键词过滤分两层：搜索只缩小展示范围，不能影响权限判断结果
+const permittedMenus = computed(() => SIDEBAR_ITEMS.filter(m => menuAllowed(m)))
+const visibleMenus = computed(() => permittedMenus.value.filter(m => menuMatches(m)))
+
+// 「首页」不是 SIDEBAR_ITEMS 成员，搜索时按同一规则决定是否显示
+const showHome = computed(() => {
+  const kw = menuKeyword.value.trim().toLowerCase()
+  return !kw || '首页'.includes(kw)
 })
 
 const menuAllowed = (m) => {
@@ -283,6 +306,10 @@ const handleCommand = (cmd) => {
 .aside::-webkit-scrollbar-thumb { background: rgba(0,120,224,0.25); border-radius: 2px; }
 
 .aside-scroll { padding: 8px 0; }
+
+/* 栏目搜索：固定在菜单上方，输入即过滤，无需回车 */
+.menu-search { padding: 0 10px 8px; }
+.menu-empty { padding: 18px 12px; text-align: center; color: var(--text-dim); font-size: 12.5px; }
 
 .menu { border-right: none; background: transparent !important; }
 .menu .el-menu-item {

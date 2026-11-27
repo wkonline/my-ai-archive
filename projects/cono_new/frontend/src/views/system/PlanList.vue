@@ -220,7 +220,8 @@ const handleDelete = async (row) => {
 
 const spanMethod = ({ row, column }) => {
   if (row._rowType === 'config') {
-    if (column.label === '产品名称') return [1, 7]
+    // 配置信息行从「产品名称」一直占到最后一列（操作列），整行铺满
+    if (column.label === '产品名称') return [1, 9]
     return [0, 0]
   }
   if (column.label === '序号') return [2, 1]
@@ -252,6 +253,7 @@ onMounted(() => {
 .group-number { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; color: #1a2533; }
 .pagination-row { margin-top: 12px; display: flex; justify-content: flex-end; }
 .group-card :deep(.config-row td) { background: #f9f9f9 !important; }
-.group-card :deep(.config-row td .cell) { line-height: 1.6; }
+/* 配置信息铺满整行后不再受列宽挤压，应换行完整展示；EP 默认 nowrap + ellipsis 会截断长文本 */
+.group-card :deep(.config-row td .cell) { line-height: 1.6; white-space: normal; word-break: break-word; }
 .group-card :deep(.config-row strong) { color: #1a2533; }
 </style>
