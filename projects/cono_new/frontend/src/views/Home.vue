@@ -57,11 +57,7 @@
           <BaseChart :option="pieChartOption" height="300px" />
         </div>
       </div>
-    </div>
-
-    <!-- 电源装配数量（年度） -->
-    <div class="charts-row" v-if="canSee('chart') && charts.assembly_labels?.length">
-      <div class="panel">
+      <div class="panel" v-if="charts.assembly_labels?.length">
         <div class="panel-heading">
           <el-icon><Box /></el-icon>
           <span>企业年度电源装配数量</span>
@@ -381,6 +377,7 @@ const assemblyChartOption = computed(() => {
     series: [{
       name: '电源装配数量', type: 'bar', data: values, barMaxWidth: 44,
       label: { show: true, position: 'top', color: '#4a5a6a', fontSize: 11 },
+      labelLayout: { hideOverlap: true },
       itemStyle: {
         borderRadius: [6, 6, 0, 0],
         color: (params) => {
@@ -514,6 +511,8 @@ onMounted(load)
   display: flex; align-items: center; gap: 8px; padding: 15px 20px;
   border-bottom: 1px solid var(--border-soft); color: var(--text-main);
   font-size: 14px; font-weight: 620;
+  /* 三图并排时标题栏变窄，长标题+提示需换行而不是撑破面板 */
+  flex-wrap: wrap;
 }
 .panel-heading .el-icon { color: var(--navy-500); }
 .panel-hint { margin-left: auto; color: var(--text-dim); font-size: 11px; font-weight: 400; }
