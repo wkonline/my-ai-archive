@@ -36,6 +36,9 @@
                 </el-tag>
                 <span class="ann-title">{{ item.title }}</span>
                 <el-tag v-if="item.is_top" size="small" type="danger" effect="plain" class="ann-top">置顶</el-tag>
+                <span v-if="item.attachments?.length" class="ann-clip" :title="`${item.attachments.length} 个附件`">
+                  <el-icon><Paperclip /></el-icon>{{ item.attachments.length }}
+                </span>
               </div>
               <div class="ann-meta">
                 <span>{{ item.publisher_name }}</span>
@@ -51,17 +54,24 @@
       </div>
     </el-dialog>
 
-    <el-dialog v-model="detailVisible" :title="detail?.title || '公告详情'" width="min(760px, 92vw)" append-to-body>
-      <div v-if="detail" class="ann-detail">
-        <div class="ann-detail-meta">
-          <el-tag size="small" :type="detail.kind === 2 ? 'warning' : 'primary'" effect="plain">
-            {{ detail.kind_display }}
-          </el-tag>
-          <span>{{ detail.publisher_name }}</span>
-          <span class="ann-sep">·</span>
-          <span>{{ formatTime(detail.publish_time) }}</span>
+    <el-dialog v-model="detailVisible" width="min(780px, 92vw)" append-to-body class="ann-detail-dialog">
+      <template #header>
+        <div v-if="detail" class="ann-detail-head">
+          <h3 class="ann-detail-title">{{ detail.title }}</h3>
+          <div class="ann-detail-meta">
+            <el-tag size="small" :type="detail.kind === 2 ? 'warning' : 'primary'" effect="plain">
+              {{ detail.kind_display }}
+            </el-tag>
+            <el-tag v-if="detail.is_top" size="small" type="danger" effect="plain">置顶</el-tag>
+            <span class="ann-detail-by">{{ detail.publisher_name }}</span>
+            <span class="ann-sep">·</span>
+            <span>{{ formatTime(detail.publish_time) }}</span>
+          </div>
         </div>
-        <div class="ann-detail-content">{{ detail.content }}</div>
+      </template>
+      <div v-if="detail" class="ann-detail-body">
+        <AnnouncementContent :content="detail.content" />
+        <AnnouncementAttachmentList :items="detail.attachments || []" />
       </div>
       <template #footer>
         <el-button @click="detailVisible = false">关闭</el-button>
@@ -72,8 +82,10 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
-import { Bell } from '@element-plus/icons-vue'
+import { Bell, Paperclip } from '@element-plus/icons-vue'
 import request from '../api/request'
+import AnnouncementContent from './AnnouncementContent.vue'
+import AnnouncementAttachmentList from './AnnouncementAttachmentList.vue'
 
 const unread = ref(0)
 const items = ref([])
@@ -239,43 +251,60 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 .status-unread { color: var(--el-color-danger); background: #fef0f0; }
 .status-read { color: var(--el-text-color-secondary); background: var(--el-fill-color); }
 
+.ann-detail-head { padding-right: 24px; }
+.ann-detail-title {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--el-text-color-primary);
+  word-break: break-word;
+}
 .ann-detail-meta {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
   font-size: 12px;
   color: var(--el-text-color-secondary);
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
 }
-.ann-detail-content {
-  padding-top: 14px;
-  max-height: 56vh;
+.ann-detail-by { color: var(--el-text-color-regular); }
+.ann-detail-body {
+  max-height: 62vh;
   overflow-y: scroll;
   overflow-x: hidden;
   padding-right: 8px;
-  font-size: 14px;
-  line-height: 1.85;
-  color: var(--el-text-color-primary);
-  white-space: pre-wrap;
-  word-break: break-word;
+}
+
+/* 附件角标：列表里一眼看出这条公告带文件 */
+.ann-clip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 9px;
+  font-size: 11px;
+  line-height: 17px;
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
 }
 
 /* 两个滚动容器统一滚动条外观 */
 .ann-scroll::-webkit-scrollbar,
-.ann-detail-content::-webkit-scrollbar { width: 8px; }
+.ann-detail-body::-webkit-scrollbar { width: 8px; }
 .ann-scroll::-webkit-scrollbar-track,
-.ann-detail-content::-webkit-scrollbar-track {
+.ann-detail-body::-webkit-scrollbar-track {
   background: var(--el-fill-color-lighter);
   border-radius: 4px;
 }
 .ann-scroll::-webkit-scrollbar-thumb,
-.ann-detail-content::-webkit-scrollbar-thumb {
+.ann-detail-body::-webkit-scrollbar-thumb {
   background: var(--el-border-color-darker);
   border-radius: 4px;
 }
 .ann-scroll::-webkit-scrollbar-thumb:hover,
-.ann-detail-content::-webkit-scrollbar-thumb:hover { background: var(--el-text-color-placeholder); }
+.ann-detail-body::-webkit-scrollbar-thumb:hover { background: var(--el-text-color-placeholder); }
 .ann-scroll,
-.ann-detail-content { scrollbar-width: thin; scrollbar-color: var(--el-border-color-darker) var(--el-fill-color-lighter); }
+.ann-detail-body { scrollbar-width: thin; scrollbar-color: var(--el-border-color-darker) var(--el-fill-color-lighter); }
 </style>

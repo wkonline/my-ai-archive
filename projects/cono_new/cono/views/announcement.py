@@ -3,17 +3,22 @@
 公告数据与新版共用同一张表，因此新版发布的通知在老版同样能看到。
 读取对全部登录用户开放（公告本就是给全员看的），标记已读只影响当前用户。
 """
+import re
+from urllib.parse import quote
+
 from django.contrib import messages
-from django.http import JsonResponse
+from django.db.models import Q
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import redirect, render
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from cono import models
 from cono.tools.form import AnnouncementForm
 
 
 def _published():
-    return models.Announcement.objects.filter(is_active=True, is_delete=False)
+    return models.Announcement.objects.filter(
+        is_active=True, is_delete=False).prefetch_related('attachments')
 
 
 def _read_ids(user_id):
@@ -40,6 +45,15 @@ def _serialize(item, read_ids):
         # 与新版前端 formatTime 保持一致的本地时间字符串
         'publish_time': item.publish_time.strftime('%Y-%m-%d %H:%M'),
         'is_read': item.id in read_ids,
+        'attachments': [
+            {
+                'id': att.id,
+                'name': att.name or att.file.name.rsplit('/', 1)[-1],
+                'size': att.size,
+                'url': '/announcement/{}'.format(att.download_path),
+            }
+            for att in item.attachments.all()
+        ],
     }
 
 
@@ -95,6 +109,25 @@ def announcement_manage_list(request):
     })
 
 
+def _bind_attachments(announcement, extra_tokens=()):
+    """把草稿附件绑定到本条公告。
+
+    与新版 AnnouncementViewSet._bind_attachments 同一规则：正文里的 token 一定
+    绑上；另外接收表单提交的隐藏字段，兜底「上传了但没插链接」的情况。老版插入
+    的是 /announcement/... 链接，新版插的是 /api/announcement/...，正则都能匹配。
+    """
+    tokens = set(re.findall(
+        r'/attachment/([0-9a-fA-F-]{36})/download/', announcement.content or ''))
+    tokens.update(t for t in extra_tokens if t)
+    if not tokens:
+        return
+    models.AnnouncementAttachment.objects.filter(
+        token__in=tokens,
+    ).filter(
+        Q(announcement__isnull=True) | Q(announcement=announcement),
+    ).update(announcement=announcement)
+
+
 def _announcement_form(request, instance=None):
     title = '修改公告' if instance else '发布公告'
     if request.method == 'GET':
@@ -108,6 +141,7 @@ def _announcement_form(request, instance=None):
         if instance is None:
             obj.publisher_id = request.info_dict_useid
         obj.save()
+        _bind_attachments(obj, request.POST.getlist('attachment_tokens'))
         messages.success(request, '公告已保存')
         return redirect('/announcement/list/')
     return render(request, 'announcement/announcement_form.html',
@@ -123,6 +157,69 @@ def announcement_edit(request, nid):
     if instance is None:
         return redirect('/announcement/list/')
     return _announcement_form(request, instance)
+
+
+@require_POST
+def announcement_attachment_upload(request):
+    """老版公告附件上传。返回 JSON，供表单页的 JS 插入链接。"""
+    f = request.FILES.get('file')
+    if not f:
+        return JsonResponse({'detail': '请选择文件'}, status=400)
+    if f.size > 50 * 1024 * 1024:
+        return JsonResponse({'detail': '附件不能超过 50MB'}, status=400)
+
+    att = models.AnnouncementAttachment.objects.create(
+        file=f, name=f.name.rsplit('/', 1)[-1][:255], size=f.size)
+    return JsonResponse({
+        'id': att.id,
+        'token': str(att.token),
+        'name': att.name,
+        'size': att.size,
+        'download_url': '/announcement/{}'.format(att.download_path),
+    }, status=201)
+
+
+@require_http_methods(['POST', 'DELETE'])
+def announcement_attachment_delete(request, token):
+    """删除尚未绑定公告的草稿附件。"""
+    att = models.AnnouncementAttachment.objects.filter(token=token).first()
+    if att is None:
+        raise Http404('附件不存在')
+    if att.announcement_id:
+        return JsonResponse({'detail': '该附件已随公告发布，不能单独删除'}, status=400)
+    att.file.delete(save=False)
+    att.delete()
+    return JsonResponse({'ok': True})
+
+
+@require_GET
+def announcement_attachment_download(request, token):
+    """老版的附件下载入口。
+
+    新版正文里插的是 /api/announcement/attachment/<token>/download/，但老版
+    8000 没有 /api 路由，直接点会 404。这里按 token 提供同样能力，老版页面
+    渲染附件时会指向本视图。
+    """
+    att = models.AnnouncementAttachment.objects.filter(token=token).first()
+    if att is None or not att.file:
+        raise Http404('附件不存在')
+    # 与新版一致：已绑定到公告的，公告下架后链接失效；草稿附件仍可下载
+    # （token 不可猜，上传后到保存公告之间需要能预览）。
+    if att.announcement_id and not (
+            att.announcement.is_active and not att.announcement.is_delete):
+        raise Http404('附件不存在')
+    try:
+        fh = att.file.open('rb')
+    except (FileNotFoundError, OSError):
+        raise Http404('附件文件已丢失')
+
+    models.AnnouncementAttachment.objects.filter(pk=att.pk).update(
+        download_count=models.F('download_count') + 1)
+
+    name = att.name or att.file.name.rsplit('/', 1)[-1]
+    resp = FileResponse(fh, as_attachment=True, filename=name)
+    resp['Content-Disposition'] = "attachment; filename*=UTF-8''{}".format(quote(name))
+    return resp
 
 
 @require_POST

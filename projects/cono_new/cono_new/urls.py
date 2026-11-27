@@ -237,6 +237,12 @@ urlpatterns += [
     path('announcement/add/', announcement.announcement_add, name='announcement_add'),
     path('announcement/<int:nid>/edit/', announcement.announcement_edit, name='announcement_edit'),
     path('announcement/delete/', announcement.announcement_delete, name='announcement_delete'),
+    path('announcement/attachment/upload/', announcement.announcement_attachment_upload,
+         name='announcement_attachment_upload'),
+    path('announcement/attachment/<uuid:token>/download/',
+         announcement.announcement_attachment_download, name='announcement_attachment_download'),
+    path('announcement/attachment/<uuid:token>/delete/', announcement.announcement_attachment_delete,
+         name='announcement_attachment_delete'),
 ]
 
 

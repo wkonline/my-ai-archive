@@ -7,7 +7,7 @@
             {{ title }}
         </div>
         <div class="panel-body">
-            <form method="post" novalidate>
+            <form method="post" novalidate id="ann-form" data-attach-base="/announcement/attachment/">
                 {% csrf_token %}
                 {% for field in form %}
                     <div class="form-group">
@@ -16,9 +16,167 @@
                         <span style="color: red;">{{ field.errors.0 }}</span>
                     </div>
                 {% endfor %}
+
+                <div class="form-group">
+                    <label>附件</label>
+                    <div class="ann-upload-area">
+                        <input type="file" id="ann-file" multiple style="display:none;">
+                        <button type="button" class="btn btn-default btn-sm" id="ann-upload-btn">
+                            <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span> 上传附件
+                        </button>
+                        <span class="ann-upload-tip">单个文件不超过 50MB，上传后自动把下载链接插入到内容末尾</span>
+                    </div>
+                    <ul class="ann-draft-list" id="ann-draft-list"></ul>
+                    <div id="ann-token-box" hidden></div>
+                    {% if instance and instance.attachments.all %}
+                        <div class="ann-existing">
+                            <div class="ann-existing-head">已发布的附件</div>
+                            <ul>
+                                {% for att in instance.attachments.all %}
+                                    <li>
+                                        <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+                                        <a href="/announcement/attachment/{{ att.token }}/download/">{{ att.name }}</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+
                 <button type="submit" class="btn btn-primary">保 存</button>
                 <a href="/announcement/list/" class="btn btn-default">返 回</a>
             </form>
         </div>
     </div>
+{% endblock %}
+
+{% block js %}
+<script>
+    /* 老版公告附件上传：上传后把下载链接追加到内容文本域末尾。
+       链接统一用老版自己的下载路径，避免在新版/老版之间点开 404。 */
+    (function () {
+        var UPLOAD_URL = '{% url "announcement_attachment_upload" %}';
+        var ATTACH_BASE = '/announcement/attachment/';
+
+        var $file = $('#ann-file');
+        var $btn = $('#ann-upload-btn');
+        var $list = $('#ann-draft-list');
+        var $tokens = $('#ann-token-box');
+        var $content = $('#id_content');
+        if (!$btn.length || !$content.length) return;
+
+        function csrfToken() {
+            var m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+            return m ? decodeURIComponent(m[1]) : '';
+        }
+
+        function formatSize(bytes) {
+            var n = Number(bytes) || 0;
+            if (n <= 0) return '';
+            if (n < 1024) return n + ' B';
+            if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+            return (n / 1024 / 1024).toFixed(1) + ' MB';
+        }
+
+        function appendLink(name, url) {
+            var current = $content.val() || '';
+            if (current.indexOf(url) >= 0) return;
+            var line = name + '：' + url;
+            $content.val(current && current.slice(-1) !== '\n' ? current + '\n' + line : current + line);
+        }
+
+        function addRow(att) {
+            var $li = $('<li class="ann-draft-item"></li>');
+            $li.append('<span class="glyphicon glyphicon-file" aria-hidden="true"></span>');
+            $li.append($('<span class="ann-draft-name"></span>').text(att.name));
+            $li.append($('<span class="ann-draft-size"></span>').text(formatSize(att.size)));
+            // 隐藏字段兜底：即使正文里的链接被用户删掉，附件也不会丢
+            $tokens.append($('<input type="hidden" name="attachment_tokens">').val(att.token));
+            var $del = $('<a href="javascript:;" class="ann-draft-del">移除</a>');
+            $del.on('click', function () {
+                $.ajax({
+                    url: ATTACH_BASE + att.token + '/delete/',
+                    type: 'DELETE',
+                    headers: { 'X-CSRFToken': csrfToken() }
+                });
+                var lines = ($content.val() || '').split('\n').filter(function (l) {
+                    return l.indexOf(att.download_url) < 0;
+                });
+                $content.val(lines.join('\n'));
+                $tokens.find('input').filter(function () {
+                    return this.value === att.token;
+                }).remove();
+                $li.remove();
+            });
+            $li.append($del);
+            $list.append($li);
+        }
+
+        $btn.on('click', function () { $file.trigger('click'); });
+
+        $file.on('change', function () {
+            var files = Array.prototype.slice.call(this.files || []);
+            this.value = '';
+            files.forEach(function (f) {
+                if (f.size > 50 * 1024 * 1024) {
+                    alert(f.name + ' 超过 50MB，无法上传');
+                    return;
+                }
+                var fd = new FormData();
+                fd.append('file', f);
+                $btn.prop('disabled', true).text('上传中...');
+                $.ajax({
+                    url: UPLOAD_URL,
+                    type: 'POST',
+                    data: fd,
+                    processData: false,
+                    contentType: false,
+                    headers: { 'X-CSRFToken': csrfToken() }
+                }).done(function (att) {
+                    addRow(att);
+                    appendLink(att.name, att.download_url);
+                }).fail(function (xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.detail) || '上传失败';
+                    alert(msg);
+                }).always(function () {
+                    $btn.prop('disabled', false).html(
+                        '<span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span> 上传附件');
+                });
+            });
+        });
+    })();
+</script>
+{% endblock %}
+
+{% block css %}
+<style>
+    .ann-upload-area { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .ann-upload-tip { font-size: 12px; color: #909399; }
+    .ann-draft-list { list-style: none; margin: 10px 0 0; padding: 0; }
+    .ann-draft-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 4px;
+        background: #f5f7fa;
+        font-size: 13px;
+    }
+    .ann-draft-item + .ann-draft-item { margin-top: 6px; }
+    .ann-draft-item .glyphicon-file { color: #0a8387; }
+    .ann-draft-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ann-draft-size { font-size: 12px; color: #909399; }
+    .ann-draft-del { color: #f56c6c; }
+    .ann-existing { margin-top: 12px; border: 1px solid #ebeef5; border-radius: 4px; }
+    .ann-existing-head {
+        padding: 6px 10px;
+        font-size: 12px;
+        color: #606266;
+        background: #f5f7fa;
+        border-bottom: 1px solid #ebeef5;
+    }
+    .ann-existing ul { list-style: none; margin: 0; padding: 6px 10px; }
+    .ann-existing li { font-size: 13px; padding: 3px 0; }
+    .ann-existing .glyphicon-file { color: #0a8387; margin-right: 4px; }
+</style>
 {% endblock %}

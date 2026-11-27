@@ -619,11 +619,27 @@ class AccountVaultSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class AnnouncementAttachmentSerializer(serializers.ModelSerializer):
+    """公告附件。下载走 token，地址不随公告 id 变化。"""
+    download_url = serializers.SerializerMethodField()
+    ext = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = models.AnnouncementAttachment
+        fields = ('id', 'token', 'name', 'size', 'ext', 'download_url', 'download_count')
+        read_only_fields = fields
+
+    def get_download_url(self, obj):
+        # 新版前端挂在 /api 下，正文里插的也是这个完整路径，下载和正文保持一致
+        return '/api/announcement/{}'.format(obj.download_path)
+
+
 class AnnouncementSerializer(serializers.ModelSerializer):
     """公告/通知。is_read 由 ViewSet 通过 SerializerContext 注入当前用户视角。"""
     kind_display = serializers.CharField(source='get_kind_display', read_only=True)
     publisher_name = serializers.CharField(source='publisher.username', read_only=True)
     is_read = serializers.SerializerMethodField()
+    attachments = AnnouncementAttachmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.Announcement

@@ -4,6 +4,7 @@ from django.db.models import Sum, F, ExpressionWrapper, FloatField
 import datetime
 import os
 import re
+import uuid
 
 # 无合同临时计划使用的备用合同编号
 TEMP_CONTRACT_NUMBER = 'No_Order_Stocking'
@@ -911,6 +912,59 @@ class Announcement(ModelBase):
 
     def __str__(self):
         return self.title
+
+
+def announcement_attachment_path(instance, filename):
+    """公告附件按 announcement/<年>/<月>/<随机前缀>_<原文件名> 存放。
+
+    加随机前缀是因为公告标题可重复、也可能重名上传，直接按原名存会互相覆盖。
+    """
+    ext = os.path.splitext(filename)[1]
+    base = os.path.splitext(os.path.basename(filename))[0]
+    base = re.sub(r'[\\/:*?"<>|\s]+', '_', base).strip('_') or 'attachment'
+    today = datetime.date.today()
+    return 'announcement/{}/{}/{}_{}{}'.format(
+        today.year, today.month, uuid.uuid4().hex[:8], base[:60], ext)
+
+
+class AnnouncementAttachment(ModelBase):
+    """ 公告附件
+
+    token 是下载地址的唯一标识：公告还没保存（id 尚不存在）时就要能把附件传
+    上去并插入正文链接，所以下载地址不能依赖 announcement_id。附件先以
+    announcement=None 落库，公告保存时再回填。
+
+    announcement 为空且超过一天未绑定，视为用户放弃的草稿附件，由清理命令删除。
+    """
+    token = models.UUIDField(verbose_name="下载标识", default=uuid.uuid4,
+                             unique=True, editable=False)
+    announcement = models.ForeignKey(verbose_name="公告", to="Announcement",
+                                     on_delete=models.CASCADE, related_name="attachments",
+                                     null=True, blank=True)
+    file = models.FileField(upload_to=announcement_attachment_path, verbose_name="附件")
+    name = models.CharField(verbose_name="显示名称", max_length=255, blank=True, default='')
+    size = models.BigIntegerField(verbose_name="字节数", default=0)
+    download_count = models.IntegerField(verbose_name="下载次数", default=0)
+
+    class Meta:
+        db_table = 'announcement_attachment'
+        ordering = ['id']
+
+    def __str__(self):
+        return self.name or os.path.basename(self.file.name)
+
+    @property
+    def ext(self):
+        return os.path.splitext(self.name or self.file.name)[1].lower().lstrip('.')
+
+    @property
+    def download_path(self):
+        """下载路径（不含前缀）。
+
+        新版挂在 /api/announcement/ 下，老版挂在 /announcement/ 下，两端各自
+        拼前缀，避免老版点开新版地址时 404。
+        """
+        return 'attachment/{}/download/'.format(self.token)
 
 
 class AnnouncementRead(models.Model):

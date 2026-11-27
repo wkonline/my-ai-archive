@@ -127,3 +127,23 @@ api/.venv/bin/python manage.py diagnose_login <用户名> <密码> --settings=lo
   `SessionStore()` 写 `session['info']={'id','username','role'}` 后 `create()`，把 key 作为 `sessionid` cookie。
 - 老系统部署走 `./deploy/sync.sh old`（tar 上传 + `docker restart cono_web`，不重建镜像）；
   新系统部署走 `./deploy/sync.sh new`。
+
+## 公告附件
+
+- 附件表 `announcement_attachment`，下载地址用 `token`（uuid4）而非公告 id——公告未保存时
+  就要能上传并插入链接。`AnnouncementAttachment.download_path` 只给 `attachment/<token>/download/`，
+  前缀由两端各自拼：新版 `/api/announcement/...`（8001），老版 `/announcement/...`（8000）。
+- **绑定规则**：保存公告时按两个来源回填 `announcement`——正文里的 `/attachment/<token>/download/`
+  链接，以及前端/表单显式提交的 `attachment_tokens`。只绑定 `announcement IS NULL` 或本条公告
+  自己的附件，防止把别人公告的附件抢过来。前端必须传 `attachment_tokens`，否则用户「上传了但没
+  插链接」时文件会变成孤儿草稿。
+- **下载免登录**：正文里是普通 `<a>`，浏览器不会带 Authorization/session。新版 `download_attachment`
+  用 `permission_classes=[]`；老版在 `AuthMiddleware._is_attachment_download` 里放行。token 不可猜，
+  等价于能力链接。公告下架/软删后两端都返回 404。
+- 老版正文若引用了新版 `/api/announcement/...` 地址，`layout.html` 的 `linkify` 会改写成
+  `/announcement/...`，否则 8000 上点开 404。
+- 草稿附件（`announcement IS NULL`）超过 24 小时由 `manage.py cleanup_announcement_attachments`
+  清理，支持 `--dry-run`、`--hours`。
+- 新版前端：`AnnouncementContent.vue`（正文链接识别）与 `AnnouncementAttachmentList.vue`（附件区，
+  按扩展名配色）挂在 `AnnouncementBell.vue` 详情弹窗里；`AnnouncementList.vue` 管理页负责上传、
+  插入链接、草稿/已发布附件列表。

@@ -1,3 +1,5 @@
+import re
+
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
@@ -30,11 +32,20 @@ def _permission_candidates(url_name):
     return codes
 
 
-class AuthMiddleware(MiddlewareMixin):
+def _is_attachment_download(path):
+    """公告附件下载路径：/announcement/attachment/<uuid>/download/"""
+    return bool(re.match(
+        r'^/announcement/attachment/[0-9a-fA-F-]{36}/download/?$', path or ''))
 
+
+class AuthMiddleware(MiddlewareMixin):
     def process_request(self, request):
         # 1.不用登录就可以访问处理
         if request.path_info in ["/login/", "/image/code/","/register/", "/dify/search/"]:
+            return
+        # 公告附件下载：正文里是普通 <a>，点开不带 session，要求登录就下不动。
+        # token 是 uuid4，猜不到，等同于带能力的一次性链接。
+        if _is_attachment_download(request.path_info):
             return
         # 2.获取session
         info_dict = request.session.get("info")
@@ -65,6 +76,8 @@ class AuthMiddleware(MiddlewareMixin):
         return
 
     def process_view(self, request, view_func, args, kwargs):
+        if _is_attachment_download(request.path_info):
+            return
         if request.path_info in [
             '/login/', '/logout/', '/image/code/', '/',
             '/ajax/search-companys/', '/ajax/check-contract-number/',
