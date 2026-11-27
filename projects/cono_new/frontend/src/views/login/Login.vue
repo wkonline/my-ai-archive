@@ -133,8 +133,17 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
+/* 项目没有全局 * 盒模型重置，自定义容器默认是 content-box：
+   padding 会额外叠加到 width/height 上。窄屏下 .login-card 的
+   width:100% + padding 68px 会直接超出视口并被 overflow:hidden 裁掉。
+   这里统一改成 border-box（Element Plus 组件本身已是 border-box，不受影响）。 */
+.login-page,
+.login-page *,
+.login-page *::before,
+.login-page *::after { box-sizing: border-box; }
+
 .login-page {
-  height: 100vh; position: relative; overflow: hidden;
+  height: 100vh; height: 100dvh; position: relative; overflow: hidden;
   background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 40%, var(--navy-700) 100%);
 }
 .deco-grid {
@@ -271,12 +280,45 @@ const handleLogin = async () => {
 @media (max-width: 900px) {
   /* 窄屏不再整体隐藏品牌区：书法标语是品牌核心内容，需保留；
      只收起系统名与英文副标题，避免挤占登录卡片的垂直空间 */
-  .login-wrap { flex-direction: column; padding: 24px 20px; gap: 20px; justify-content: center; }
+  .login-wrap {
+    height: auto; min-height: 100vh; min-height: 100dvh;
+    flex-direction: column; padding: 24px 16px; gap: 20px;
+    /* 不能用 justify-content:center —— 内容超出视口时 flex 居中会把
+       溢出部分推到负方向（滚不到），键盘弹出/横屏下登录按钮会够不着。
+       改用子项 margin:auto 居中：空间够时居中，不够时正常从顶部排布 */
+    justify-content: flex-start;
+  }
+  .login-brand, .login-card { margin-left: auto; margin-right: auto; flex-shrink: 0; }
+  .login-brand { margin-top: auto; }
+  .login-card { margin-bottom: auto; }
+  /* 小屏（320x568 这类）标语 + 卡片会超过一屏，页面必须能滚，
+     否则底部的「登录」按钮和页脚会被 overflow:hidden 裁掉 */
+  .login-page { overflow-y: auto; }
+  /* 装饰圆超出容器边界（bottom:-80px），会撑大 scrollHeight 造成
+     多余的空白滚动。它是纯装饰，裁掉溢出部分即可 */
+  .deco-circle-2 { display: none; }
   .login-brand { display: block; max-width: 100%; text-align: center; }
   .brand-logo { display: none; }
   .brand-title, .brand-sub, .brand-copy { display: none; }
   .brand-slogan { margin-bottom: 0; }
   .brand-slogan img { width: 260px; margin: 0 auto; }
-  .login-card { width: 100%; max-width: 460px; }
+  /* 移动端同时取消卡片内部滚动：max-height:90vh + overflow-y:auto 会让
+     卡片被压缩并在内部滚动，与页面滚动形成双层滚动条，键盘弹出时
+     登录按钮会被困在卡片里。改为让整个页面滚动 */
+  .login-card {
+    width: 100%; max-width: 460px; padding: 32px 24px;
+    max-height: none; overflow-y: visible;
+  }
+  /* iOS Safari 对 font-size < 16px 的输入框会在聚焦时自动放大整个页面，
+     登录后页面会停留在放大状态。移动端强制 16px 规避 */
+  .tech-input :deep(.el-input__inner) { font-size: 16px !important; }
+  .captcha-img { width: 96px; height: 44px; }
+}
+
+@media (max-width: 380px) {
+  .login-card { padding: 26px 18px; }
+  .brand-slogan img { width: 220px; }
+  .rm-btn { padding: 4px 10px; font-size: 11px; }
+  .captcha-img { width: 84px; }
 }
 </style>
