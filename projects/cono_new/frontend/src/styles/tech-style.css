@@ -337,6 +337,28 @@ html, body, #app {
     display: none !important;
   }
 
+  /* 手机端不展示版本切换入口：屏宽有限，顶栏只留公告与账号，
+     版本切换在电脑上操作即可。登录页页脚只有「返回老版系统」一个
+     链接，隐藏后容器会留下空行，连 .login-footer 一起收掉。
+     不用 :has() —— 旧版 Safari 不支持，且选择器列表里出现无效
+     选择器会让整条规则失效，连 .btn-back 也一起丢掉。 */
+  .btn-back { display: none !important; }
+  .login-footer { display: none !important; }
+
+  /* 手机端隐藏各栏目的统计汇总卡片（合同总数、合同总额、未完结、
+     已完结等）。这些数字在窄屏上占掉半屏高度，把真正要看的列表
+     推到首屏之外；电脑端仍完整展示。
+     .stats-row/.summary-row 是 el-row，隐藏后不占高度；
+     .stats-card 是整张卡片容器，需连标题一起隐藏；
+     .summary-col 是发货页夹在图表行里的汇总列，只能整列隐藏，
+     否则会留下空卡片。 */
+  .stats-row,
+  .summary-row,
+  .stats-card,
+  .summary-col {
+    display: none !important;
+  }
+
   /* 表格铺满卡片：去掉卡片内边距，让可用宽度最大化 */
   .el-card__body { padding: 10px !important; }
   .el-card__header { padding: 10px 12px !important; }

@@ -18,7 +18,7 @@
           <BaseChart :option="monthChartOption" height="260px" />
         </el-card>
       </el-col>
-      <el-col :xs="24" :sm="12" :md="8">
+      <el-col :xs="24" :sm="12" :md="8" class="summary-col">
         <el-card shadow="hover" class="chart-card">
           <template #header><span class="chart-title"><el-icon><Histogram /></el-icon> 本年发货汇总</span></template>
           <div class="total-box">
