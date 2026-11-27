@@ -567,7 +567,7 @@ onMounted(load)
   letter-spacing: .2px; vertical-align: middle;
 }
 .home-table .table tbody td {
-  height: 40px; padding: 0 12px; box-sizing: border-box; vertical-align: middle;
+  height: 45px; padding: 0 12px; box-sizing: border-box; vertical-align: middle;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   border-bottom: 1px solid var(--border-soft); color: var(--text-main); font-size: 12.5px;
   transition: background var(--dur) var(--ease);
@@ -580,8 +580,11 @@ onMounted(load)
 .col-date { width: 86px; }
 .col-amount { width: 114px; }
 .col-status { width: 100px; }
-.col-index {
-  width: 34px !important; text-align: center; padding-left: 0 !important;
+/* # 列居中：表头和单元格都要覆盖（th 的 text-align:left 优先级更高），
+   并清掉左右 padding，否则不对称的内边距会让徽标偏离列中心。 */
+.home-table .table thead th.col-index,
+.home-table .table tbody td.col-index {
+  width: 34px !important; padding: 0 !important; text-align: center;
   color: var(--text-dim); font-variant-numeric: tabular-nums; font-size: 11.5px;
 }
 /* 序号做成浅色小徽标，比纯数字更易扫读，又不喧宾夺主 */
