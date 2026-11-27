@@ -574,11 +574,12 @@ onMounted(load)
 }
 .home-table .table tbody tr:last-child td { border-bottom: none; }
 .home-table .table tbody tr:hover td { background: var(--navy-50); }
-.col-customer { width: 196px; }
-.col-contract { width: 128px; }
-.col-code { width: 144px; }
-.col-date { width: 86px; }
-.col-amount { width: 114px; }
+/* 列宽策略：只给窄列（日期/金额/状态）固定 px，
+   客户/合同/编号/型号等宽列不设宽度 —— table-layout:fixed 会把剩余空间
+   均分给它们。原先所有列都写死 px，总和 704px 超过双栏面板的 651px，
+   窗口一窄就整表溢出、末列被裁掉。 */
+.col-date { width: 104px; }
+.col-amount { width: 110px; }
 .col-status { width: 100px; }
 /* # 列居中：表头和单元格都要覆盖（th 的 text-align:left 优先级更高），
    并清掉左右 padding，否则不对称的内边距会让徽标偏离列中心。 */
@@ -619,6 +620,9 @@ onMounted(load)
 .home-table tbody td.overdue-date { color: #c62828; font-weight: 600; }
 
 @media (max-width: 1200px) { .metric-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+/* 列表改单栏的断点比两栏布局的 991px 提前到 1240px：
+   双栏下面板只剩 451px，6 列表格塞不下会截断内容。 */
+@media (max-width: 1240px) { .home-lists { grid-template-columns: 1fr; } }
 @media (max-width: 991px) {
   .metric-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .two-col { flex-direction: column; }
