@@ -10,15 +10,12 @@
     <div class="login-wrap">
       <div class="login-brand">
         <div class="brand-logo">
-          <img src="/logo.png" alt="Logo" />
+          <img src="/logo-white.png" alt="科诺" />
         </div>
         <h1 class="brand-title">洛阳科诺工业设备管理系统</h1>
         <p class="brand-sub">Intelligent Industrial Management Platform</p>
-        <div class="brand-stats">
-          <div class="stat" v-for="s in stats" :key="s.label">
-            <div class="stat-num">{{ s.num }}</div>
-            <div class="stat-label">{{ s.label }}</div>
-          </div>
+        <div class="brand-slogan">
+          <img src="/brand-slogan.png" alt="科诺，让世界感知中国温度" />
         </div>
         <p class="brand-copy">© 2026 洛阳科诺工业智能 · 业务管理平台</p>
       </div>
@@ -72,6 +69,7 @@ import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import { User, Lock } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { hasValidToken } from '../../utils/token'
 import { legacyAppUrl } from '../../utils/legacyApp'
 
@@ -105,17 +103,16 @@ onMounted(() => {
   fetchCaptcha()
 })
 
-const stats = [
-  { num: '19', label: '注册用户' },
-  { num: '237', label: '客户企业' },
-  { num: '1882', label: '合同总数' },
-  { num: '1330', label: '售后服务' },
-]
-
 // 登录
 const handleLogin = async () => {
-  if (!form.username || !form.password) return
-  if (showCaptcha.value && !captchaInput.value) return
+  if (!form.username || !form.password) {
+    ElMessage.warning('请输入用户名和密码')
+    return
+  }
+  if (showCaptcha.value && !captchaInput.value) {
+    ElMessage.warning('请输入验证码')
+    return
+  }
   loading.value = true
   try {
     const captchaKey = JSON.parse(localStorage.getItem('_captcha') || '{}')?.key || ''
@@ -127,8 +124,10 @@ const handleLogin = async () => {
     })
     router.push('/')
   } catch (e) {
-    if (e?.response?.status === 400) captchaInput.value = ''
-    else throw e
+    // 错误提示由 axios 拦截器统一弹出，这里不重复提示。
+    // 验证码一次性使用：无论因何失败都要换新图，否则用户会反复提交同一个失效验证码
+    captchaInput.value = ''
+    await fetchCaptcha()
   } finally { loading.value = false }
 }
 </script>
@@ -160,13 +159,19 @@ const handleLogin = async () => {
 
 .login-brand { color: #fff; max-width: 420px; }
 .brand-logo { margin-bottom: 24px; }
-.brand-logo img { height: 56px; }
+.brand-logo img {
+  height: 64px; width: auto;
+  filter: drop-shadow(0 0 24px rgba(120,190,255,0.55));
+}
 .brand-title { margin: 0 0 8px; font-size: 26px; font-weight: 700; letter-spacing: 1px; text-shadow: 0 0 20px rgba(0,120,224,0.5); }
-.brand-sub { margin: 0 0 40px; font-size: 11px; letter-spacing: 4px; color: rgba(255,255,255,0.7); text-transform: uppercase; }
-.brand-stats { display: flex; gap: 28px; margin-bottom: 48px; }
-.stat { text-align: left; }
-.stat-num { font-size: 32px; font-weight: 700; color: #fff; line-height: 1; text-shadow: 0 0 20px rgba(0,120,224,0.4); }
-.stat-label { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 6px; letter-spacing: 1px; }
+.brand-sub { margin: 0 0 36px; font-size: 11px; letter-spacing: 4px; color: rgba(255,255,255,0.7); text-transform: uppercase; }
+/* 书法标语：占用原统计数据块的位置。图是 2 行排版（892x242），
+   限宽 340px 时每字约 42px，既清楚又不挤压下方版权行 */
+.brand-slogan { margin-bottom: 44px; }
+.brand-slogan img {
+  display: block; width: 340px; max-width: 100%; height: auto;
+  filter: drop-shadow(0 0 18px rgba(0,120,224,0.45));
+}
 .brand-copy { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 2px; }
 
 .login-card {
@@ -263,8 +268,14 @@ const handleLogin = async () => {
 }
 
 @media (max-width: 900px) {
-  .login-brand { display: none; }
-  .login-wrap { padding: 0 20px; gap: 0; }
+  /* 窄屏不再整体隐藏品牌区：书法标语是品牌核心内容，需保留；
+     只收起系统名与英文副标题，避免挤占登录卡片的垂直空间 */
+  .login-wrap { flex-direction: column; padding: 24px 20px; gap: 20px; justify-content: center; }
+  .login-brand { display: block; max-width: 100%; text-align: center; }
+  .brand-logo { display: none; }
+  .brand-title, .brand-sub, .brand-copy { display: none; }
+  .brand-slogan { margin-bottom: 0; }
+  .brand-slogan img { width: 260px; margin: 0 auto; }
   .login-card { width: 100%; max-width: 460px; }
 }
 </style>
