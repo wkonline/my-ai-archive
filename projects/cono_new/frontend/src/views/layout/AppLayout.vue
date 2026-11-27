@@ -308,7 +308,10 @@ const handleCommand = (cmd) => {
 .aside-scroll { padding: 8px 0; }
 
 /* 栏目搜索：固定在菜单上方，输入即过滤，无需回车 */
-.menu-search { padding: 0 10px 8px; }
+.menu-search { padding: 0 10px 10px; }
+.menu-search :deep(.el-input__wrapper) { padding: 4px 11px; }
+.menu-search :deep(.el-input__inner) { height: 30px; line-height: 30px; font-size: 13px; }
+.menu-search :deep(.el-input__prefix) { font-size: 14px; }
 .menu-empty { padding: 18px 12px; text-align: center; color: var(--text-dim); font-size: 12.5px; }
 
 .menu { border-right: none; background: transparent !important; }
