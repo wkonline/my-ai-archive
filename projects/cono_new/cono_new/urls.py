@@ -7,6 +7,7 @@ from cono.views import contract,index,department,user,customer,collection,\
 from cono.views import auth_manage
 from cono.views import account_vault
 from cono.views import dify_integration
+from cono.views import announcement
 from django.conf import settings
 
 urlpatterns = [
@@ -225,6 +226,17 @@ urlpatterns += [
     path('auth/role/<int:pk>/edit/', auth_manage.role_edit, name='auth_role_edit'),
     path('auth/role/<int:pk>/delete/', auth_manage.role_delete, name='auth_role_delete'),
     path('auth/user/<int:nid>/permission/', auth_manage.user_permission, name='auth_user_permission'),
+
+    # 公告通知（与新版共用数据，供老版顶栏铃铛调用）
+    path('ajax/announcement/list/', announcement.announcement_list, name='announcement_list'),
+    path('ajax/announcement/<int:nid>/read/', announcement.announcement_read, name='announcement_read'),
+    path('ajax/announcement/read-all/', announcement.announcement_read_all, name='announcement_read_all'),
+
+    # 公告管理（老版页面）
+    path('announcement/list/', announcement.announcement_manage_list, name='announcement_manage_list'),
+    path('announcement/add/', announcement.announcement_add, name='announcement_add'),
+    path('announcement/<int:nid>/edit/', announcement.announcement_edit, name='announcement_edit'),
+    path('announcement/delete/', announcement.announcement_delete, name='announcement_delete'),
 ]
 
 

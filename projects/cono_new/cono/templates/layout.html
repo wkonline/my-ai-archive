@@ -130,11 +130,239 @@
             }
         }
 
+        /* ===== 公告铃铛（老版顶栏） ===== */
+        .ann-entry { position: relative; }
+        .ann-toggle { position: relative; }
+        .ann-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            min-width: 17px;
+            height: 17px;
+            padding: 0 4px;
+            border-radius: 9px;
+            background: #f56c6c;
+            color: #fff;
+            font-size: 11px;
+            line-height: 17px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 0 0 2px #fff;
+        }
+        /* 面板比默认 dropdown 宽，长内容靠内部滚动而不是撑开页面 */
+        .ann-panel {
+            width: 460px;
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .14);
+            overflow: hidden;
+        }
+        /* Bootstrap 给 .dropdown-menu > li > a 加了 20px 内边距和 nowrap，
+           会把面板里的 flex 布局撑坏，这里统一清掉 */
+        .ann-panel a {
+            padding: 0;
+            white-space: normal;
+            line-height: inherit;
+            color: inherit;
+        }
+        .ann-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-bottom: 1px solid #ebeef5;
+            font-size: 13px;
+            color: #606266;
+        }
+        .ann-panel-head .ann-mark-all { font-size: 13px; color: #0a8387; text-decoration: none; }
+        .ann-panel-head .ann-mark-all:hover { text-decoration: underline; }
+        .ann-panel-head .ann-mark-all.is-disabled {
+            color: #c0c4cc;
+            cursor: default;
+            text-decoration: none;
+        }
+        .ann-panel-body {
+            max-height: 52vh;
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+        .ann-panel-body::-webkit-scrollbar { width: 8px; }
+        .ann-panel-body::-webkit-scrollbar-track { background: #f5f7fa; border-radius: 4px; }
+        .ann-panel-body::-webkit-scrollbar-thumb { background: #c0c4cc; border-radius: 4px; }
+        .ann-panel-body::-webkit-scrollbar-thumb:hover { background: #909399; }
+        .ann-panel-body { scrollbar-width: thin; scrollbar-color: #c0c4cc #f5f7fa; }
+        .ann-loading, .ann-empty { padding: 28px 0; font-size: 13px; }
+        .ann-list { list-style: none; margin: 0; padding: 0; }
+        .ann-item {
+            display: flex;
+            gap: 8px;
+            padding: 11px 14px;
+            border-bottom: 1px solid #f2f6fc;
+            cursor: pointer;
+            transition: background .18s;
+        }
+        .ann-item:hover { background: #f5f7fa; }
+        .ann-item.is-unread { background: #f5f9ff; }
+        .ann-item.is-unread:hover { background: #eaf3ff; }
+        .ann-dot {
+            flex: 0 0 auto;
+            width: 8px;
+            height: 8px;
+            margin-top: 7px;
+            border-radius: 50%;
+            background: #c0c4cc;
+        }
+        .ann-item.is-unread .ann-dot {
+            background: #f56c6c;
+            box-shadow: 0 0 0 3px rgba(245, 108, 108, .16);
+        }
+        .ann-main { flex: 1 1 auto; min-width: 0; }
+        .ann-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .ann-kind {
+            flex: 0 0 auto;
+            padding: 0 6px;
+            border-radius: 3px;
+            border: 1px solid #b3d8d9;
+            background: #f0fafa;
+            color: #0a8387;
+            font-size: 11px;
+            line-height: 17px;
+        }
+        .ann-kind.is-notice { border-color: #f5dab1; background: #fdf6ec; color: #e6a23c; }
+        .ann-top {
+            flex: 0 0 auto;
+            padding: 0 6px;
+            border-radius: 3px;
+            border: 1px solid #fbc4c4;
+            background: #fef0f0;
+            color: #f56c6c;
+            font-size: 11px;
+            line-height: 17px;
+        }
+        .ann-title {
+            flex: 1 1 auto;
+            font-size: 14px;
+            color: #303133;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ann-item.is-unread .ann-title { font-weight: 600; }
+        .ann-meta {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #909399;
+        }
+        .ann-status {
+            margin-left: auto;
+            padding: 0 7px;
+            border-radius: 9px;
+            font-size: 11px;
+            line-height: 17px;
+            background: #f4f4f5;
+            color: #909399;
+        }
+        .ann-item.is-unread .ann-status { background: #fef0f0; color: #f56c6c; }
+        .ann-panel-foot {
+            padding: 9px 14px;
+            border-top: 1px solid #ebeef5;
+            background: #fafcff;
+            font-size: 12px;
+            text-align: center;
+        }
+        .ann-panel-foot a { color: #0a8387; text-decoration: none; }
+        .ann-panel-foot a:hover { text-decoration: underline; }
+        /* 详情浮层：复用同一套面板样式，正文独立滚动 */
+        .ann-detail-mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .35);
+            z-index: 1060;
+        }
+        .ann-detail {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 760px;
+            max-width: 92vw;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .24);
+            z-index: 1061;
+            overflow: hidden;
+        }
+        .ann-detail-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 16px 18px 12px;
+            border-bottom: 1px solid #ebeef5;
+        }
+        .ann-detail-title {
+            flex: 1 1 auto;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .ann-detail-close {
+            flex: 0 0 auto;
+            border: none;
+            background: transparent;
+            font-size: 22px;
+            line-height: 1;
+            color: #909399;
+            cursor: pointer;
+            padding: 0 2px;
+        }
+        .ann-detail-close:hover { color: #606266; }
+        .ann-detail-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px 0;
+            font-size: 12px;
+            color: #909399;
+        }
+        .ann-detail-content {
+            max-height: 56vh;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            padding: 12px 18px 18px;
+            font-size: 14px;
+            line-height: 1.85;
+            color: #303133;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .ann-detail-content::-webkit-scrollbar { width: 8px; }
+        .ann-detail-content::-webkit-scrollbar-track { background: #f5f7fa; border-radius: 4px; }
+        .ann-detail-content::-webkit-scrollbar-thumb { background: #c0c4cc; border-radius: 4px; }
+        .ann-detail-content::-webkit-scrollbar-thumb:hover { background: #909399; }
+        .ann-detail-content { scrollbar-width: thin; scrollbar-color: #c0c4cc #f5f7fa; }
+        .ann-detail-foot {
+            padding: 10px 18px;
+            border-top: 1px solid #ebeef5;
+            background: #fafcff;
+            text-align: right;
+        }
+        @media (max-width: 768px) {
+            .ann-panel { width: 92vw; }
+            .ann-label { display: none; }
+        }
     </style>
     {% block css %}{% endblock %}
 </head>
 <body>
 <div class="container m-t-10">
+    {# 隐藏的 csrf token：确保所有页面都下发 csrftoken cookie，公告标记已读的 POST 才能通过校验 #}
+    <div style="display:none;">{% csrf_token %}</div>
     {% if messages %}
         <div class="row">
             <div class="col-xs-12">
@@ -149,6 +377,31 @@
     {% endif %}
     <div class="clearfix">
         <ul class="nav navbar-nav float-right">
+            <li class="dropdown ann-entry">
+                <a href="#" class="ann-toggle" title="公告通知" data-toggle="dropdown" role="button"
+                   aria-haspopup="true" aria-expanded="false">
+                    <span class="glyphicon glyphicon-bell" aria-hidden="true"></span>
+                    <span class="ann-label">公告</span>
+                    <span class="ann-badge" style="display:none;">0</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-right ann-panel">
+                    <li class="ann-panel-head">
+                        <span class="ann-summary">共 <b class="ann-total">0</b> 条，<b class="ann-unread">0</b> 条未读</span>
+                        <a href="javascript:;" class="ann-mark-all">全部已读</a>
+                    </li>
+                    <li class="ann-panel-body">
+                        <div class="ann-loading text-center text-muted">加载中…</div>
+                        <div class="ann-empty text-center text-muted" style="display:none;">暂无公告</div>
+                        <ul class="ann-list"></ul>
+                    </li>
+                    <li class="ann-panel-foot">
+                        <a href="{{ new_app_url }}" target="_blank" rel="noopener noreferrer">
+                            <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>
+                            查看更完整的公告与工作台，请使用新版系统
+                        </a>
+                    </li>
+                </ul>
+            </li>
             <li class="dropdown entry-new-version">
                 <a href="{{ new_app_url }}" target="_blank" rel="noopener noreferrer" title="打开尝鲜版（新程序）首页">
                     <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>尝鲜版
@@ -190,6 +443,177 @@
     {% endblock %}
 </div>
 <script src="{% static 'plugins/bootstrap-3.4.1/js/bootstrap.min.js' %}"></script>
+<script>
+    /* 老版公告铃铛：与新版共用 announcement / announcement_read 两张表 */
+    (function () {
+        var URL_LIST = '{% url "announcement_list" %}';
+        var URL_READ_ALL = '{% url "announcement_read_all" %}';
+        // 用 id=0 生成一次路径再替换，避免在模板里硬编码 URL
+        var URL_READ_TPL = '{% url "announcement_read" 0 %}';
+
+        var $entry = $('.ann-entry');
+        if (!$entry.length) return;
+        var $badge = $entry.find('.ann-badge');
+        var $total = $entry.find('.ann-total');
+        var $unread = $entry.find('.ann-unread');
+        var $list = $entry.find('.ann-list');
+        var $loading = $entry.find('.ann-loading');
+        var $empty = $entry.find('.ann-empty');
+        var $markAll = $entry.find('.ann-mark-all');
+        var items = [];
+        var loaded = false;
+
+        function csrfToken() {
+            var match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
+
+        function post(url) {
+            return $.ajax({
+                url: url,
+                type: 'POST',
+                headers: { 'X-CSRFToken': csrfToken() }
+            });
+        }
+
+        function setUnread(count) {
+            if (count > 0) {
+                $badge.text(count > 99 ? '99+' : count).show();
+            } else {
+                $badge.hide();
+            }
+            $unread.text(count);
+            $markAll.toggleClass('is-disabled', count === 0);
+        }
+
+        function escapeHtml(text) {
+            return $('<div>').text(text == null ? '' : text).html();
+        }
+
+        function render() {
+            $total.text(items.length);
+            setUnread(items.filter(function (i) { return !i.is_read; }).length);
+            $loading.hide();
+            if (!items.length) {
+                $empty.show();
+                $list.empty();
+                return;
+            }
+            $empty.hide();
+            $list.html(items.map(function (item) {
+                return '' +
+                    '<li class="ann-item' + (item.is_read ? '' : ' is-unread') + '" data-id="' + item.id + '">' +
+                        '<span class="ann-dot"></span>' +
+                        '<div class="ann-main">' +
+                            '<div class="ann-title-row">' +
+                                '<span class="ann-kind' + (item.kind === 2 ? ' is-notice' : '') + '">' +
+                                    escapeHtml(item.kind_display) + '</span>' +
+                                '<span class="ann-title" title="' + escapeHtml(item.title) + '">' +
+                                    escapeHtml(item.title) + '</span>' +
+                                (item.is_top ? '<span class="ann-top">置顶</span>' : '') +
+                            '</div>' +
+                            '<div class="ann-meta">' +
+                                '<span>' + escapeHtml(item.publisher) + '</span>' +
+                                '<span>·</span>' +
+                                '<span>' + escapeHtml(item.publish_time) + '</span>' +
+                                '<span class="ann-status">' + (item.is_read ? '已读' : '未读') + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</li>';
+            }).join(''));
+        }
+
+        function load() {
+            // 每次展开都重新拉取：轮询只更新数字，若沿用缓存列表，
+            // 页面停留期间新发的公告会出现「数字变了、列表没变」。
+            if (!loaded) $loading.show();
+            $.getJSON(URL_LIST).done(function (data) {
+                items = data.results || [];
+                loaded = true;
+                render();
+            }).fail(function () {
+                $loading.text('公告加载失败，请刷新页面重试');
+            });
+        }
+
+        // 未读数每分钟刷新一次，与新版前端保持一致。
+        // 用 count=1 只取数字，避免轮询反复拉公告正文。
+        function pollUnread() {
+            $.getJSON(URL_LIST, { count: 1 }).done(function (data) {
+                setUnread(data.unread || 0);
+            });
+        }
+
+        function openDetail(id) {
+            var item = items.filter(function (i) { return i.id === id; })[0];
+            if (!item) return;
+
+            var $mask = $('<div class="ann-detail-mask"></div>');
+            var $dialog = $('' +
+                '<div class="ann-detail" role="dialog" aria-modal="true">' +
+                    '<div class="ann-detail-head">' +
+                        '<h4 class="ann-detail-title">' + escapeHtml(item.title) + '</h4>' +
+                        '<button type="button" class="ann-detail-close" aria-label="关闭">&times;</button>' +
+                    '</div>' +
+                    '<div class="ann-detail-meta">' +
+                        '<span class="ann-kind' + (item.kind === 2 ? ' is-notice' : '') + '">' +
+                            escapeHtml(item.kind_display) + '</span>' +
+                        '<span>' + escapeHtml(item.publisher) + '</span>' +
+                        '<span>·</span>' +
+                        '<span>' + escapeHtml(item.publish_time) + '</span>' +
+                    '</div>' +
+                    '<div class="ann-detail-content">' + escapeHtml(item.content) + '</div>' +
+                    '<div class="ann-detail-foot">' +
+                        '<button type="button" class="btn btn-default btn-sm ann-detail-ok">关闭</button>' +
+                    '</div>' +
+                '</div>');
+
+            function close() {
+                $mask.remove();
+                $dialog.remove();
+                $(document).off('keydown.annDetail');
+            }
+
+            $mask.on('click', close);
+            $dialog.find('.ann-detail-close, .ann-detail-ok').on('click', close);
+            $(document).on('keydown.annDetail', function (e) {
+                if (e.key === 'Escape') close();
+            });
+
+            $('body').append($mask).append($dialog);
+            $dialog.find('.ann-detail-ok').trigger('focus');
+
+            if (!item.is_read) {
+                post(URL_READ_TPL.replace('/0/read/', '/' + item.id + '/read/')).done(function (data) {
+                    item.is_read = true;
+                    setUnread(data.unread || 0);
+                    render();
+                });
+            }
+        }
+
+        $entry.on('click', '.ann-item', function () {
+            openDetail(parseInt($(this).data('id'), 10));
+        });
+
+        $markAll.on('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if ($(this).hasClass('is-disabled')) return;
+            post(URL_READ_ALL).done(function () {
+                items.forEach(function (i) { i.is_read = true; });
+                setUnread(0);
+                render();
+            });
+        });
+
+        // 打开下拉时才拉列表，避免每个页面都多一次请求
+        $entry.on('show.bs.dropdown', load);
+
+        pollUnread();
+        setInterval(pollUnread, 60000);
+    })(jQuery);
+</script>
 {% block js %}{% endblock %}
 <style>
     .drag-zone {

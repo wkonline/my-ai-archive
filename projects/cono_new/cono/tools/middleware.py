@@ -80,6 +80,9 @@ class AuthMiddleware(MiddlewareMixin):
             return
         # 2.允许用户修改/重置自己的资料和密码
         url_name = request.resolver_match.url_name
+        # 公告对全员可见：读取、标记已读都不校验权限码（公告本就是给全员看的）
+        if url_name in ('announcement_list', 'announcement_read', 'announcement_read_all'):
+            return
         if url_name in ('user_edit', 'user_reset', 'user_profile', 'user_profile_edit', 'user_change_password'):
             target_id = kwargs.get('nid')
             if target_id is not None and int(target_id) == request.info_dict_useid:

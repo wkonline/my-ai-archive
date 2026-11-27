@@ -176,6 +176,17 @@ Product_FormSet_update = forms.modelformset_factory(
     can_delete=True,
 )
 
+
+# 公告表单（老版公告管理页）
+class AnnouncementForm(BootStrapModelForm):
+    class Meta:
+        model = models.Announcement
+        fields = ['title', 'kind', 'is_top', 'is_active', 'content']
+        widgets = {
+            'content': forms.Textarea(attrs={'rows': 10}),
+        }
+
+
 # 公司信息表单
 class MyCompanyModelForm(BootStrapModelForm):
     class Meta:

@@ -6,7 +6,7 @@
       </el-badge>
     </button>
 
-    <el-dialog v-model="panelVisible" title="公告通知" width="600px" class="ann-dialog" append-to-body>
+    <el-dialog v-model="panelVisible" title="公告通知" width="min(880px, 92vw)" class="ann-dialog" append-to-body>
       <div class="ann-toolbar">
         <span class="ann-summary">
           共 {{ items.length }} 条
@@ -51,7 +51,7 @@
       </div>
     </el-dialog>
 
-    <el-dialog v-model="detailVisible" :title="detail?.title || '公告详情'" width="560px" append-to-body>
+    <el-dialog v-model="detailVisible" :title="detail?.title || '公告详情'" width="min(760px, 92vw)" append-to-body>
       <div v-if="detail" class="ann-detail">
         <div class="ann-detail-meta">
           <el-tag size="small" :type="detail.kind === 2 ? 'warning' : 'primary'" effect="plain">

@@ -1,0 +1,97 @@
+{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+    <div class="panel panel-default m-t-10">
+        <div class="panel-heading clearfix">
+            <span class="glyphicon glyphicon-bullhorn" aria-hidden="true"></span>
+            {{ title }}
+            <a href="/announcement/add/" class="btn btn-primary btn-sm pull-right">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> 发布公告
+            </a>
+        </div>
+        <div class="panel-body">
+            <form class="form-inline m-b-10" method="get">
+                <div class="form-group">
+                    <input type="text" name="keyword" value="{{ keyword }}" class="form-control"
+                           placeholder="按标题搜索" autocomplete="off">
+                </div>
+                <button type="submit" class="btn btn-default">搜索</button>
+                {% if keyword %}
+                    <a href="/announcement/list/" class="btn btn-link">清空</a>
+                {% endif %}
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                    <tr>
+                        <th style="width:60px;">#</th>
+                        <th>标题</th>
+                        <th style="width:70px;">类型</th>
+                        <th style="width:70px;">置顶</th>
+                        <th style="width:90px;">状态</th>
+                        <th style="width:90px;">发布人</th>
+                        <th style="width:150px;">发布时间</th>
+                        <th style="width:130px;">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for obj in queryset %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ obj.title }}</td>
+                            <td>{{ obj.get_kind_display }}</td>
+                            <td>
+                                {% if obj.is_top %}
+                                    <span class="label label-danger">置顶</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if obj.is_active %}
+                                    <span class="label label-success">已发布</span>
+                                {% else %}
+                                    <span class="label label-default">已下架</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ obj.publisher.username }}</td>
+                            <td>{{ obj.publish_time|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <a href="/announcement/{{ obj.id }}/edit/" class="btn btn-default btn-xs">编辑</a>
+                                <button type="button" class="btn btn-danger btn-xs btn-del"
+                                        data-id="{{ obj.id }}" data-title="{{ obj.title }}">删除</button>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted" style="padding:30px;">
+                                暂无公告，点击右上角「发布公告」新建一条。
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <form id="del-form" method="post" action="/announcement/delete/" style="display:none;">
+        {% csrf_token %}
+        <input type="hidden" name="nid" id="del-nid">
+    </form>
+{% endblock %}
+
+{% block js %}
+    <script>
+        $(function () {
+            $('.btn-del').on('click', function () {
+                var id = $(this).data('id');
+                var title = $(this).data('title');
+                if (!confirm('确定删除公告「' + title + '」？删除后所有用户都不再看到它。')) return;
+                $('#del-nid').val(id);
+                $('#del-form').trigger('submit');
+            });
+        });
+    </script>
+{% endblock %}
