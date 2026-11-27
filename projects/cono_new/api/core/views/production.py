@@ -212,10 +212,11 @@ class PlanViewSet(BaseModelViewSet):
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        qs = self.get_queryset()
-        # 年度统计固定按生效日期取当年 1/1 起，不受列表的日期/关键词筛选影响：
-        # 卡片展示的是"今年排产了多少"，跟着列表筛选变化会让人误读成筛选结果合计。
-        # 状态筛选仍然生效，待生产/生产中/已完成三张卡片要和年度总量口径一致。
+        # 四张卡片是"本年度总览"，不能跟随列表筛选：
+        # 走 self.get_queryset() 会把 completed_status/日期/关键词一起带上，
+        # 点"待生产"后四张卡片会同时塌缩成筛选结果，看起来像数据丢了。
+        # 用 super().get_queryset() 跳过本类的请求参数过滤，只保留软删除过滤。
+        qs = super().get_queryset()
         year = _parse_year(request.query_params.get('year'))
         year_start = datetime.date(year, 1, 1)
         next_year = datetime.date(year + 1, 1, 1)

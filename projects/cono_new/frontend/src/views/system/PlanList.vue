@@ -165,11 +165,9 @@ const fetchList = async () => {
 
 const fetchStats = async () => {
   try {
-    const params = {}
-    if (filters.status !== '') params.completed_status = filters.status
-    console.log('[PlanList] fetchStats params:', params)
-    stats.value = await request.get('/plan/stats/', { params })
-    console.log('[PlanList] stats:', stats.value)
+    // 四张卡片是"本年度总览"，只按年份统计，不传任何列表筛选参数；
+    // 传了 completed_status 会让卡片跟着快捷筛选变，看着像年度数据被改小。
+    stats.value = await request.get('/plan/stats/')
   } catch {}
 }
 
@@ -178,12 +176,10 @@ const onSearch = () => {
   fetchList()
 }
 
-// 当用户点击快捷筛选时触发
+// 当用户点击快捷筛选时触发：只影响下方列表，年度卡片不重算
 const handleStatusChange = () => {
-  console.log('[PlanList] status changed to:', filters.status)
   page.value = 1
   fetchList()
-  fetchStats()
 }
 
 const resetFilter = () => {
