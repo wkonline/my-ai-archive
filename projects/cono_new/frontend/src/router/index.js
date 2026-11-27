@@ -86,6 +86,7 @@ const routes = [
       { path: 'account-vault/new', name: 'AccountVaultNew', component: () => import('../views/system/VaultForm.vue'), meta: { title: '新增账号密码' } },
       { path: 'account-vault/edit/:id', name: 'AccountVaultEdit', component: () => import('../views/system/VaultForm.vue'), meta: { title: '编辑账号密码' } },
       { path: 'auth/role', name: 'Role', component: () => import('../views/system/RoleView.vue'), meta: { title: '权限管理' } },
+      { path: 'announcement', name: 'Announcement', component: () => import('../views/system/AnnouncementList.vue'), meta: { title: '公告管理' } },
       { path: 'auth/role/new', name: 'RoleNew', component: () => import('../views/system/RoleForm.vue'), meta: { title: '新增角色' } },
       { path: 'auth/role/edit/:id', name: 'RoleEdit', component: () => import('../views/system/RoleForm.vue'), meta: { title: '编辑角色' } },
     ],

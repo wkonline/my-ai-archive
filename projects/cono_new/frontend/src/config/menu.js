@@ -2,7 +2,7 @@
 import {
   Document, Money, List, Calendar, TrendCharts, Upload, Postcard, Van,
   Tools, Setting, RefreshLeft, Switch, Files, Goods, OfficeBuilding, Box,
-  User, InfoFilled, Clock, FolderOpened, Key,
+  User, InfoFilled, Clock, FolderOpened, Key, Bell,
 } from '@element-plus/icons-vue'
 
 // 菜单入口所需权限码（与老版 MENU_PERMISSIONS 一致）
@@ -31,6 +31,7 @@ export const MENU_PERM = {
   '/company': ['company_show'],
   '/account-vault': ['account_vault_list'],
   '/auth/role': ['auth_role_list', 'auth_user_permission'],
+  '/announcement': ['announcement_list', 'announcement_add', 'announcement_edit'],
 }
 
 // 侧边栏菜单定义（标题与路由权限一一对应）
@@ -59,4 +60,5 @@ export const SIDEBAR_ITEMS = [
   { path: '/account-vault', title: '账号密码', icon: Key },
   { path: '/user', title: '用户管理', icon: User },
   { path: '/auth/role', title: '权限管理', icon: Setting },
+  { path: '/announcement', title: '公告管理', icon: Bell },
 ]

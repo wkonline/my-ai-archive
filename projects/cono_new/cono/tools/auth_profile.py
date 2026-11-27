@@ -94,6 +94,7 @@ PERMISSION_GROUPS = {
         'highcharts',
     ],
     '系统管理': [
+        'announcement_',
         'account_vault_',
         'user_',
         'department_',
@@ -292,6 +293,10 @@ PERMISSION_LABELS = {
     'account_vault_edit': '账号密码 - 编辑记录',
     'account_vault_delete': '账号密码 - 删除记录',
     'account_vault_password': '账号密码 - 查看/复制密码',
+    'announcement_list': '公告管理 - 列表查看',
+    'announcement_add': '公告管理 - 发布公告',
+    'announcement_edit': '公告管理 - 编辑公告',
+    'announcement_delete': '公告管理 - 删除公告',
 }
 
 
@@ -327,6 +332,7 @@ MENU_PERMISSIONS = {
     '公司信息': ('company_show',),
     '账号密码': ('account_vault_list',),
     '权限管理': ('auth_role_list', 'auth_user_permission'),
+    '公告管理': ('announcement_list', 'announcement_add', 'announcement_edit'),
 }
 
 
@@ -394,7 +400,7 @@ MENU_GROUPS = {
     '生产交付': ['生产计划', '派任务单', '产品铭牌', '发货信息', '资料上传'],
     '基础资料': ['仓库管理', '部门管理', '用户管理', '客户管理', '产品分类', '产品管理'],
     '售后服务': ['售后服务', '维修服务', '售后返件', '售后流转'],
-    '系统管理': ['应收应付', '数据备份', '操作日志', '公司信息', '账号密码', '权限管理'],
+    '系统管理': ['应收应付', '数据备份', '操作日志', '公司信息', '账号密码', '权限管理', '公告管理'],
 }
 
 

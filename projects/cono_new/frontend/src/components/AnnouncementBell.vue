@@ -1,0 +1,247 @@
+<template>
+  <div class="ann-bell">
+    <button class="bell-btn" :title="unread > 0 ? `${unread} 条未读公告` : '公告通知'" @click="openPanel">
+      <el-badge :value="unread" :max="99" :hidden="unread === 0" class="bell-badge">
+        <el-icon :size="19"><Bell /></el-icon>
+      </el-badge>
+    </button>
+
+    <el-dialog v-model="panelVisible" title="公告通知" width="600px" class="ann-dialog" append-to-body>
+      <div class="ann-toolbar">
+        <span class="ann-summary">
+          共 {{ items.length }} 条
+          <template v-if="unread > 0">，<b class="ann-unread-count">{{ unread }}</b> 条未读</template>
+          <template v-else>，已全部读完</template>
+        </span>
+        <el-button
+          type="primary" size="small" plain
+          :disabled="unread === 0 || loading"
+          @click="markAll"
+        >全部已读</el-button>
+      </div>
+
+      <el-scrollbar max-height="52vh" v-loading="loading">
+        <el-empty v-if="!loading && items.length === 0" description="暂无公告" :image-size="80" />
+        <ul class="ann-list">
+          <li
+            v-for="item in items" :key="item.id"
+            class="ann-item" :class="{ 'is-unread': !item.is_read }"
+            @click="openDetail(item)"
+          >
+            <span class="ann-dot" :class="item.is_read ? 'dot-read' : 'dot-unread'"></span>
+            <div class="ann-main">
+              <div class="ann-title-row">
+                <el-tag size="small" :type="item.kind === 2 ? 'warning' : 'primary'" effect="plain" class="ann-kind">
+                  {{ item.kind_display }}
+                </el-tag>
+                <span class="ann-title">{{ item.title }}</span>
+                <el-tag v-if="item.is_top" size="small" type="danger" effect="plain" class="ann-top">置顶</el-tag>
+              </div>
+              <div class="ann-meta">
+                <span>{{ item.publisher_name }}</span>
+                <span class="ann-sep">·</span>
+                <span>{{ formatTime(item.publish_time) }}</span>
+                <span class="ann-status" :class="item.is_read ? 'status-read' : 'status-unread'">
+                  {{ item.is_read ? '已读' : '未读' }}
+                </span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </el-scrollbar>
+    </el-dialog>
+
+    <el-dialog v-model="detailVisible" :title="detail?.title || '公告详情'" width="560px" append-to-body>
+      <div v-if="detail" class="ann-detail">
+        <div class="ann-detail-meta">
+          <el-tag size="small" :type="detail.kind === 2 ? 'warning' : 'primary'" effect="plain">
+            {{ detail.kind_display }}
+          </el-tag>
+          <span>{{ detail.publisher_name }}</span>
+          <span class="ann-sep">·</span>
+          <span>{{ formatTime(detail.publish_time) }}</span>
+        </div>
+        <div class="ann-detail-content">{{ detail.content }}</div>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { onMounted, onUnmounted, ref } from 'vue'
+import { Bell } from '@element-plus/icons-vue'
+import request from '../api/request'
+
+const unread = ref(0)
+const items = ref([])
+const loading = ref(false)
+const panelVisible = ref(false)
+const detailVisible = ref(false)
+const detail = ref(null)
+let timer = null
+
+const formatTime = (raw) => {
+  if (!raw) return ''
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return String(raw)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+const fetchUnread = async () => {
+  try {
+    const data = await request.get('/announcement/unread-count/')
+    unread.value = data?.unread || 0
+  } catch {}
+}
+
+const fetchList = async () => {
+  loading.value = true
+  try {
+    const data = await request.get('/announcement/', { params: { page_size: 100 } })
+    items.value = data?.results || data || []
+  } catch {
+    items.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+const openPanel = async () => {
+  panelVisible.value = true
+  await fetchList()
+}
+
+const openDetail = async (item) => {
+  detail.value = item
+  detailVisible.value = true
+  if (!item.is_read) {
+    try {
+      const data = await request.post(`/announcement/${item.id}/read/`)
+      item.is_read = true
+      unread.value = data?.unread ?? Math.max(unread.value - 1, 0)
+    } catch {}
+  }
+}
+
+const markAll = async () => {
+  loading.value = true
+  try {
+    await request.post('/announcement/read-all/')
+    items.value.forEach(i => { i.is_read = true })
+    unread.value = 0
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchUnread()
+  // 每分钟轮询一次：局域网内公告不需要实时推送，轮询足够且不占资源
+  timer = setInterval(fetchUnread, 60000)
+})
+
+onUnmounted(() => { if (timer) clearInterval(timer) })
+</script>
+
+<style scoped>
+.bell-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background .2s;
+}
+.bell-btn:hover { background: rgba(255, 255, 255, 0.2); }
+.bell-badge :deep(.el-badge__content) { border: none; }
+
+.ann-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.ann-summary { font-size: 13px; color: var(--el-text-color-secondary); }
+.ann-unread-count { color: var(--el-color-danger); }
+
+.ann-list { list-style: none; margin: 0; padding: 0; }
+.ann-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .18s;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.ann-item:hover { background: var(--el-fill-color-light); }
+.ann-item.is-unread { background: #f5f9ff; }
+.ann-item.is-unread:hover { background: #eaf3ff; }
+
+.ann-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 7px;
+}
+.dot-unread { background: var(--el-color-danger); box-shadow: 0 0 0 3px rgba(245, 108, 108, 0.16); }
+.dot-read { background: var(--el-border-color); }
+
+.ann-main { flex: 1; min-width: 0; }
+.ann-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ann-title {
+  font-size: 14px;
+  color: var(--el-text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ann-item.is-unread .ann-title { font-weight: 600; }
+.ann-kind, .ann-top { flex-shrink: 0; }
+
+.ann-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.ann-sep { opacity: .5; }
+.ann-status {
+  margin-left: auto;
+  padding: 0 7px;
+  border-radius: 9px;
+  font-size: 11px;
+  line-height: 17px;
+}
+.status-unread { color: var(--el-color-danger); background: #fef0f0; }
+.status-read { color: var(--el-text-color-secondary); background: var(--el-fill-color); }
+
+.ann-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.ann-detail-content {
+  padding-top: 14px;
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--el-text-color-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+</style>

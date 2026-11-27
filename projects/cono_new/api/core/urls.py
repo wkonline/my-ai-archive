@@ -27,6 +27,7 @@ from api.core.views import backup as views
 from api.core.views.system import (
     CompanyViewSet, UserLogViewSet, AuthRoleViewSet, AccountVaultViewSet,
 )
+from api.core.views.announcement import AnnouncementViewSet
 
 router = DefaultRouter()
 router.register('department', DepartmentViewSet)
@@ -54,6 +55,7 @@ router.register('company', CompanyViewSet)
 router.register('log', UserLogViewSet)
 router.register('auth-role', AuthRoleViewSet)
 router.register('account-vault', AccountVaultViewSet)
+router.register('announcement', AnnouncementViewSet)
 
 urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='api_login'),

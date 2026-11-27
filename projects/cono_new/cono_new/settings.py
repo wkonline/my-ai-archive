@@ -195,6 +195,7 @@ CONO_MENU = {
         {"title":"公司信息","url":"/company/" },
         {"title":"账号密码","url":"/account_vault/" },
         {"title":"权限管理","url":"/auth/role/" },
+        {"title":"公告管理","url":"/announcement/" },
 
 
     ],
@@ -328,6 +329,8 @@ CONO_PERMISSION = {
         # 操作日志
         'get_log',
         'auth_role_list', 'auth_role_add', 'auth_role_edit', 'auth_role_delete', 'auth_user_permission',
+        #系统公告
+        'announcement_list', 'announcement_add', 'announcement_edit', 'announcement_delete',
     },
     'saler': {
         'department_list', 'department_add', 'department_edit', 'department_delete',

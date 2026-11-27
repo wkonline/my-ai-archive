@@ -883,3 +883,46 @@ class FlowStatusLog(ModelBase):
         db_table = 'flow_status_log'
         ordering = ['-id']
 
+
+
+class Announcement(ModelBase):
+    """ 系统公告 / 通知
+
+    未读状态按人记录（见 AnnouncementRead），因此公告本身不存已读信息。
+    下架用 is_active，不删数据：删了会把所有人的已读记录一起带走。
+    """
+    KIND_CHOICES = (
+        (1, "公告"),
+        (2, "通知"),
+    )
+    title = models.CharField(verbose_name="标题", max_length=128)
+    content = models.TextField(verbose_name="内容")
+    kind = models.IntegerField(verbose_name="类型", choices=KIND_CHOICES, default=1)
+    # 置顶：重要的公告排在列表最前
+    is_top = models.BooleanField(verbose_name="置顶", default=False)
+    # 发布状态：草稿/下架时为 False，前端列表不展示
+    is_active = models.BooleanField(verbose_name="已发布", default=True)
+    publisher = models.ForeignKey(verbose_name="发布人", to="User", on_delete=models.PROTECT)
+    publish_time = models.DateTimeField(verbose_name="发布时间", auto_now_add=True)
+
+    class Meta:
+        db_table = 'announcement'
+        ordering = ['-is_top', '-publish_time', '-id']
+
+    def __str__(self):
+        return self.title
+
+
+class AnnouncementRead(models.Model):
+    """ 公告已读记录：一条 = 某用户读过某公告 """
+    announcement = models.ForeignKey(verbose_name="公告", to="Announcement",
+                                     on_delete=models.CASCADE, related_name="reads")
+    user = models.ForeignKey(verbose_name="用户", to="User", on_delete=models.CASCADE,
+                             related_name="announcement_reads")
+    read_time = models.DateTimeField(verbose_name="阅读时间", auto_now_add=True)
+
+    class Meta:
+        db_table = 'announcement_read'
+        # 同一用户对同一公告只留一条，重复标记已读用 get_or_create 兜住
+        unique_together = (('announcement', 'user'),)
+        ordering = ['-id']

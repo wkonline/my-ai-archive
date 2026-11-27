@@ -617,3 +617,25 @@ class AccountVaultSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.AccountVault
         fields = '__all__'
+
+
+class AnnouncementSerializer(serializers.ModelSerializer):
+    """公告/通知。is_read 由 ViewSet 通过 SerializerContext 注入当前用户视角。"""
+    kind_display = serializers.CharField(source='get_kind_display', read_only=True)
+    publisher_name = serializers.CharField(source='publisher.username', read_only=True)
+    is_read = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Announcement
+        fields = '__all__'
+        read_only_fields = ('publisher', 'publish_time', 'create_time', 'update_time')
+
+    def get_is_read(self, obj):
+        read_ids = self.context.get('read_ids')
+        if read_ids is not None:
+            return obj.id in read_ids
+        user = getattr(self.context.get('request'), 'user', None)
+        if not user or not getattr(user, 'pk', None):
+            return False
+        return models.AnnouncementRead.objects.filter(
+            announcement=obj, user=user).exists()

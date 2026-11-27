@@ -14,6 +14,7 @@
         </div>
       </div>
       <div class="header-right">
+        <AnnouncementBell />
         <el-button type="info" size="small" @click="goLegacy" class="btn-back">
           <el-icon><Switch /></el-icon>&nbsp;返回老版
         </el-button>
@@ -68,6 +69,7 @@ import { legacyAppUrl } from '../../utils/legacyApp'
 import {
   HomeFilled, ArrowDown, Switch, Menu,
 } from '@element-plus/icons-vue'
+import AnnouncementBell from '../../components/AnnouncementBell.vue'
 import { SIDEBAR_ITEMS, MENU_PERM as menuPerm } from '../../config/menu'
 
 const router = useRouter()
