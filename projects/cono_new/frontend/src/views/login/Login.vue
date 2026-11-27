@@ -165,11 +165,12 @@ const handleLogin = async () => {
 }
 .brand-title { margin: 0 0 8px; font-size: 26px; font-weight: 700; letter-spacing: 1px; text-shadow: 0 0 20px rgba(0,120,224,0.5); }
 .brand-sub { margin: 0 0 36px; font-size: 11px; letter-spacing: 4px; color: rgba(255,255,255,0.7); text-transform: uppercase; }
-/* 书法标语：占用原统计数据块的位置。图是 2 行排版（892x242），
-   限宽 340px 时每字约 42px，既清楚又不挤压下方版权行 */
-.brand-slogan { margin-bottom: 44px; }
+/* 书法标语：单行不换行，图片本身已旋转 8° 倾斜。
+   旋转后外接框 619x130（宽高比 4.76）。限宽 400px 让倾斜的右端
+   留出视觉余量，不与品牌区右边界顶死 */
+.brand-slogan { margin-bottom: 40px; }
 .brand-slogan img {
-  display: block; width: 340px; max-width: 100%; height: auto;
+  display: block; width: 400px; max-width: 100%; height: auto;
   filter: drop-shadow(0 0 18px rgba(0,120,224,0.45));
 }
 .brand-copy { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 2px; }
