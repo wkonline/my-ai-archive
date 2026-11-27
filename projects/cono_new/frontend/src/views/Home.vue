@@ -567,7 +567,7 @@ onMounted(load)
   letter-spacing: .2px; vertical-align: middle;
 }
 .home-table .table tbody td {
-  height: 30px; padding: 0 12px; box-sizing: border-box; vertical-align: middle;
+  height: 40px; padding: 0 12px; box-sizing: border-box; vertical-align: middle;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   border-bottom: 1px solid var(--border-soft); color: var(--text-main); font-size: 12.5px;
   transition: background var(--dur) var(--ease);
